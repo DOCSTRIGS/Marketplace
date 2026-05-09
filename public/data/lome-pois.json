@@ -1,0 +1,234 @@
+{
+  "pois": [
+    {
+      "id": "marche-gbossime",
+      "name": "Marché de Gbossimé",
+      "type": "market",
+      "category": "market",
+      "color": "#27AE60",
+      "lat": 6.1593289,
+      "lng": 1.1901624,
+      "address": "DB KARA, Lomé"
+    },
+    {
+      "id": "grand-marche-lome",
+      "name": "Grand Marché de Lomé",
+      "type": "market",
+      "category": "market",
+      "color": "#27AE60",
+      "lat": 6.1295,
+      "lng": 1.2155,
+      "address": "Centre-ville, Lomé"
+    },
+    {
+      "id": "universite-lome",
+      "name": "Université de Lomé (UL)",
+      "type": "university",
+      "category": "university",
+      "color": "#3498DB",
+      "lat": 6.1247,
+      "lng": 1.2110,
+      "address": "Lomé"
+    },
+    {
+      "id": "isdi",
+      "name": "ISDI - Institut Supérieur de Droit",
+      "type": "university",
+      "category": "university",
+      "color": "#3498DB",
+      "lat": 6.1540,
+      "lng": 1.2010,
+      "address": "Tokoin, Lomé"
+    },
+    {
+      "id": "eamau",
+      "name": "EAMAU - École d'Architecture",
+      "type": "university",
+      "category": "university",
+      "color": "#3498DB",
+      "lat": 6.1450,
+      "lng": 1.2130,
+      "address": "Lomé"
+    },
+    {
+      "id": "lycee-tokoin",
+      "name": "Lycée de Tokoin",
+      "type": "school",
+      "category": "university",
+      "color": "#3498DB",
+      "lat": 6.1315,
+      "lng": 1.2125,
+      "address": "Tokoin, Lomé"
+    },
+    {
+      "id": "hotel-napoleon",
+      "name": "Hôtel Napoléon Lagune",
+      "type": "hotel",
+      "category": "hotel",
+      "color": "#9B59B6",
+      "lat": 6.1220,
+      "lng": 1.2350,
+      "address": "Baie de Lomé"
+    },
+    {
+      "id": "hotel-savanna",
+      "name": "Hôtel Savanna",
+      "type": "hotel",
+      "category": "hotel",
+      "color": "#9B59B6",
+      "lat": 6.1180,
+      "lng": 1.2250,
+      "address": "Aéroport, Lomé"
+    },
+    {
+      "id": "hotel-cachou",
+      "name": "Hôtel Cachou",
+      "type": "hotel",
+      "category": "hotel",
+      "color": "#9B59B6",
+      "lat": 6.1420,
+      "lng": 1.2100,
+      "address": "Tokoin, Lomé"
+    },
+    {
+      "id": "restaurant-obelix",
+      "name": "Restaurant Obelix",
+      "type": "restaurant",
+      "category": "restaurant",
+      "color": "#E67E22",
+      "lat": 6.1350,
+      "lng": 1.2280,
+      "address": "Centre-ville, Lomé"
+    },
+    {
+      "id": "pizza-burger",
+      "name": "Elite Pizza Burger",
+      "type": "restaurant",
+      "category": "restaurant",
+      "color": "#E67E22",
+      "lat": 6.1481,
+      "lng": 1.2085,
+      "address": "Tokoin, Lomé"
+    },
+    {
+      "id": "la-huqqa",
+      "name": "La HuQQa",
+      "type": "restaurant",
+      "category": "restaurant",
+      "color": "#E67E22",
+      "lat": 6.1520,
+      "lng": 1.2230,
+      "address": "Aéroport, Lomé"
+    },
+    {
+      "id": "ivrivrii-chicken",
+      "name": "Ivrivrii Chicken",
+      "type": "restaurant",
+      "category": "restaurant",
+      "color": "#E67E22",
+      "lat": 6.1470,
+      "lng": 1.2320,
+      "address": "Aéroport, Lomé"
+    },
+    {
+      "id": "cafe-lome",
+      "name": "Café Lome",
+      "type": "cafe",
+      "category": "cafe",
+      "color": "#D4945D",
+      "lat": 6.1320,
+      "lng": 1.2200,
+      "address": "Centre-ville, Lomé"
+    },
+    {
+      "id": "forever-pharmacie",
+      "name": "Forever Pharmacie",
+      "type": "pharmacy",
+      "category": "pharmacy",
+      "color": "#E74C3C",
+      "lat": 6.1330,
+      "lng": 1.2180,
+      "address": "Centre-ville, Lomé"
+    },
+    {
+      "id": "pharmacie-centre",
+      "name": "Pharmacie du Centre",
+      "type": "pharmacy",
+      "category": "pharmacy",
+      "color": "#E74C3C",
+      "lat": 6.1350,
+      "lng": 1.2200,
+      "address": "Centre-ville, Lomé"
+    },
+    {
+      "id": "pharmacie-moderne",
+      "name": "Pharmacie Moderne",
+      "type": "pharmacy",
+      "category": "pharmacy",
+      "color": "#E74C3C",
+      "lat": 6.1500,
+      "lng": 1.2250,
+      "address": "Aéroport, Lomé"
+    },
+    {
+      "id": "colombe-paix",
+      "name": "Colombe de la Paix (Monument)",
+      "type": "landmark",
+      "category": "landmark",
+      "color": "#F39C12",
+      "lat": 6.1264,
+      "lng": 1.2222,
+      "address": "Centre-ville, Lomé"
+    },
+    {
+      "id": "monument-independance",
+      "name": "Monument de l'Indépendance",
+      "type": "landmark",
+      "category": "landmark",
+      "color": "#F39C12",
+      "lat": 6.1240,
+      "lng": 1.2110,
+      "address": "Centre-ville, Lomé"
+    },
+    {
+      "id": "btci-banque",
+      "name": "BTCI Banque",
+      "type": "bank",
+      "category": "bank",
+      "color": "#34495E",
+      "lat": 6.1280,
+      "lng": 1.2150,
+      "address": "Centre-ville, Lomé"
+    },
+    {
+      "id": "boa-togo",
+      "name": "BOA Togo",
+      "type": "bank",
+      "category": "bank",
+      "color": "#34495E",
+      "lat": 6.1350,
+      "lng": 1.2200,
+      "address": "Centre-ville, Lomé"
+    },
+    {
+      "id": "eden-plage",
+      "name": "Eden Plage",
+      "type": "landmark",
+      "category": "landmark",
+      "color": "#F39C12",
+      "lat": 6.1420,
+      "lng": 1.2400,
+      "address": "Baie de Lomé"
+    },
+    {
+      "id": "plage-lome",
+      "name": "Plage de Lomé",
+      "type": "landmark",
+      "category": "landmark",
+      "color": "#F39C12",
+      "lat": 6.1380,
+      "lng": 1.2450,
+      "address": "Baie de Lomé"
+    }
+  ]
+}
