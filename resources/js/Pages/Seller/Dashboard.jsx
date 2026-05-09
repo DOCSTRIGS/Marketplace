@@ -141,6 +141,32 @@ export default function Dashboard({ auth }) {
                             ))}
                         </div>
                     </div>
+                    {/* Messages Card */}
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-[#8B4513]/10 rounded-xl flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#8B4513]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-900">Messages Clients</h3>
+                            </div>
+                            <Link href="/seller/chat" className="text-xs font-black text-[#8B4513] hover:underline uppercase tracking-widest">
+                                Voir tout →
+                            </Link>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-4">Répondez à vos clients en temps réel directement depuis votre boutique.</p>
+                        <Link
+                            href="/seller/chat"
+                            className="w-full flex items-center justify-center py-3 rounded-xl bg-[#8B4513] text-white font-bold text-sm hover:bg-[#70360f] transition-colors shadow-md shadow-[#8B4513]/20"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            Ouvrir la messagerie
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Recent Orders */}

@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import React, { useState, useEffect } from 'react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { useCart } from '@/Contexts/CartContext';
+import { useToast } from '@/Contexts/ToastContext';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import { APIProvider, Map, AdvancedMarker } from '@vis.gl/react-google-maps';
+
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 export default function ProductDetail({ auth, product }) {
     if (!product) return <div>Produit introuvable</div>;
@@ -11,6 +16,30 @@ export default function ProductDetail({ auth, product }) {
         : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80';
     
     const [mainImage, setMainImage] = useState(initialImage);
+    
+    const { data, setData, post, processing, reset, errors } = useForm({
+        rating: 5,
+        comment: '',
+    });
+
+    const submitReview = (e) => {
+        e.preventDefault();
+        post(route('reviews.store', product.id), {
+            onSuccess: () => reset(),
+            preserveScroll: true,
+        });
+    };
+
+    const { addToCart } = useCart();
+    const { addToast } = useToast();
+    const [added, setAdded] = useState(false);
+
+    const handleAddToCart = () => {
+        addToCart(product);
+        setAdded(true);
+        addToast(`"${product.name}" ajouté au panier !`, 'success');
+        setTimeout(() => setAdded(false), 2000);
+    };
 
     // Use actual product images if available, otherwise fallback
     const thumbnails = product.images && product.images.length > 0 
@@ -113,18 +142,23 @@ export default function ProductDetail({ auth, product }) {
                                 </span>
                             </div>
 
-                            <button className="w-full bg-[#70360f] text-white font-bold py-3.5 rounded-md hover:bg-[#5a2b0c] transition-colors mb-3 flex justify-center items-center shadow-md">
+                            <button 
+                                onClick={handleAddToCart}
+                                className={`w-full ${added ? 'bg-[#2ECC71]' : 'bg-[#70360f]'} text-white font-bold py-3.5 rounded-md hover:opacity-90 transition-all mb-3 flex justify-center items-center shadow-md transform active:scale-95`}
+                            >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                                    <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7h-3v7h.05a2.5 2.5 0 004.9 0H17a1 1 0 001-1V9l-2-2h-2z" />
+                                    <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 100-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
                                 </svg>
-                                Acheter et se faire livrer
+                                {added ? 'Ajouté !' : 'Ajouter au panier'}
                             </button>
-                            <button className="w-full bg-transparent border-2 border-[#70360f] text-[#70360f] font-bold py-3 rounded-md hover:bg-[#70360f]/5 transition-colors flex justify-center items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10.496 2.132a1 1 0 00-.992 0l-7 4A1 1 0 003 8v7a1 1 0 100 2h14a1 1 0 100-2V8a1 1 0 00.504-1.868l-7-4zM6 9a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1zm3 1a1 1 0 012 0v3a1 1 0 11-2 0v-3zm5-1a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1z" clipRule="evenodd" />
+                            <button
+                                onClick={() => window.location.href = `/chat/shop/${product.shop?.id}`}
+                                className="w-full bg-transparent border-2 border-[#70360f] text-[#70360f] font-bold py-3 rounded-md hover:bg-[#70360f]/5 transition-colors flex justify-center items-center"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                 </svg>
-                                Réserver et passer en boutique
+                                Contacter le vendeur
                             </button>
                         </div>
 
@@ -158,20 +192,51 @@ export default function ProductDetail({ auth, product }) {
                                 </div>
                             </div>
 
-                            {/* Static Map Image Replacement */}
-                            <div className="relative w-full h-48 bg-gray-200 rounded-xl overflow-hidden mb-6 border border-gray-300">
-                                <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=600&q=80" alt="Map" className="w-full h-full object-cover opacity-50 grayscale" />
+                            {/* Real Google Map */}
+                            <div className="relative w-full h-64 bg-gray-100 rounded-2xl overflow-hidden mb-5 border border-gray-200 shadow-inner">
+                                {(() => {
+                                    const lat = product.shop?.latitude
+                                        ? parseFloat(product.shop.latitude)
+                                        : 6.1375;
+                                    const lng = product.shop?.longitude
+                                        ? parseFloat(product.shop.longitude)
+                                        : 1.2123;
+                                    const shopPos = { lat, lng };
 
-                                {/* Map Pin */}
-                                <div className="absolute top-1/2 left-1/2 -mt-4 -ml-4 w-8 h-8 text-[#8B4513] drop-shadow-md">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                                        <path fillRule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-                                    </svg>
-                                </div>
+                                    return (
+                                        <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+                                            <Map
+                                                defaultCenter={shopPos}
+                                                defaultZoom={15}
+                                                disableDefaultUI={false}
+                                                gestureHandling={'cooperative'}
+                                                mapId="bf50a87343b44b8b"
+                                                style={{ width: '100%', height: '100%' }}
+                                            >
+                                                <AdvancedMarker position={shopPos}>
+                                                    <div className="relative flex flex-col items-center">
+                                                        <div className="absolute -top-1 w-10 h-10 bg-[#B03A2E]/20 rounded-full animate-ping" />
+                                                        <div className="w-5 h-5 bg-[#B03A2E] border-2 border-white rounded-full shadow-xl z-10" />
+                                                        <div className="mt-1 bg-white text-[#B03A2E] text-[9px] font-black px-2 py-0.5 rounded-full shadow-md whitespace-nowrap">
+                                                            {product.shop?.name}
+                                                        </div>
+                                                    </div>
+                                                </AdvancedMarker>
+                                            </Map>
+                                        </APIProvider>
+                                    );
+                                })()}
 
-                                {/* Map Label */}
-                                <div className="absolute bottom-3 left-3 bg-white px-3 py-1.5 rounded-md text-[10px] font-bold text-gray-800 shadow-sm">
-                                    Quartier {product.shop?.neighborhood?.name}, Lomé
+                                {/* Gradient footer overlay */}
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white/80 to-transparent p-3 pointer-events-none">
+                                    <div className="flex items-center gap-1.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-[#B03A2E]" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-[10px] font-bold text-gray-700">
+                                            {product.shop?.neighborhood?.name || 'Lomé'}, Togo
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -209,23 +274,116 @@ export default function ProductDetail({ auth, product }) {
                             </div>
 
                             {/* Reviews */}
-                            <div>
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-xl font-bold text-[#222222]">Avis clients (0)</h3>
-                                    <div className="flex items-center">
-                                        <div className="flex text-[#8B4513]">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <svg key={star} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                </svg>
-                                            ))}
+                            <div id="reviews">
+                                <div className="flex justify-between items-center mb-8">
+                                    <h3 className="text-xl font-bold text-[#222222]">
+                                        Avis clients ({product.reviews?.length || 0})
+                                    </h3>
+                                    <div className="flex items-center bg-[#8B4513]/5 px-4 py-2 rounded-lg">
+                                        <div className="flex text-[#B03A2E]">
+                                            {[1, 2, 3, 4, 5].map((star) => {
+                                                const avg = product.reviews?.length > 0 
+                                                    ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length 
+                                                    : 0;
+                                                return (
+                                                    <svg key={star} xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${star <= Math.round(avg) ? 'fill-current' : 'text-gray-300'}`} viewBox="0 0 20 20" fill="currentColor">
+                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                    </svg>
+                                                );
+                                            })}
                                         </div>
-                                        <span className="ml-2 font-bold text-[#222222]">0/5</span>
+                                        <span className="ml-2 font-bold text-[#222222]">
+                                            {product.reviews?.length > 0 
+                                                ? (product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length).toFixed(1) 
+                                                : '0'}/5
+                                        </span>
                                     </div>
                                 </div>
 
-                                <div className="p-8 bg-white rounded-xl border border-dashed border-gray-300 text-center">
-                                    <p className="text-gray-500 text-sm">Il n'y a pas encore d'avis pour ce produit.</p>
+                                {/* Review Form */}
+                                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-10">
+                                    <h4 className="font-bold text-[#222222] mb-4">Laisser un avis</h4>
+                                    <form onSubmit={submitReview} className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Votre note</label>
+                                            <div className="flex gap-2">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <button
+                                                        key={star}
+                                                        type="button"
+                                                        onClick={() => setData('rating', star)}
+                                                        className={`p-1 transition-transform active:scale-90 ${data.rating >= star ? 'text-[#B03A2E]' : 'text-gray-300 hover:text-[#B03A2E]/50'}`}
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 fill-current" viewBox="0 0 20 20">
+                                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                        </svg>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            {errors.rating && <p className="text-red-500 text-xs mt-1">{errors.rating}</p>}
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Votre commentaire</label>
+                                            <textarea
+                                                value={data.comment}
+                                                onChange={e => setData('comment', e.target.value)}
+                                                className="w-full rounded-lg border-gray-200 focus:border-[#8B4513] focus:ring focus:ring-[#8B4513]/20 text-sm p-4 h-24"
+                                                placeholder="Partagez votre expérience avec ce produit..."
+                                            ></textarea>
+                                            {errors.comment && <p className="text-red-500 text-xs mt-1">{errors.comment}</p>}
+                                        </div>
+
+                                        <button 
+                                            type="submit" 
+                                            disabled={processing}
+                                            className="bg-[#8B4513] text-white px-6 py-2.5 rounded-lg font-bold text-sm hover:bg-[#70360f] transition-all disabled:opacity-50"
+                                        >
+                                            {processing ? 'Envoi...' : 'Publier mon avis'}
+                                        </button>
+                                    </form>
+                                </div>
+
+                                {/* Review List */}
+                                <div className="space-y-6">
+                                    {product.reviews?.length > 0 ? (
+                                        product.reviews.map((review) => (
+                                            <div key={review.id} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div className="flex items-center">
+                                                        <div className="w-10 h-10 rounded-full bg-[#FADBD8] text-[#B03A2E] flex items-center justify-center font-bold mr-3">
+                                                            {review.user?.name.substring(0, 1) || 'U'}
+                                                        </div>
+                                                        <div>
+                                                            <h5 className="font-bold text-[#222222] text-sm">{review.user?.name || 'Client Anonyme'}</h5>
+                                                            <div className="flex text-[#B03A2E] mt-0.5">
+                                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                                    <svg key={star} xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 ${star <= review.rating ? 'fill-current' : 'text-gray-300'}`} viewBox="0 0 20 20">
+                                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                    </svg>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[10px] text-gray-400 font-medium">
+                                                        {new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                    </span>
+                                                </div>
+                                                <p className="text-gray-600 text-sm leading-relaxed">
+                                                    {review.comment}
+                                                </p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="p-12 bg-white rounded-xl border border-dashed border-gray-200 text-center">
+                                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.827-1.233L3 20l1.341-4.634C3.298 14.167 3 12.43 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                                </svg>
+                                            </div>
+                                            <p className="text-gray-400 text-sm font-medium">Soyez le premier à donner votre avis sur ce produit !</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

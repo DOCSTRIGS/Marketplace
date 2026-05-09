@@ -8,6 +8,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
@@ -17,32 +18,53 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
+            'items' => 'required|array|min:1',
+            'items.*.id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
             'delivery_address' => 'required|string',
         ]);
 
-        $product = Product::findOrFail($validated['product_id']);
-        $totalAmount = $product->price * $validated['quantity'];
+        $itemsByShop = [];
+        foreach ($validated['items'] as $itemData) {
+            $product = Product::findOrFail($itemData['id']);
+            $itemsByShop[$product->shop_id][] = [
+                'product' => $product,
+                'quantity' => $itemData['quantity']
+            ];
+        }
 
-        $order = Order::create([
-            'user_id' => auth()->id() ?? 1, // Fallback for demo if not logged in
-            'shop_id' => $product->shop_id,
-            'order_number' => 'CMD-' . strtoupper(Str::random(8)),
-            'total_amount' => $totalAmount,
-            'status' => 'En préparation',
-            'delivery_address' => $validated['delivery_address'],
-            'payment_method' => 'Cash',
-        ]);
+        $paymentReference = 'PAY-' . strtoupper(Str::random(12));
+        $createdOrders = [];
 
-        OrderItem::create([
-            'order_id' => $order->id,
-            'product_id' => $product->id,
-            'quantity' => $validated['quantity'],
-            'price' => $product->price,
-        ]);
+        foreach ($itemsByShop as $shopId => $items) {
+            $totalAmount = 0;
+            foreach ($items as $item) {
+                $totalAmount += $item['product']->price * $item['quantity'];
+            }
 
-        return redirect()->route('tracking', ['order_id' => $order->id])->with('success', 'Commande passée avec succès !');
+            $order = Order::create([
+                'user_id' => Auth::id(),
+                'shop_id' => $shopId,
+                'order_number' => 'CMD-' . strtoupper(Str::random(8)),
+                'total_amount' => $totalAmount,
+                'status' => 'pending',
+                'delivery_address' => $validated['delivery_address'],
+                'payment_method' => 'Flooz/T-Money',
+                'payment_reference' => $paymentReference,
+            ]);
+
+            foreach ($items as $item) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $item['product']->id,
+                    'quantity' => $item['quantity'],
+                    'price' => $item['product']->price,
+                ]);
+            }
+            $createdOrders[] = $order;
+        }
+
+        return redirect()->route('checkout.show', ['reference' => $paymentReference]);
     }
 
     /**
@@ -50,15 +72,10 @@ class OrderController extends Controller
      */
     public function sellerOrders()
     {
-        // Fallback for Demo/Testing without authentication
-        $user = auth()->user();
-        if (!$user) {
-            $shop = \App\Models\Shop::first();
-        } else {
-            $shop = $user->shops()->first();
-        }
+        $user = Auth::user();
+        $shop = $user->shop;
         
-        if (!$shop) return redirect()->route('seller.dashboard');
+        if (!$shop) return redirect()->route('shops.create');
 
         $orders = Order::where('shop_id', $shop->id)
             ->with(['orderItems.product', 'user'])
@@ -76,19 +93,34 @@ class OrderController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $validated = $request->validate([
-            'status' => 'required|string|in:En préparation,Expédié,Livré,Annulé',
+            'status' => 'required|string|in:pending,paid,preparing,shipped,delivered,cancelled',
         ]);
 
         $order = Order::findOrFail($id);
         
         // Security check: only the shop owner can update the status
-        $shop = auth()->user()->shops()->first();
-        if ($order->shop_id !== $shop->id) {
+        $shop = Auth::user()->shop;
+        if (!$shop || $order->shop_id !== $shop->id) {
             abort(403);
         }
 
         $order->update(['status' => $validated['status']]);
 
         return back()->with('success', 'Statut mis à jour avec succès.');
+    }
+
+    /**
+     * Display user orders history.
+     */
+    public function userOrders()
+    {
+        $orders = Order::where('user_id', Auth::id())
+            ->with(['orderItems.product', 'shop'])
+            ->latest()
+            ->get();
+
+        return Inertia::render('MyOrders', [
+            'orders' => $orders
+        ]);
     }
 }

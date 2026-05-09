@@ -48,6 +48,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function shop()
+    {
+        return $this->hasOne(Shop::class);
+    }
+
     public function shops()
     {
         return $this->hasMany(Shop::class);

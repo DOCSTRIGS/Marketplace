@@ -5,6 +5,9 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 
+import { CartProvider } from './Contexts/CartContext';
+import { ToastProvider } from './Contexts/ToastContext';
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
@@ -17,9 +20,15 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
 
-        root.render(<App {...props} />);
+        root.render(
+            <CartProvider>
+                <ToastProvider>
+                    <App {...props} />
+                </ToastProvider>
+            </CartProvider>
+        );
     },
     progress: {
-        color: '#4B5563',
+        color: '#D35400',
     },
 });

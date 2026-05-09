@@ -2,71 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import { useCart } from '@/Contexts/CartContext';
+import { useToast } from '@/Contexts/ToastContext';
 import { APIProvider, Map, AdvancedMarker } from '@vis.gl/react-google-maps';
+import CategoryProductCard from '@/Components/CategoryProductCard';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-const CategoryProductCard = ({ product }) => (
-    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col">
-        {/* Image Container */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
-            <img
-                src={product.images && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80'}
-                alt={product.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-
-            {/* Badges */}
-            <div className="absolute top-3 left-3 flex flex-col items-start space-y-2">
-                {product.stock > 0 ? (
-                    <span className="bg-[#2ECC71] text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide shadow-sm">
-                        En stock
-                    </span>
-                ) : (
-                    <span className="bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide shadow-sm">
-                        Rupture
-                    </span>
-                )}
-                <span className="bg-white/95 backdrop-blur-sm text-[#8B4513] text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm uppercase">
-                    {product.category?.name}
-                </span>
-            </div>
-        </div>
-
-        {/* Content Container */}
-        <div className="p-4 flex flex-col flex-grow">
-            <div className="flex justify-between items-start mb-1">
-                <h3 className="font-bold text-[#333333] text-sm leading-tight pr-2 line-clamp-1">
-                    {product.name}
-                </h3>
-                <div className="flex items-center text-[#999999] text-[10px] whitespace-nowrap pt-0.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                    </svg>
-                    {product.shop?.neighborhood?.name || 'Lomé'}
-                </div>
-            </div>
-
-            <p className="text-[11px] text-[#888888] mb-4 line-clamp-2 h-8">
-                {product.description || 'Pas de description disponible.'}
-            </p>
-
-            <div className="mt-auto">
-                <p className="text-[18px] font-bold text-[#B03A2E] mb-4">
-                    {new Intl.NumberFormat('fr-FR').format(product.price)} <span className="text-xs font-semibold">FCFA</span>
-                </p>
-
-                <Link
-                    href={route('product.show', product.id)}
-                    className="block w-full py-2 bg-white border border-[#8B4513] text-[#8B4513] text-xs font-bold rounded-lg text-center hover:bg-[#8B4513] hover:text-white transition-colors"
-                >
-                    Voir le produit
-                </Link>
-            </div>
-        </div>
-    </div>
-);
-
 
 export default function Explore({ products, categories, filters }) {
     const [activeMainCategory, setActiveMainCategory] = useState(null);
@@ -110,6 +51,48 @@ export default function Explore({ products, categories, filters }) {
 
     const [activeSort, setActiveSort] = useState('Tous');
     const [userLocation, setUserLocation] = useState(null);
+
+    // Filter states
+    const [searchTerm, setSearchTerm] = useState(filters.search || '');
+    const [minPrice, setMinPrice] = useState(filters.min_price || '');
+    const [maxPrice, setMaxPrice] = useState(filters.max_price || '');
+    const [selectedRating, setSelectedRating] = useState(filters.rating || null);
+
+    const applyFilters = (newFilters = {}) => {
+        const currentFilters = {
+            category_id: activeSubCategoryId,
+            search: searchTerm,
+            min_price: minPrice,
+            max_price: maxPrice,
+            rating: selectedRating,
+            ...newFilters
+        };
+        
+        // Remove empty values
+        Object.keys(currentFilters).forEach(key => 
+            (currentFilters[key] === '' || currentFilters[key] === null) && delete currentFilters[key]
+        );
+
+        router.get(route('explore'), currentFilters, { 
+            preserveState: true,
+            preserveScroll: true,
+            replace: true 
+        });
+    };
+
+    // Debounced search could be better, but for now simple Enter or blur
+    const handleSearch = (e) => {
+        if (e.key === 'Enter') applyFilters();
+    };
+
+    const clearAllFilters = () => {
+        setSearchTerm('');
+        setMinPrice('');
+        setMaxPrice('');
+        setSelectedRating(null);
+        setActiveSubCategoryId(null);
+        router.get(route('explore'));
+    };
 
     // Get real user location
     useEffect(() => {
@@ -162,6 +145,10 @@ export default function Explore({ products, categories, filters }) {
                         </div>
                         <input
                             type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onKeyDown={handleSearch}
+                            onBlur={() => applyFilters()}
                             placeholder="Rechercher un produit..."
                             className="w-full bg-white border border-gray-200 rounded-md py-2.5 pl-10 pr-4 text-sm focus:ring-1 focus:ring-[#B03A2E] focus:outline-none focus:border-[#B03A2E] text-gray-700 shadow-sm"
                         />
@@ -175,15 +162,12 @@ export default function Explore({ products, categories, filters }) {
                         <div className="bg-white rounded-xl p-6 shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 mb-6">
                             <h2 className="text-xl font-bold text-[#222222] mb-6 flex justify-between items-center">
                                 Catégories
-                                {activeSubCategoryId && (
+                                {(activeSubCategoryId || searchTerm || minPrice || maxPrice || selectedRating) && (
                                     <button
-                                        onClick={() => {
-                                            setActiveSubCategoryId(null);
-                                            router.get(route('explore'));
-                                        }}
+                                        onClick={clearAllFilters}
                                         className="text-[10px] text-[#B03A2E] font-bold uppercase hover:underline"
                                     >
-                                        Effacer
+                                        Effacer tout
                                     </button>
                                 )}
                             </h2>
@@ -218,6 +202,63 @@ export default function Explore({ products, categories, filters }) {
                                         </div>
                                     );
                                 })}
+                            </div>
+                        </div>
+
+                        {/* Price Filter */}
+                        <div className="bg-white rounded-xl p-6 shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 mb-6">
+                            <h2 className="text-xl font-bold text-[#222222] mb-4">Prix (FCFA)</h2>
+                            <div className="grid grid-cols-2 gap-2">
+                                <input 
+                                    type="number" 
+                                    placeholder="Min" 
+                                    value={minPrice}
+                                    onChange={(e) => setMinPrice(e.target.value)}
+                                    onBlur={() => applyFilters()}
+                                    className="w-full text-xs border-gray-100 rounded-lg focus:ring-[#B03A2E] focus:border-[#B03A2E]"
+                                />
+                                <input 
+                                    type="number" 
+                                    placeholder="Max" 
+                                    value={maxPrice}
+                                    onChange={(e) => setMaxPrice(e.target.value)}
+                                    onBlur={() => applyFilters()}
+                                    className="w-full text-xs border-gray-100 rounded-lg focus:ring-[#B03A2E] focus:border-[#B03A2E]"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Rating Filter */}
+                        <div className="bg-white rounded-xl p-6 shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 mb-6">
+                            <h2 className="text-xl font-bold text-[#222222] mb-4">Note minimale</h2>
+                            <div className="space-y-2">
+                                {[5, 4, 3, 2].map((r) => (
+                                    <button
+                                        key={r}
+                                        onClick={() => {
+                                            const newRating = selectedRating == r ? null : r;
+                                            setSelectedRating(newRating);
+                                            applyFilters({ rating: newRating });
+                                        }}
+                                        className={`w-full flex items-center justify-between text-xs p-2 rounded-lg transition-colors ${selectedRating == r ? 'bg-[#B03A2E]/10 text-[#B03A2E] font-bold' : 'text-gray-500 hover:bg-gray-50'}`}
+                                    >
+                                        <div className="flex items-center">
+                                            <div className="flex text-[#B03A2E] mr-2">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <svg key={star} xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 ${star <= r ? 'fill-current' : 'text-gray-200'}`} viewBox="0 0 20 20" fill="currentColor">
+                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                    </svg>
+                                                ))}
+                                            </div>
+                                            <span>{r} étoiles & plus</span>
+                                        </div>
+                                        {selectedRating == r && (
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
@@ -305,8 +346,8 @@ export default function Explore({ products, categories, filters }) {
                         {/* Product Grid */}
                         {sortedProducts.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-                                {sortedProducts.map(product => (
-                                    <CategoryProductCard key={product.id} product={product} />
+                                {sortedProducts.map((product, index) => (
+                                    <CategoryProductCard key={product.id} product={product} index={index} />
                                 ))}
                             </div>
                         ) : (

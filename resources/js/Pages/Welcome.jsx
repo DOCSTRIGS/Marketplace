@@ -2,56 +2,15 @@ import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
-import ProductCard from '@/Components/ProductCard';
+import CategoryProductCard from '@/Components/CategoryProductCard';
 
-export default function Welcome({ auth }) {
+export default function Welcome({ auth, products = [] }) {
     const categories = [
         'Tous', 'Chaussures', 'Téléphones', 'Ordinateurs', 'Tablettes', 
         'Réfrigérateurs', 'Climatiseurs', 'Électroménager', 'Habits'
     ];
 
-    const mockProducts = [
-        { 
-            id: 1, 
-            name: 'Nike Air Max Red Edition', 
-            price: '45,000', 
-            shopName: 'Lomé Sport Plaza', 
-            distance: '2.4km', 
-            payment: 'Flooz / T-Money',
-            inStock: true,
-            image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80' 
-        },
-        { 
-            id: 2, 
-            name: 'Smartphone X-Pro Max', 
-            price: '125,000', 
-            shopName: 'Digital Store Togo', 
-            distance: '0.8km', 
-            payment: 'T-Money',
-            inStock: true,
-            image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80' 
-        },
-        { 
-            id: 3, 
-            name: 'Montre Classique Silver', 
-            price: '18,500', 
-            shopName: 'Bijouterie de l\'Union', 
-            distance: '4.1km', 
-            payment: 'Flooz / T-Money',
-            inStock: true,
-            image: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&w=600&q=80' 
-        },
-        { 
-            id: 4, 
-            name: 'Tissu Wax Authentique', 
-            price: '12,000', 
-            shopName: 'Maman Wax Lomé', 
-            distance: '1.5km', 
-            payment: 'Flooz',
-            inStock: true,
-            image: 'https://images.unsplash.com/photo-1596755094514-f87e32f85e2c?auto=format&fit=crop&w=600&q=80' 
-        },
-    ];
+
 
     return (
         <div className="min-h-screen bg-[#FDF8F4] flex flex-col font-sans">
@@ -116,7 +75,7 @@ export default function Welcome({ auth }) {
                     {/* Left Banner (Wax) */}
                     <div className="md:col-span-2 relative rounded-2xl overflow-hidden min-h-[300px] shadow-sm group cursor-pointer flex items-end">
                         <img 
-                            src="https://images.unsplash.com/photo-1544413164-96690ce11b11?auto=format&fit=crop&w=1200&q=80" 
+                            src="https://images.unsplash.com/photo-1574342289656-e991cb456d9a?auto=format&fit=crop&w=1200&q=80" 
                             alt="Wax Togolais" 
                             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
@@ -169,9 +128,13 @@ export default function Welcome({ auth }) {
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {mockProducts.map((product) => (
-                            <ProductCard key={product.id} product={product} />
-                        ))}
+                        {products && products.length > 0 ? (
+                            products.map((product, index) => (
+                                <CategoryProductCard key={product.id} product={product} index={index} />
+                            ))
+                        ) : (
+                            <p className="text-gray-500 col-span-full">Aucun produit disponible pour le moment.</p>
+                        )}
                     </div>
                 </section>
 

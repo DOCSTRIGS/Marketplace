@@ -12,10 +12,23 @@ export default function Orders({ orders }) {
     };
 
     const stats = [
-        { name: 'À PRÉPARER', value: orders.filter(o => o.status === 'En préparation').length, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-orange-500', bg: 'bg-orange-100' },
+        { name: 'À PRÉPARER', value: orders.filter(o => o.status === 'paid' || o.status === 'processing' || o.status === 'preparing').length, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-orange-500', bg: 'bg-orange-100' },
         { name: 'REVENU TOTAL', value: new Intl.NumberFormat('fr-FR').format(orders.reduce((acc, o) => acc + parseFloat(o.total_amount), 0)) + ' F', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-green-500', bg: 'bg-green-100' },
         { name: 'COMMANDES TOTALES', value: orders.length, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-blue-500', bg: 'bg-blue-100' },
     ];
+
+    const getStatusText = (status) => {
+        const map = {
+            'pending': 'En attente',
+            'paid': 'Payé',
+            'processing': 'En cours',
+            'preparing': 'En préparation',
+            'shipped': 'Expédié',
+            'delivered': 'Livré',
+            'cancelled': 'Annulé'
+        };
+        return map[status] || status;
+    };
 
     return (
         <SellerLayout>
@@ -108,27 +121,36 @@ export default function Orders({ orders }) {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-3 py-1 inline-flex text-[10px] leading-5 font-black uppercase rounded-full ${
-                                            order.status === 'Livré' ? 'bg-green-100 text-green-800' :
-                                            order.status === 'En préparation' ? 'bg-orange-100 text-orange-800' :
-                                            order.status === 'Expédié' ? 'bg-blue-100 text-blue-800' :
-                                            'bg-red-100 text-red-800'
+                                            order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                            (order.status === 'preparing' || order.status === 'processing') ? 'bg-orange-100 text-orange-800' :
+                                            order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                                            order.status === 'paid' ? 'bg-indigo-100 text-indigo-800' :
+                                            'bg-gray-100 text-gray-800'
                                         }`}>
-                                            {order.status}
+                                            {getStatusText(order.status)}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex items-center justify-end gap-2">
-                                            {order.status === 'En préparation' && (
+                                            {(order.status === 'paid' || order.status === 'processing' || order.status === 'pending') && (
                                                 <button 
-                                                    onClick={() => handleStatusUpdate(order.id, 'Expédié')}
+                                                    onClick={() => handleStatusUpdate(order.id, 'preparing')}
                                                     className="bg-[#8B4513] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-[#70360f] transition-all"
                                                 >
-                                                    Expédier
+                                                    Commencer la Préparation
                                                 </button>
                                             )}
-                                            {order.status === 'Expédié' && (
+                                            {order.status === 'preparing' && (
                                                 <button 
-                                                    onClick={() => handleStatusUpdate(order.id, 'Livré')}
+                                                    onClick={() => handleStatusUpdate(order.id, 'shipped')}
+                                                    className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-blue-700 transition-all"
+                                                >
+                                                    Confier au Livreur
+                                                </button>
+                                            )}
+                                            {order.status === 'shipped' && (
+                                                <button 
+                                                    onClick={() => handleStatusUpdate(order.id, 'delivered')}
                                                     className="bg-green-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-green-700 transition-all"
                                                 >
                                                     Confirmer Livraison

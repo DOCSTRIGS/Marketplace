@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
+import { useCart } from '@/Contexts/CartContext';
+import CartDrawer from './CartDrawer';
 
 export default function Navbar() {
     const { url, props } = usePage();
     const { auth } = props;
+    const { cartCount } = useCart();
+    const [isCartOpen, setIsCartOpen] = useState(false);
+
     const isSellerFlow = auth?.user?.role === 'seller' || url?.startsWith('/seller') || url?.startsWith('/shops/create');
 
     return (
@@ -18,7 +23,7 @@ export default function Navbar() {
                 </Link>
             </div>
 
-            {/* Centered Desktop Links - Role Based Filtering */}
+            {/* Centered Desktop Links */}
             <div className="hidden lg:flex space-x-6 items-center justify-end">
                 {isSellerFlow ? (
                     <>
@@ -46,6 +51,9 @@ export default function Navbar() {
                         <Link href={route('tracking')} className={`font-bold text-sm pb-1 ${route().current('tracking') ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] hover:text-[#B03A2E]'}`}>
                             Tracking
                         </Link>
+                        <Link href={route('orders.index')} className={`font-bold text-sm pb-1 ${route().current('orders.index') ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] hover:text-[#B03A2E]'}`}>
+                            Mes Commandes
+                        </Link>
                     </>
                 )}
             </div>
@@ -54,16 +62,21 @@ export default function Navbar() {
             <div className="flex items-center space-x-6">
                 {/* Cart Icon - Only for non-sellers */}
                 {auth?.user?.role !== 'seller' && (
-                    <Link href="#" className="text-[#B03A2E] hover:text-[#8B4513] transition-colors relative">
+                    <button 
+                        onClick={() => setIsCartOpen(true)}
+                        className="text-[#B03A2E] hover:text-[#8B4513] transition-colors relative focus:outline-none"
+                    >
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="9" cy="21" r="1"></circle>
                             <circle cx="20" cy="21" r="1"></circle>
                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                         </svg>
-                        <span className="absolute -top-2 -right-2 bg-[#D35400] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                            3
-                        </span>
-                    </Link>
+                        {cartCount > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-[#D35400] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-bounce">
+                                {cartCount}
+                            </span>
+                        )}
+                    </button>
                 )}
 
                 {/* Bell Icon */}
@@ -91,6 +104,8 @@ export default function Navbar() {
                     </Link>
                 )}
             </div>
+
+            <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
         </nav>
     );
 }

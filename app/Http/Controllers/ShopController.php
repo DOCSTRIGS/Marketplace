@@ -6,6 +6,8 @@ use App\Models\Shop;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class ShopController extends Controller
 {
@@ -93,11 +95,10 @@ class ShopController extends Controller
             'longitude' => 'required|numeric',
         ]);
 
-        // Demo Fallback: Use the first user if not authenticated
-        $userId = auth()->id() ?: (\App\Models\User::first()->id ?? null);
+        $user = Auth::user();
 
         $shop = Shop::create([
-            'user_id' => $userId,
+            'user_id' => $user->id,
             'name' => $validated['name'],
             'slogan' => $validated['slogan'],
             'description' => $validated['description'],
@@ -109,13 +110,11 @@ class ShopController extends Controller
             'coverage_area' => $validated['coverage_area'],
             'latitude' => $validated['latitude'],
             'longitude' => $validated['longitude'],
-            'slug' => \Illuminate\Support\Str::slug($validated['name']) . '-' . time(),
+            'slug' => Str::slug($validated['name']) . '-' . time(),
         ]);
 
-        // Update user role to seller if possible
-        if (auth()->check()) {
-            auth()->user()->update(['role' => 'seller']);
-        }
+        // Enforce seller role
+        $user->update(['role' => 'seller']);
 
         return redirect()->route('seller.dashboard')->with('success', 'Votre boutique a été créée !');
     }
