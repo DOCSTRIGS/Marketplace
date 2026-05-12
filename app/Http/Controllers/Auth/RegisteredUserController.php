@@ -55,6 +55,6 @@ class RegisteredUserController extends Controller
             return redirect()->route('shops.create');
         }
 
-        return redirect()->route('home');
+        return redirect()->intended(route('home'));
     }
 }

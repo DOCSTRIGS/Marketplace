@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import confetti from 'canvas-confetti';
 
-export default function Success({ reference, totalAmount }) {
+export default function Success({ reference, totalAmount, firstOrderId }) {
     useEffect(() => {
         // Lancer les confettis au chargement de la page
         const duration = 3 * 1000;
@@ -59,11 +59,12 @@ export default function Success({ reference, totalAmount }) {
 
                 <div className="flex flex-col gap-3">
                     <Link 
-                        href={route('orders.index')}
+                        href={route('tracking', { order_id: firstOrderId })}
                         className="w-full bg-[#8B4513] text-white py-4 rounded-xl font-bold text-sm hover:bg-[#70360f] transition-all shadow-lg shadow-[#8B4513]/20 uppercase tracking-wider"
                     >
-                        Suivre ma commande
+                        Suivre en direct (Carte)
                     </Link>
+
                     <Link 
                         href={route('explore')}
                         className="w-full bg-white text-gray-900 border-2 border-gray-200 py-4 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all uppercase tracking-wider"

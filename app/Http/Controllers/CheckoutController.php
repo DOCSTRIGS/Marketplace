@@ -68,10 +68,11 @@ class CheckoutController extends Controller
         // Puisque c'est une simulation réussie, on met à jour le statut.
         foreach ($orders as $order) {
             $order->update([
-                'status' => 'paid',
+                'status' => 'processing',
                 'payment_method' => $validated['payment_method']
             ]);
         }
+
 
         return redirect()->route('checkout.success', ['reference' => $validated['reference']]);
     }
@@ -91,7 +92,9 @@ class CheckoutController extends Controller
 
         return Inertia::render('Payment/Success', [
             'reference' => $reference,
-            'totalAmount' => $orders->sum('total_amount')
+            'totalAmount' => $orders->sum('total_amount'),
+            'firstOrderId' => $orders->first()->id
         ]);
+
     }
 }

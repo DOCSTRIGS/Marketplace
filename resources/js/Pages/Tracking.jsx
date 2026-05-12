@@ -49,37 +49,8 @@ const Polyline = (props) => {
     return null;
 };
 
-export default function Tracking({ order }) {
-    // Auto-refresh every 10 seconds to simulate real-time tracking
-    useEffect(() => {
-        const interval = setInterval(() => {
-            router.reload({ preserveScroll: true });
-        }, 10000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const orderDetails = order ? {
-        id: order.order_number,
-        product: order.order_items?.[0]?.product?.name || 'Produit',
-        shop: order.shop?.name || 'Boutique',
-        date: new Date(order.created_at).toLocaleDateString('fr-FR'),
-        estimatedDelivery: order.status === 'Livré' ? 'Livré le ' + new Date(order.updated_at).toLocaleDateString('fr-FR') : 'Aujourd\'hui, 15:00 - 15:30',
-        status: order.status
-    } : {
-        id: '#CMD-1023',
-        product: 'iPhone 13 Pro Max - 256Go',
-        shop: 'Tech Store Lomé',
-        date: '06 Mai 2026',
-        estimatedDelivery: 'Aujourd\'hui, 14:45 - 15:15',
-        status: 'En route'
-    };
-
-    const deliveryPerson = {
-        name: 'Komi (Livreur)',
-        phone: '+228 90 12 34 56',
-        vehicle: 'Moto (TG-1234-A)',
-        rating: 4.8
-    };
+export default function Tracking({ order: initialOrder }) {
+    const [order, setOrder] = useState(initialOrder);
 
     const shopLocation = order?.shop?.latitude ? { lat: parseFloat(order.shop.latitude), lng: parseFloat(order.shop.longitude) } : { lat: 6.1366, lng: 1.2222 };
     const deliveryLocation = { lat: 6.1550, lng: 1.2150 };
@@ -89,7 +60,7 @@ export default function Tracking({ order }) {
         if (!navigator.geolocation) return;
         const watchId = navigator.geolocation.watchPosition(
             (p) => setCustomerLocation({ lat: p.coords.latitude, lng: p.coords.longitude }),
-            (err) => console.warn("Tracking geolocation error:", err),
+            null,
             { enableHighAccuracy: true }
         );
         return () => navigator.geolocation.clearWatch(watchId);
@@ -103,157 +74,156 @@ export default function Tracking({ order }) {
         customerLocation
     ], [customerLocation, shopLocation]);
 
-    const timeline = [
-        { title: 'Commande confirmée', time: '10:30', completed: true },
-        { title: 'Commande préparée par la boutique', time: '11:45', completed: orderDetails.status !== 'En préparation' },
-        { title: 'Colis récupéré par le livreur', time: '13:15', completed: orderDetails.status === 'Expédié' || orderDetails.status === 'En route' || orderDetails.status === 'Livré' },
-        { title: 'En cours de livraison', time: '14:20', completed: orderDetails.status === 'Expédié' || orderDetails.status === 'En route', active: orderDetails.status === 'Expédié' || orderDetails.status === 'En route' },
-        { title: 'Livré', time: 'Terminé', completed: orderDetails.status === 'Livré', active: orderDetails.status === 'Livré' }
-    ];
-
     return (
-        <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans">
-            <Head title="Suivi de commande" />
+        <div className="h-screen flex flex-col bg-white dark:bg-[#121212] overflow-hidden font-sans transition-colors duration-300">
+            <Head title="Suivi Live — LoméShop" />
             <Navbar />
 
-            <main className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-                <div className="mb-8">
-                    <div className="flex items-center gap-3 mb-2">
-                        <Link href="/" className="p-2 bg-white rounded-full shadow-sm hover:bg-gray-50 transition-colors">
-                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
-                        </Link>
-                        <h1 className="text-3xl font-extrabold text-gray-900">Suivi de commande <span className="text-[#96370B]">{orderDetails.id}</span></h1>
-                    </div>
-                    <p className="text-gray-600 font-medium">
-                        {orderDetails.status === 'En préparation' && 'La boutique prépare votre colis avec soin.'}
-                        {(orderDetails.status === 'Expédié' || orderDetails.status === 'En route') && 'Komi a récupéré votre colis et arrive vers vous !'}
-                        {orderDetails.status === 'Livré' && 'Votre commande a été livrée. Bonne dégustation/utilisation !'}
-                    </p>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Left Column */}
-                    <div className="lg:col-span-1 space-y-6">
-                        {/* Status Card */}
-                        <div className={`p-6 rounded-3xl border-2 transition-all duration-500 ${
-                            order.status === 'Livré' ? 'bg-green-50 border-green-200' : 'bg-white border-gray-100'
-                        }`}>
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="font-bold text-lg text-gray-900">Statut Actuel</h3>
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                                    orderDetails.status === 'Livré' ? 'bg-green-500 text-white' : 'bg-[#96370B] text-white'
-                                }`}>
-                                    {orderDetails.status}
-                                </span>
-                            </div>
-                            
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500 font-medium">Produit</span>
-                                    <span className="font-bold text-gray-900">{orderDetails.product}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500 font-medium">Boutique</span>
-                                    <span className="font-bold text-gray-900">{orderDetails.shop}</span>
-                                </div>
-                                <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
-                                    <span className="text-gray-900 font-bold">Arrivée prévue</span>
-                                    <span className="font-black text-[#96370B]">{orderDetails.estimatedDelivery}</span>
-                                </div>
-                            </div>
+            <div className="flex-1 flex overflow-hidden">
+                {/* LEFT SIDEBAR: CONTENT */}
+                <aside className="w-full md:w-[400px] flex flex-col bg-white dark:bg-[#1e1e1e] border-r border-gray-100 dark:border-gray-800 z-10 shadow-xl overflow-y-auto transition-colors">
+                    <div className="p-8">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tighter uppercase">Suivi Commande</h2>
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${order ? 'bg-green-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400'}`}>
+                                {order ? 'Live' : 'Inactif'}
+                            </span>
                         </div>
 
-                        {/* Livreur Info */}
-                        {orderDetails.status !== 'En préparation' && (
-                            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex items-center">
-                                <div className="w-16 h-16 rounded-2xl bg-gray-100 overflow-hidden mr-4 border-2 border-[#96370B]/20">
-                                    <img src="https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?auto=format&fit=crop&w=150&q=80" alt="Livreur" className="w-full h-full object-cover" />
+                        {!order ? (
+                            <div className="py-20 text-center">
+                                <div className="w-20 h-20 bg-gray-50 dark:bg-[#252525] rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-100 dark:border-gray-800">
+                                    <div className="w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
                                 </div>
-                                <div className="flex-1">
-                                    <h4 className="font-bold text-gray-900 text-sm">{deliveryPerson.name}</h4>
-                                    <div className="flex items-center gap-1 text-xs text-yellow-500 font-bold">
-                                        <span>⭐ {deliveryPerson.rating}</span>
-                                        <span className="text-gray-300">•</span>
-                                        <span className="text-gray-500 uppercase">{deliveryPerson.vehicle}</span>
+                                <h3 className="text-lg font-black text-gray-900 dark:text-white mb-2 uppercase tracking-tighter">Aucune commande</h3>
+                                <p className="text-xs text-gray-400 font-medium leading-relaxed px-10">
+                                    Vous n'avez pas de livraison en cours de suivi pour le moment.
+                                </p>
+                                <Link href={route('home')} className="mt-8 inline-block px-8 py-4 bg-[#8B4513] text-white text-[10px] font-black rounded-xl uppercase tracking-widest">
+                                    Faire un achat
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="space-y-10">
+                                {/* Product Summary */}
+                                <div className="bg-gray-50 dark:bg-white/5 rounded-3xl p-6 border border-gray-100 dark:border-gray-800">
+                                    <div className="flex gap-4 mb-6">
+                                        <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-sm border-2 border-white dark:border-gray-800">
+                                            <img src={order.order_items?.[0]?.product?.images?.[0] || 'https://via.placeholder.com/150'} className="w-full h-full object-cover" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Article</p>
+                                            <h4 className="text-sm font-black text-gray-900 dark:text-white leading-tight">{order.order_items?.[0]?.product?.name || 'Produit'}</h4>
+                                            <p className="text-xs font-bold text-[#8B4513] mt-1">{order.order_number}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-800">
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Boutique</span>
+                                        <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter">{order.shop?.name || 'Boutique'}</span>
                                     </div>
                                 </div>
-                                <a href={`tel:${deliveryPerson.phone}`} className="w-12 h-12 bg-[#96370B] text-white rounded-2xl flex items-center justify-center hover:bg-[#7a2d09] transition-all shadow-lg shadow-[#96370B]/20 active:scale-95">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                                </a>
+
+                                {/* Timeline */}
+                                <div className="space-y-8 pl-2">
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Étapes de livraison</h3>
+                                    <div className="relative border-l-2 border-gray-100 dark:border-gray-800 ml-3 space-y-12 pb-2">
+                                        <div className="relative pl-8">
+                                            <div className="absolute -left-[11px] top-0 w-5 h-5 rounded-full border-4 bg-[#8B4513] border-[#8B4513]/20"></div>
+                                            <div className="flex flex-col -mt-1">
+                                                <span className="font-black text-xs text-gray-900 dark:text-white">Commande validée</span>
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Enregistré</span>
+                                            </div>
+                                        </div>
+                                        <div className="relative pl-8">
+                                            <div className={`absolute -left-[11px] top-0 w-5 h-5 rounded-full border-4 transition-all duration-500 ${['Préparé', 'Expédié', 'En route', 'Livré'].includes(order.status) ? 'bg-[#8B4513] border-[#8B4513]/20' : 'bg-white dark:bg-[#1e1e1e] border-gray-100 dark:border-gray-800'}`}></div>
+                                            <div className="flex flex-col -mt-1">
+                                                <span className={`font-black text-xs ${['Préparé', 'Expédié', 'En route', 'Livré'].includes(order.status) ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-700'}`}>Préparation terminée</span>
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Logistique boutique</span>
+                                            </div>
+                                        </div>
+                                        <div className="relative pl-8">
+                                            <div className={`absolute -left-[11px] top-0 w-5 h-5 rounded-full border-4 transition-all duration-500 ${['En route', 'Livré'].includes(order.status) ? 'bg-[#8B4513] border-[#8B4513]/20 scale-125' : 'bg-white dark:bg-[#1e1e1e] border-gray-100 dark:border-gray-800'}`}></div>
+                                            <div className="flex flex-col -mt-1">
+                                                <span className={`font-black text-xs ${['En route', 'Livré'].includes(order.status) ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-700'}`}>Livreur en route</span>
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Suivi temps réel</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="pt-10 space-y-4">
+                                    <button className="w-full py-5 bg-gray-900 dark:bg-[#8B4513] text-white font-black rounded-2xl text-[10px] uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all">
+                                        Contacter le livreur
+                                    </button>
+                                    <button className="w-full py-5 bg-white dark:bg-transparent text-gray-400 dark:text-gray-500 font-black rounded-2xl text-[10px] uppercase tracking-[0.2em] border-2 border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
+                                        Signaler un problème
+                                    </button>
+                                </div>
                             </div>
                         )}
-
-                        {/* Timeline */}
-                        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-                            <h3 className="font-bold text-lg text-gray-900 mb-8">Étapes de la commande</h3>
-                            <div className="relative border-l-2 border-gray-100 ml-4 space-y-10">
-                                {timeline.map((step, idx) => (
-                                    <div key={idx} className="relative pl-8">
-                                        <div className={`absolute -left-[11px] top-0 w-5 h-5 rounded-full border-4 transition-all duration-500 ${
-                                            step.active ? 'bg-[#96370B] border-[#96370B]/20 scale-125' :
-                                            step.completed ? 'bg-[#96370B] border-[#96370B]/20' : 'bg-white border-gray-100'
-                                        }`}></div>
-                                        <div className="flex flex-col -mt-1">
-                                            <span className={`font-bold text-sm transition-colors ${step.completed ? 'text-gray-900' : 'text-gray-300'}`}>{step.title}</span>
-                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{step.time}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
                     </div>
+                </aside>
 
-                    {/* Right Column: Map */}
-                    <div className="lg:col-span-2 h-[600px] lg:h-auto min-h-[600px] rounded-3xl overflow-hidden shadow-xl border border-white relative bg-white">
-                        <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
-                            <Map
-                                defaultCenter={deliveryLocation}
-                                defaultZoom={13}
-                                mapId="tracking-map"
-                                mapTypeControl={false}
-                                streetViewControl={false}
-                                fullscreenControl={false}
-                            >
-                                <AdvancedMarker position={shopLocation}>
-                                    <div className="bg-white p-2 rounded-lg shadow-md border border-gray-100 flex items-center gap-2">
-                                        <span className="text-lg">🏪</span>
-                                        <span className="text-[10px] font-bold text-gray-700">BOUTIQUE</span>
-                                    </div>
-                                </AdvancedMarker>
-
-                                <AdvancedMarker position={customerLocation}>
-                                    <div className="bg-[#96370B] p-2 rounded-lg shadow-md border border-white flex items-center gap-2">
-                                        <span className="text-lg">🏠</span>
-                                        <span className="text-[10px] font-bold text-white">MOI</span>
-                                    </div>
-                                </AdvancedMarker>
-
-                                <AdvancedMarker position={deliveryLocation}>
-                                    <div className="relative flex items-center justify-center">
-                                        <div className="absolute w-12 h-12 bg-[#96370B]/20 rounded-full animate-ping"></div>
-                                        <div className="bg-white p-2.5 rounded-full shadow-xl border-2 border-[#96370B] z-10">
-                                            <img src="https://cdn-icons-png.flaticon.com/512/2972/2972185.png" alt="Livreur" className="w-8 h-8" />
+                {/* RIGHT SIDE: MAP */}
+                <main className="flex-1 relative bg-gray-50 dark:bg-[#121212] overflow-hidden">
+                    <APIProvider apiKey={GOOGLE_MAPS_API_KEY} libraries={['places']}>
+                        <Map
+                            defaultCenter={deliveryLocation}
+                            defaultZoom={13}
+                            mapId="bf50a87343b44b8b"
+                            disableDefaultUI={true}
+                        >
+                            {order && (
+                                <>
+                                    {/* Shop Marker */}
+                                    <AdvancedMarker position={shopLocation}>
+                                        <div className="flex flex-col items-center">
+                                            <div className="mb-1 px-2 py-1 bg-white dark:bg-[#1e1e1e] rounded-full text-[8px] font-black shadow-lg text-[#8B4513] border border-[#8B4513]/10 uppercase">BOUTIQUE</div>
+                                            <div className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 shadow-xl flex items-center justify-center bg-white dark:bg-[#1e1e1e] overflow-hidden transition-transform hover:scale-110">
+                                                <img src={order.shop?.image || 'https://via.placeholder.com/150'} className="w-full h-full object-cover" />
+                                            </div>
                                         </div>
-                                    </div>
-                                </AdvancedMarker>
+                                    </AdvancedMarker>
 
-                                <Polyline path={routeCoords} />
-                            </Map>
-                        </APIProvider>
+                                    {/* User Marker */}
+                                    <AdvancedMarker position={customerLocation}>
+                                        <div className="flex flex-col items-center">
+                                            <div className="mb-1 px-2 py-1 bg-[#8B4513] rounded-full text-[8px] font-black shadow-lg text-white uppercase tracking-tighter">MA POSITION</div>
+                                            <div className="w-8 h-8 rounded-full border-4 border-white dark:border-gray-800 shadow-xl flex items-center justify-center bg-[#8B4513]"></div>
+                                        </div>
+                                    </AdvancedMarker>
 
-                        <div className="absolute top-6 left-6 z-[10] bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg border border-white flex items-center gap-3">
-                            <span className="relative flex h-3 w-3">
+                                    {/* Courier Marker */}
+                                    <AdvancedMarker position={deliveryLocation}>
+                                        <div className="relative">
+                                            <div className="absolute inset-0 bg-[#8B4513] rounded-full animate-ping opacity-25 scale-150"></div>
+                                            <div className="w-7 h-7 bg-[#8B4513] rounded-full border-4 border-white dark:border-gray-800 shadow-2xl relative z-10 flex items-center justify-center">
+                                                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                                            </div>
+                                        </div>
+                                    </AdvancedMarker>
+
+                                    <Polyline path={routeCoords} />
+                                </>
+                            )}
+                        </Map>
+                    </APIProvider>
+
+                    {/* LIVE OVERLAY */}
+                    {order && (
+                        <div className="absolute top-8 left-8 bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-md px-6 py-3 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 flex items-center gap-4 z-10">
+                            <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                             </span>
-                            <span className="font-extrabold text-gray-900 text-sm tracking-tight uppercase">
-                                {orderDetails.status === 'Expédié' || orderDetails.status === 'En route' ? 'KOMI EST EN ROUTE' : orderDetails.status === 'Livré' ? 'COMMANDE LIVRÉE' : 'EN ATTENTE DU LIVREUR'}
+                            <span className="font-black text-gray-900 dark:text-white text-[10px] tracking-widest uppercase">
+                                Signal GPS optimisé
                             </span>
                         </div>
-                    </div>
-                </div>
-            </main>
-            <Footer />
+                    )}
+                </main>
+            </div>
         </div>
     );
 }

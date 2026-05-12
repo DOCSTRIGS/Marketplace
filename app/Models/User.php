@@ -62,4 +62,35 @@ class User extends Authenticatable
     {
         return $this->hasMany(Order::class);
     }
+
+    public function conversations()
+    {
+        return $this->hasMany(Conversation::class);
+    }
+
+    public function receivedMessages()
+    {
+        // For a client, received messages are those where they are NOT the sender in their conversations
+        return $this->hasManyThrough(Message::class, Conversation::class)
+            ->where('messages.sender_id', '!=', $this->id);
+    }
+
+    public function unreadMessagesCount()
+    {
+        // If user is a seller, they care about messages in their shop's conversations
+        if ($this->role === 'seller' && $this->shop) {
+            return Message::whereHas('conversation', function($q) {
+                $q->where('shop_id', $this->shop->id);
+            })->where('sender_id', '!=', $this->id)
+              ->whereNull('read_at')
+              ->count();
+        }
+
+        // For clients
+        return Message::whereHas('conversation', function($q) {
+            $q->where('user_id', $this->id);
+        })->where('sender_id', '!=', $this->id)
+          ->whereNull('read_at')
+          ->count();
+    }
 }

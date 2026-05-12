@@ -1,0 +1,196 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use App\Models\Shop;
+use App\Models\User;
+use App\Models\Order;
+use App\Models\Category;
+use App\Models\Review;
+use App\Models\Withdrawal;
+use Illuminate\Support\Str;
+
+class AdminController extends Controller
+{
+    public function dashboard()
+    {
+        $pendingShops = Shop::with('user', 'neighborhood')
+            ->where('status', 'pending')
+            ->get();
+            
+        $approvedShops = Shop::with('user', 'neighborhood')
+            ->where('status', 'approved')
+            ->get();
+
+        $rejectedShops = Shop::with('user', 'neighborhood')
+            ->where('status', 'rejected')
+            ->get();
+
+        $stats = [
+            'total_users' => User::count(),
+            'total_shops' => Shop::where('status', 'approved')->count(),
+            'total_orders' => Order::count(),
+            'total_revenue' => (float) Order::where('status', '!=', 'cancelled')->sum('total_amount'),
+            'total_commissions' => (float) Order::where('status', '!=', 'cancelled')->sum('commission_amount'),
+        ];
+
+        $categories = Category::withCount('children')->get();
+        $users = User::latest()->get();
+        $reviews = Review::with(['user', 'product.shop'])->latest()->get();
+        $withdrawals = Withdrawal::with('shop.user')->latest()->get();
+
+        // Real Chart data for the last 7 days
+        $chartData = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $dateString = $date->format('d/m');
+            
+            $revenue = Order::whereDate('created_at', $date)
+                ->where('status', '!=', 'cancelled')
+                ->sum('total_amount');
+                
+            $commission = Order::whereDate('created_at', $date)
+                ->where('status', '!=', 'cancelled')
+                ->sum('commission_amount');
+
+            $ordersCount = Order::whereDate('created_at', $date)->count();
+
+            $chartData[] = [
+                'name' => $dateString,
+                'revenue' => (float) $revenue,
+                'commission' => (float) $commission,
+                'orders' => $ordersCount,
+            ];
+        }
+
+        // Real Category distribution data
+        $categoryStats = Category::whereNull('parent_id')
+            ->withCount('products')
+            ->orderBy('products_count', 'desc')
+            ->get()
+            ->map(fn($cat) => [
+                'name' => $cat->name,
+                'value' => $cat->products_count, // Real count
+            ]);
+
+        return Inertia::render('Admin/Dashboard', [
+            'pendingShops'  => $pendingShops,
+            'approvedShops' => $approvedShops,
+            'rejectedShops' => $rejectedShops,
+            'stats'         => $stats,
+            'categories'    => $categories,
+            'users'         => $users,
+            'reviews'       => $reviews,
+            'withdrawals'   => $withdrawals,
+            'chartData'     => $chartData,
+            'categoryStats' => $categoryStats
+        ]);
+    }
+
+    public function updateShopStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:approved,rejected,pending'
+        ]);
+
+        $shop = Shop::findOrFail($id);
+        $shop->status = $request->status;
+        $shop->save();
+
+        return redirect()->back()->with('success', 'Statut de la boutique mis à jour avec succès.');
+    }
+
+    public function deleteShop($id)
+    {
+        $shop = Shop::findOrFail($id);
+        $shop->delete();
+        return redirect()->back()->with('success', 'Boutique supprimée avec succès.');
+    }
+
+    public function toggleAdminRole($id)
+    {
+        $user = User::findOrFail($id);
+        
+        // Don't allow toggling own admin status to prevent lockout
+        if ($user->id === auth()->id()) {
+            return redirect()->back()->with('error', 'Vous ne pouvez pas modifier votre propre statut admin.');
+        }
+
+        if ($user->role === 'admin') {
+            // Default to client if no shop, otherwise could be seller but client is safer
+            $user->role = $user->shop ? 'seller' : 'client';
+        } else {
+            $user->role = 'admin';
+        }
+        
+        $user->save();
+
+        return redirect()->back()->with('success', 'Rôle de l\'utilisateur mis à jour.');
+    }
+
+    public function deleteReview($id)
+    {
+        $review = Review::findOrFail($id);
+        $review->delete();
+        return redirect()->back()->with('success', 'Avis supprimé avec succès.');
+    }
+
+    public function storeCategory(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:categories,name'
+        ]);
+
+        Category::create([
+            'name' => $request->name,
+            'slug' => Str::slug($request->name),
+            'parent_id' => null
+        ]);
+
+        return redirect()->back()->with('success', 'Catégorie ajoutée avec succès.');
+    }
+
+    public function storeSubCategory(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:categories,name'
+        ]);
+
+        $parent = Category::findOrFail($id);
+
+        Category::create([
+            'name' => $request->name,
+            'slug' => Str::slug($request->name) . '-' . time(),
+            'parent_id' => $parent->id
+        ]);
+
+        return redirect()->back()->with('success', 'Sous-catégorie ajoutée avec succès.');
+    }
+
+    public function updateCategory(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:categories,name,' . $id
+        ]);
+
+        $category = Category::findOrFail($id);
+        $category->name = $request->name;
+        $category->slug = Str::slug($request->name);
+        $category->save();
+
+        return redirect()->back()->with('success', 'Catégorie modifiée avec succès.');
+    }
+
+    public function deleteCategory($id)
+    {
+        $category = Category::findOrFail($id);
+
+        // Delete children first
+        $category->children()->delete();
+        $category->delete();
+
+        return redirect()->back()->with('success', 'Catégorie supprimée avec succès.');
+    }
+}

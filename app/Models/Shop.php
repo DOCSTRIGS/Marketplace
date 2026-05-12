@@ -6,7 +6,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class Shop extends Model
 {
-    protected $fillable = ['user_id', 'neighborhood_id', 'name', 'slug', 'description', 'logo', 'cover_image', 'latitude', 'longitude', 'slogan', 'phone', 'categories', 'delivery_available', 'delivery_fee', 'coverage_area'];
+    protected $fillable = [
+        'user_id', 'neighborhood_id', 'name', 'slug', 'description', 
+        'logo', 'cover_image', 'latitude', 'longitude', 'slogan', 
+        'phone', 'categories', 'delivery_available', 'delivery_fee', 
+        'coverage_area', 'balance', 'status'
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'categories' => 'array',
+            'delivery_available' => 'boolean',
+            'delivery_fee' => 'decimal:2',
+            'balance' => 'decimal:2',
+        ];
+    }
 
     public function user()
     {
@@ -31,5 +46,10 @@ class Shop extends Model
     public function conversations()
     {
         return $this->hasMany(Conversation::class);
+    }
+
+    public function withdrawals()
+    {
+        return $this->hasMany(Withdrawal::class);
     }
 }

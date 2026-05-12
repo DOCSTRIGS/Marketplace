@@ -73,21 +73,19 @@ export default function Conversation({ conversation, messages: initialMessages, 
         : conversation.user?.name ?? 'Client';
 
     return (
-        <div className="flex items-center justify-center h-screen font-sans" style={{ background: '#C9B8A8' }}>
+        <div className="flex items-center justify-center h-screen font-sans transition-colors duration-300" style={{ background: '#C9B8A8' }} id="chat-container">
             <Head title={`Chat — ${shopName}`} />
 
             {/* Fenêtre de chat centrée — max-w comme Telegram/iMessage */}
-            <div className="flex flex-col w-full max-w-2xl h-screen sm:h-[90vh] sm:rounded-2xl sm:shadow-2xl overflow-hidden" style={{ background: '#E5DDD5' }}>
+            <div className="flex flex-col w-full max-w-2xl h-screen sm:h-[90vh] sm:rounded-2xl sm:shadow-2xl overflow-hidden transition-all bg-[#E5DDD5] dark:bg-[#121212]">
 
                 {/* Header WhatsApp-style */}
-                <div className="bg-[#8B4513] text-white px-4 py-3 flex items-center gap-3 shadow-lg z-10">
+                <div className="bg-[#8B4513] dark:bg-[#1e1e1e] text-white px-4 py-3 flex items-center gap-3 shadow-lg z-10 transition-colors border-b dark:border-gray-800">
                     <button
                         onClick={() => router.get(isSeller ? '/seller/chat' : '/chat/inbox')}
-                        className="text-white/80 hover:text-white transition-colors"
+                        className="text-white/80 hover:text-white transition-colors text-xs font-black uppercase tracking-widest"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
+                        RETOUR
                     </button>
                     <div className="w-10 h-10 bg-[#D35400] rounded-full flex items-center justify-center font-black text-lg flex-shrink-0 ring-2 ring-white/30">
                         {shopName.charAt(0)}
@@ -102,9 +100,8 @@ export default function Conversation({ conversation, messages: initialMessages, 
                 <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
                     {messages.length === 0 && (
                         <div className="flex justify-center">
-                            <div className="bg-white/80 rounded-xl px-4 py-3 text-center shadow-sm max-w-xs">
-                                <p className="text-2xl mb-1">👋</p>
-                                <p className="text-sm text-gray-600 font-medium">Début de la conversation avec <strong>{shopName}</strong></p>
+                            <div className="bg-white/80 dark:bg-[#1e1e1e]/80 rounded-xl px-4 py-3 text-center shadow-sm max-w-xs transition-colors">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Début de la conversation avec <strong>{shopName}</strong></p>
                             </div>
                         </div>
                     )}
@@ -137,19 +134,16 @@ export default function Conversation({ conversation, messages: initialMessages, 
                                     )}
 
                                     {/* Bulle : CLIENT → Vert | VENDEUR → Blanc */}
-                                    <div className={`px-3 py-2 shadow-sm text-sm leading-relaxed rounded-2xl ${
+                                    <div className={`px-3 py-2 shadow-sm text-sm leading-relaxed rounded-2xl transition-colors ${
                                         isClient
-                                            ? 'bg-[#D9FDD3] text-gray-800 rounded-br-md'
-                                            : 'bg-white text-gray-800 rounded-bl-md'
+                                            ? 'bg-[#D9FDD3] dark:bg-[#056162] text-gray-800 dark:text-gray-100 rounded-br-md'
+                                            : 'bg-white dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 rounded-bl-md'
                                     }`}>
                                         <p>{msg.content}</p>
                                         <div className={`flex items-center gap-1 mt-1 ${isOnRight ? 'justify-end' : 'justify-start'}`}>
-                                            <span className="text-[10px] text-gray-400">{formatTime(msg.created_at)}</span>
+                                            <span className="text-[10px] text-gray-400 dark:text-gray-500">{formatTime(msg.created_at)}</span>
                                             {isOnRight && (
-                                                <svg className="h-3.5 w-3.5 text-[#53BDEB]" viewBox="0 0 16 11" fill="currentColor">
-                                                    <path d="M11.071.653a.75.75 0 0 1 .024 1.06l-6 6.5a.75.75 0 0 1-1.083.002L1.263 5.222a.75.75 0 0 1 1.085-1.036l2.25 2.357 5.413-5.866a.75.75 0 0 1 1.06-.024z"/>
-                                                    <path d="M14.071.653a.75.75 0 0 1 .024 1.06l-6 6.5a.75.75 0 0 1-1.083.002l-.75-.785a.75.75 0 1 1 1.085-1.036l.208.217 5.456-5.914a.75.75 0 0 1 1.06-.044z" opacity="0.5"/>
-                                                </svg>
+                                                <span className="text-[8px] font-black text-[#53BDEB] uppercase ml-1">Lu</span>
                                             )}
                                         </div>
                                     </div>
@@ -161,25 +155,23 @@ export default function Conversation({ conversation, messages: initialMessages, 
                 </div>
 
                 {/* Zone de saisie */}
-                <form onSubmit={sendMessage} className="bg-[#F0F2F5] border-t border-gray-200 p-2 flex items-center gap-2">
+                <form onSubmit={sendMessage} className="bg-[#F0F2F5] dark:bg-[#1e1e1e] border-t border-gray-200 dark:border-gray-800 p-2 flex items-center gap-2 transition-colors">
                     <input
                         ref={inputRef}
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Message..."
-                        className="flex-1 bg-white rounded-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#8B4513]/20 transition-all shadow-sm"
+                        className="flex-1 bg-white dark:bg-[#252525] text-gray-900 dark:text-white rounded-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#8B4513]/20 transition-all shadow-sm border-none"
                     />
                     <button
                         type="submit"
                         disabled={!input.trim() || isSending}
-                        className={`w-11 h-11 rounded-full flex items-center justify-center text-white transition-all transform active:scale-90 flex-shrink-0 shadow ${
+                        className={`px-4 h-11 rounded-full flex items-center justify-center text-white transition-all transform active:scale-90 flex-shrink-0 shadow text-[10px] font-black uppercase tracking-widest ${
                             input.trim() && !isSending ? 'bg-[#8B4513] hover:bg-[#70360f]' : 'bg-gray-300 cursor-not-allowed'
                         }`}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 rotate-45" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
+                        Envoyer
                     </button>
                 </form>
 

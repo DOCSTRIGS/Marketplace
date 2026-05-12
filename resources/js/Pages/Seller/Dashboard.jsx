@@ -13,50 +13,46 @@ const data = [
   { name: 'Dim', revenus: 55000 },
 ];
 
-export default function Dashboard({ auth }) {
-    const stats = [
-        { name: 'Revenus du mois', value: '425 000 FCFA', change: '+12%', trend: 'up' },
-        { name: 'Commandes du jour', value: '18', change: '+4', trend: 'up' },
-        { name: 'Produits actifs', value: '45', change: '0', trend: 'neutral' },
-        { name: 'Produits en rupture', value: '3', change: '-2', trend: 'down' },
+export default function Dashboard({ auth, stats: initialStats, recentOrders: initialOrders, chartData: initialChartData, activeTrackings: initialTrackings }) {
+    // Default data if props are missing
+    const stats = initialStats || [
+        { name: 'Revenus du mois', value: '0 FCFA', change: '+0%', trend: 'neutral' },
+        { name: 'Commandes du jour', value: '0', change: '+0', trend: 'neutral' },
+        { name: 'Produits actifs', value: '0', change: '0', trend: 'neutral' },
+        { name: 'Produits en rupture', value: '0', change: '0', trend: 'neutral' },
     ];
 
-    const recentOrders = [
-        { id: '#CMD-1023', customer: 'Ayao Koffi', product: 'iPhone 13 Pro', amount: '450000 FCFA', status: 'En cours de livraison', date: 'Aujourd\'hui, 14:30' },
-        { id: '#CMD-1022', customer: 'Dédé Mensah', product: 'Ventilateur Binatone', amount: '25000 FCFA', status: 'Livré', date: 'Aujourd\'hui, 10:15' },
-        { id: '#CMD-1021', customer: 'Komi Afantchao', product: 'MacBook Air M1', amount: '650000 FCFA', status: 'En attente', date: 'Hier, 16:45' },
-        { id: '#CMD-1020', customer: 'Afiavi Lawson', product: 'Sac en cuir', amount: '35000 FCFA', status: 'Livré', date: 'Hier, 09:20' },
-    ];
+    const recentOrders = initialOrders || [];
+    const chartData = initialChartData || [];
+    const activeTrackings = initialTrackings || [];
+
+    const [isMounted, setIsMounted] = React.useState(false);
+    
+    React.useEffect(() => {
+        const timer = setTimeout(() => setIsMounted(true), 200);
+        return () => clearTimeout(timer);
+    }, []);
+
 
     return (
         <SellerLayout>
             <Head title="Tableau de bord Vendeur" />
             
-            <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-900">Bonjour, {auth?.user?.name || 'Visiteur Vendeur'} 👋</h2>
-                <p className="text-gray-600">Voici ce qui se passe dans votre boutique aujourd'hui.</p>
+            <div className="mb-8 transition-colors">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors">Bonjour, {auth?.user?.name || 'Vendeur'}</h2>
+                <p className="text-gray-600 dark:text-gray-400 transition-colors">Voici ce qui se passe dans votre boutique aujourd'hui.</p>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {stats.map((stat) => (
-                    <div key={stat.name} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                        <p className="text-sm font-medium text-gray-500 mb-1">{stat.name}</p>
+                    <div key={stat.name} className="bg-white dark:bg-[#1e1e1e] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 transition-colors">
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{stat.name}</p>
                         <div className="flex items-end justify-between">
-                            <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors">{stat.value}</h3>
                             <span className={`text-sm font-bold flex items-center ${
-                                stat.trend === 'up' ? 'text-green-500' : stat.trend === 'down' ? 'text-red-500' : 'text-gray-400'
+                                stat.trend === 'up' ? 'text-green-500' : stat.trend === 'down' ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'
                             }`}>
-                                {stat.trend === 'up' && (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                    </svg>
-                                )}
-                                {stat.trend === 'down' && (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-                                    </svg>
-                                )}
                                 {stat.change}
                             </span>
                         </div>
@@ -67,132 +63,132 @@ export default function Dashboard({ auth }) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Chart Area */}
                 <div className="lg:col-span-2 space-y-8">
-                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 transition-colors">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-gray-900">Aperçu des revenus</h3>
-                            <select className="text-sm border-gray-300 rounded-lg shadow-sm focus:border-primary focus:ring-primary py-1.5 pl-3 pr-8">
-                                <option>Ces 7 derniers jours</option>
-                                <option>Ce mois-ci</option>
-                                <option>Cette année</option>
-                            </select>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white transition-colors">Aperçu des revenus</h3>
+                            <div className="text-xs font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full uppercase transition-colors">7 derniers jours</div>
                         </div>
-                        <div className="h-80 w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart
-                                    data={data}
-                                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                                >
-                                    <defs>
-                                        <linearGradient id="colorRevenus" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#8B4513" stopOpacity={0.3}/>
-                                            <stop offset="95%" stopColor="#8B4513" stopOpacity={0}/>
-                                        </linearGradient>
-                                    </defs>
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} dx={-10} tickFormatter={(value) => `${value/1000}k`} />
-                                    <CartesianGrid vertical={false} stroke="#F3F4F6" />
-                                    <Tooltip 
-                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}
-                                        formatter={(value) => [`${value} FCFA`, 'Revenus']}
-                                    />
-                                    <Area type="monotone" dataKey="revenus" stroke="#8B4513" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenus)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                        <div className="relative w-full">
+                            {isMounted && chartData.length > 0 && (
+                                <ResponsiveContainer width="100%" height={320} minWidth={0}>
+                                    <AreaChart
+                                        data={chartData}
+                                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                                    >
+                                        <defs>
+                                            <linearGradient id="colorRevenus" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#8B4513" stopOpacity={0.3}/>
+                                                <stop offset="95%" stopColor="#8B4513" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} dx={-10} tickFormatter={(value) => `${value}`} />
+                                        <CartesianGrid vertical={false} stroke="#374151" strokeDasharray="3 3" opacity={0.1} />
+                                        <Tooltip 
+                                            contentStyle={{ backgroundColor: '#1e1e1e', borderRadius: '8px', border: '1px solid #374151', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                                            itemStyle={{ color: '#fff' }}
+                                            labelStyle={{ color: '#9CA3AF' }}
+                                            formatter={(value) => [`${value} FCFA`, 'Revenus']}
+                                        />
+                                        <Area type="monotone" dataKey="revenus" stroke="#8B4513" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenus)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            )}
                         </div>
                     </div>
 
+
                     {/* NEW: Real-time Tracking Section */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 transition-colors">
                         <div className="flex justify-between items-center mb-6">
                             <div className="flex items-center gap-3">
-                                <h3 className="text-lg font-bold text-gray-900">Suivi des Livraisons en Temps Réel</h3>
-                                <span className="flex items-center text-[10px] font-black text-green-500 bg-green-50 px-2 py-1 rounded-full animate-pulse uppercase">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white transition-colors">Suivi des Livraisons en Temps Réel</h3>
+                                <span className="flex items-center text-[10px] font-black text-green-500 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded-full animate-pulse uppercase transition-colors">
                                     <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>
                                     Live
                                 </span>
                             </div>
-                            <Link href={route('seller.tracking')} className="text-xs font-black text-[#8B4513] hover:underline uppercase tracking-widest">
+                            <Link href={route('seller.tracking')} className="text-xs font-black text-[#8B4513] hover:underline uppercase tracking-widest transition-colors">
                                 Voir la carte complète
                             </Link>
                         </div>
                         <div className="space-y-4">
-                            {[
-                                { id: '#TRK-4592', dest: 'Adidogomé, Lomé', status: 'En route', progress: 65, courier: 'Moussa T.' },
-                                { id: '#TRK-4590', dest: 'Hédranawoé, Lomé', status: 'Préparation', progress: 20, courier: 'Koffi A.' }
-                            ].map((track) => (
-                                <div key={track.id} className="p-4 border border-gray-50 rounded-xl hover:bg-gray-50 transition-colors">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <div>
-                                            <p className="text-sm font-bold text-gray-900">{track.id}</p>
-                                            <p className="text-xs text-gray-500">{track.dest}</p>
+                            {activeTrackings.length > 0 ? (
+                                activeTrackings.map((track) => (
+                                    <div key={track.id} className="p-4 border border-gray-50 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <div>
+                                                <p className="text-sm font-bold text-gray-900 dark:text-white transition-colors">{track.id}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 transition-colors">{track.dest}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xs font-black text-[#8B4513] uppercase transition-colors">{track.status}</p>
+                                                <p className="text-[10px] text-gray-400 dark:text-gray-500 transition-colors">Livreur: {track.courier}</p>
+                                            </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-xs font-black text-[#8B4513] uppercase">{track.status}</p>
-                                            <p className="text-[10px] text-gray-400">Livreur: {track.courier}</p>
+                                        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                                            <div 
+                                                className="bg-[#8B4513] h-full transition-all duration-1000" 
+                                                style={{ width: `${track.progress}%` }}
+                                            ></div>
                                         </div>
                                     </div>
-                                    <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                                        <div 
-                                            className="bg-[#8B4513] h-full transition-all duration-1000" 
-                                            style={{ width: `${track.progress}%` }}
-                                        ></div>
+                                ))
+                            ) : (
+                                <div className="py-12 text-center">
+                                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
                                     </div>
+                                    <p className="text-sm text-gray-400 font-medium">Aucune livraison en cours</p>
                                 </div>
-                            ))}
+                            )}
                         </div>
+
                     </div>
                     {/* Messages Card */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 transition-colors">
                         <div className="flex justify-between items-center mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-[#8B4513]/10 rounded-xl flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#8B4513]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-lg font-bold text-gray-900">Messages Clients</h3>
-                            </div>
-                            <Link href="/seller/chat" className="text-xs font-black text-[#8B4513] hover:underline uppercase tracking-widest">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white transition-colors">Messages Clients</h3>
+                            <Link href={route('seller.chat')} className="text-xs font-black text-[#8B4513] hover:underline uppercase tracking-widest transition-colors">
                                 Voir tout →
                             </Link>
                         </div>
-                        <p className="text-sm text-gray-500 mb-4">Répondez à vos clients en temps réel directement depuis votre boutique.</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 transition-colors">Répondez à vos clients en temps réel directement depuis votre boutique.</p>
                         <Link
-                            href="/seller/chat"
+                            href={route('seller.chat')}
                             className="w-full flex items-center justify-center py-3 rounded-xl bg-[#8B4513] text-white font-bold text-sm hover:bg-[#70360f] transition-colors shadow-md shadow-[#8B4513]/20"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                            </svg>
                             Ouvrir la messagerie
                         </Link>
                     </div>
                 </div>
 
                 {/* Recent Orders */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 self-start">
+                <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 self-start transition-colors">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-bold text-gray-900">Dernières commandes</h3>
-                        <button className="text-sm text-primary font-medium hover:underline">Tout voir</button>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white transition-colors">Dernières commandes</h3>
+                        <button className="text-sm text-[#8B4513] font-medium hover:underline transition-colors">Tout voir</button>
                     </div>
                     <div className="space-y-6">
                         {recentOrders.map((order) => (
-                            <div key={order.id} className="flex flex-col border-b border-gray-50 pb-4 last:border-0 last:pb-0">
+                            <div key={order.id} className="flex flex-col border-b border-gray-50 dark:border-gray-800 pb-4 last:border-0 last:pb-0 transition-colors">
                                 <div className="flex justify-between items-start mb-2">
-                                    <span className="font-bold text-gray-900">{order.customer}</span>
-                                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                                        order.status === 'Livré' ? 'bg-green-100 text-green-800' :
-                                        order.status === 'En attente' ? 'bg-yellow-100 text-yellow-800' :
-                                        'bg-blue-100 text-blue-800'
+                                    <span className="font-bold text-gray-900 dark:text-white transition-colors">{order.customer}</span>
+                                    <span className={`text-xs font-bold px-2 py-1 rounded-full transition-colors ${
+                                        order.status === 'Livré' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' :
+                                        order.status === 'En attente' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400' :
+                                        'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
                                     }`}>
                                         {order.status}
                                     </span>
                                 </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500">{order.product}</span>
-                                    <span className="font-bold text-gray-700">{order.amount}</span>
+                                <div className="flex justify-between items-center text-sm transition-colors">
+                                    <span className="text-gray-500 dark:text-gray-400">{order.product}</span>
+                                    <span className="font-bold text-gray-700 dark:text-gray-300">{order.amount}</span>
                                 </div>
-                                <div className="text-xs text-gray-400 mt-2">
+                                <div className="text-xs text-gray-400 dark:text-gray-500 mt-2 transition-colors">
                                     {order.id} • {order.date}
                                 </div>
                             </div>

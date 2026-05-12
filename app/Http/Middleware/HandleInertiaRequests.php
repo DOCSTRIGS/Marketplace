@@ -34,6 +34,14 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'unreadMessagesCount' => (function() use ($request) {
+                try {
+                    return $request->user() ? $request->user()->unreadMessagesCount() : 0;
+                } catch (\Exception $e) {
+                    \Log::error('Error counting unread messages: ' . $e->getMessage());
+                    return 0;
+                }
+            })(),
         ];
     }
 }

@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderPlacedSeller;
+use App\Mail\OrderConfirmedClient;
 
 class OrderController extends Controller
 {
@@ -42,11 +45,16 @@ class OrderController extends Controller
                 $totalAmount += $item['product']->price * $item['quantity'];
             }
 
+            $commissionAmount = $totalAmount * 0.10;
+            $sellerAmount = $totalAmount - $commissionAmount;
+
             $order = Order::create([
                 'user_id' => Auth::id(),
                 'shop_id' => $shopId,
                 'order_number' => 'CMD-' . strtoupper(Str::random(8)),
                 'total_amount' => $totalAmount,
+                'commission_amount' => $commissionAmount,
+                'seller_amount' => $sellerAmount,
                 'status' => 'pending',
                 'delivery_address' => $validated['delivery_address'],
                 'payment_method' => 'Flooz/T-Money',
@@ -61,6 +69,20 @@ class OrderController extends Controller
                     'price' => $item['product']->price,
                 ]);
             }
+            // Send Email to Seller
+            try {
+                Mail::to($order->shop->user->email)->send(new OrderPlacedSeller($order));
+            } catch (\Exception $e) {
+                // Log error or ignore if mail not configured
+            }
+
+            // Send Email to Client
+            try {
+                Mail::to($order->user->email)->send(new OrderConfirmedClient($order));
+            } catch (\Exception $e) {
+                // Log error
+            }
+
             $createdOrders[] = $order;
         }
 
@@ -104,7 +126,13 @@ class OrderController extends Controller
             abort(403);
         }
 
+        $oldStatus = $order->status;
         $order->update(['status' => $validated['status']]);
+
+        // Si la commande passe à "delivered", on crédite le vendeur
+        if ($validated['status'] === 'delivered' && $oldStatus !== 'delivered') {
+            $order->shop->increment('balance', $order->seller_amount);
+        }
 
         return back()->with('success', 'Statut mis à jour avec succès.');
     }

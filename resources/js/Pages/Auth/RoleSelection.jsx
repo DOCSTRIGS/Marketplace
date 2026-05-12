@@ -257,9 +257,9 @@ export default function RoleSelection() {
 
                 <div className="grid md:grid-cols-2 gap-10 w-full max-w-5xl">
                     {/* Card Acheteur */}
-                    <div className="group relative bg-white border-2 border-gray-100 rounded-[40px] overflow-hidden shadow-xl hover:border-[#8B4513]/30 transition-all duration-500">
+                    <div className="group relative bg-white border border-gray-100 rounded-[40px] overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-500">
                         <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500">
-                            <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800" alt="Retail Products" className="w-full h-full object-cover" />
+                            <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800" alt="Shopping" className="w-full h-full object-cover" />
                         </div>
                         <div className="relative p-12 flex flex-col items-center text-center">
                             <div className="w-20 h-20 bg-[#F5E6DA] rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
@@ -267,26 +267,28 @@ export default function RoleSelection() {
                                     <path d="M12 2C9.24 2 7 4.24 7 7V8H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2h-1V7c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v1H9V7c0-1.66 1.34-3 3-3zm0 10c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
                                 </svg>
                             </div>
-                            <h2 className="text-3xl font-black text-[#1a1a1a] mb-4">Je suis Acheteur</h2>
-                            <p className="text-gray-500 mb-10 text-sm leading-relaxed font-medium">Trouvez les meilleurs produits <br /> et faites-vous livrer rapidement.</p>
+                            <h2 className="text-3xl font-black text-[#1a1a1a] mb-4 uppercase tracking-tighter">Je suis Acheteur</h2>
+                            <p className="text-gray-400 mb-10 text-sm leading-relaxed font-medium">Parcourez les boutiques de Lomé <br /> et profitez d'une livraison express.</p>
+                            
                             <Link 
                                 href={route('home')}
-                                className="w-full py-5 bg-[#8B4513] text-white font-black rounded-2xl text-lg hover:bg-[#70360f] transition-all shadow-xl shadow-[#8B4513]/20"
+                                className="w-full py-5 bg-[#8B4513] text-white font-black rounded-2xl text-lg hover:bg-[#70360f] transition-all shadow-xl shadow-[#8B4513]/20 uppercase tracking-widest text-[13px]"
                             >
-                                Accéder au Shopping
+                                Accéder à la boutique
                             </Link>
-                            <div className="mt-8 flex gap-4 text-[10px] font-black text-[#8B4513] uppercase tracking-widest">
-                                <Link href={route('login', { role: 'client' })} className="hover:underline">Connexion</Link>
+
+                            <div className="mt-10 pt-8 border-t border-gray-50 w-full flex justify-center gap-6 text-[11px] font-black uppercase tracking-widest">
+                                <Link href={route('login', { role: 'client' })} className="text-[#8B4513] hover:underline">Se connecter</Link>
                                 <span className="text-gray-200">|</span>
-                                <Link href={route('register', { role: 'client' })} className="hover:underline">S'inscrire</Link>
+                                <Link href={route('register', { role: 'client' })} className="text-gray-400 hover:text-[#8B4513]">Créer un compte</Link>
                             </div>
                         </div>
                     </div>
 
                     {/* Card Vendeur */}
-                    <div className="group relative bg-white border-2 border-gray-100 rounded-[40px] overflow-hidden shadow-xl hover:border-[#D35400]/30 transition-all duration-500">
+                    <div className="group relative bg-white border border-gray-100 rounded-[40px] overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-500">
                         <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500">
-                            <img src="https://images.unsplash.com/photo-1511317558616-384d721a3788?w=800" alt="Artisan Workspace" className="w-full h-full object-cover" />
+                            <img src="https://images.unsplash.com/photo-1511317558616-384d721a3788?w=800" alt="Vendre" className="w-full h-full object-cover" />
                         </div>
                         <div className="relative p-12 flex flex-col items-center text-center">
                             <div className="w-20 h-20 bg-[#FEF3EB] rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
@@ -294,18 +296,20 @@ export default function RoleSelection() {
                                     <path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2c0 .55.45 1 1 1v5h10v-5h4v5h2v-5c.55 0 1-.45 1-1zM9 18H5v-4h4v4zm8 0h-4v-4h4v4z"/>
                                 </svg>
                             </div>
-                            <h2 className="text-3xl font-black text-[#1a1a1a] mb-4">Je suis Vendeur</h2>
-                            <p className="text-gray-500 mb-10 text-sm leading-relaxed font-medium">Ouvrez votre boutique <br /> et commencez à vendre dès aujourd'hui.</p>
+                            <h2 className="text-3xl font-black text-[#1a1a1a] mb-4 uppercase tracking-tighter">Je suis Vendeur</h2>
+                            <p className="text-gray-400 mb-10 text-sm leading-relaxed font-medium">Digitalisez votre commerce <br /> et multipliez vos ventes aujourd'hui.</p>
+                            
                             <Link 
-                                href={route('shops.create')}
-                                className="w-full py-5 border-2 border-[#D35400] text-[#D35400] font-black rounded-2xl text-lg hover:bg-[#D35400] hover:text-white transition-all shadow-xl shadow-[#D35400]/10"
+                                href={route('register', { role: 'seller' })}
+                                className="w-full py-5 border-2 border-[#D35400] text-[#D35400] font-black rounded-2xl text-lg hover:bg-[#D35400] hover:text-white transition-all uppercase tracking-widest text-[13px]"
                             >
                                 Ouvrir ma boutique
                             </Link>
-                            <div className="mt-8 flex gap-4 text-[10px] font-black text-[#D35400] uppercase tracking-widest">
-                                <Link href={route('seller.dashboard')} className="hover:underline">Dashboard (Démo)</Link>
+
+                            <div className="mt-10 pt-8 border-t border-gray-50 w-full flex justify-center gap-6 text-[11px] font-black uppercase tracking-widest">
+                                <Link href={route('login', { role: 'seller' })} className="text-[#D35400] hover:underline">Se connecter</Link>
                                 <span className="text-gray-200">|</span>
-                                <p className="text-gray-300">Vendeur vérifié</p>
+                                <Link href={route('register', { role: 'seller' })} className="text-gray-400 hover:text-[#D35400]">Devenir vendeur</Link>
                             </div>
                         </div>
                     </div>

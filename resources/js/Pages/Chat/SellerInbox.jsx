@@ -10,8 +10,12 @@ export default function SellerInbox({ conversations: initialConvs, shop, authUse
     const [input, setInput] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [loadingMessages, setLoadingMessages] = useState(false);
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    
     const bottomRef = useRef(null);
     const inputRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     // Scroll to bottom when new messages arrive
     useEffect(() => {
@@ -36,6 +40,20 @@ export default function SellerInbox({ conversations: initialConvs, shop, authUse
         return () => window.Echo?.leave(`conversation.${activeConv.id}`);
     }, [activeConv?.id]);
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setImageFile(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const removeImage = () => {
+        setImageFile(null);
+        setImagePreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
     const openConversation = async (conv) => {
         setActiveConv(conv);
         setMessages([]);
@@ -53,26 +71,39 @@ export default function SellerInbox({ conversations: initialConvs, shop, authUse
 
     const sendMessage = async (e) => {
         e.preventDefault();
-        if (!input.trim() || isSending || !activeConv) return;
+        if ((!input.trim() && !imageFile) || isSending || !activeConv) return;
 
         setIsSending(true);
         const content = input.trim();
+        const currentImageFile = imageFile;
+        const currentImagePreview = imagePreview;
+
         setInput('');
+        removeImage();
 
         const tempMsg = {
             id: `temp-${Date.now()}`,
             sender_id: authUser.id,
             content,
+            type: currentImageFile ? 'image' : 'text',
+            image_path: currentImagePreview, // Use preview for temp
             created_at: new Date().toISOString(),
             sender: authUser,
         };
+        
         setMessages(prev => [...prev, tempMsg]);
         setConversations(prev => prev.map(c =>
             c.id === activeConv.id ? { ...c, messages: [tempMsg] } : c
         ));
 
         try {
-            const res = await axios.post(`/chat/${activeConv.id}/message`, { content });
+            const formData = new FormData();
+            formData.append('content', content);
+            if (currentImageFile) formData.append('image', currentImageFile);
+
+            const res = await axios.post(`/chat/${activeConv.id}/message`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
             setMessages(prev => prev.map(m => m.id === tempMsg.id ? res.data.message : m));
         } catch (err) {
             console.error(err);
@@ -107,24 +138,18 @@ export default function SellerInbox({ conversations: initialConvs, shop, authUse
         <SellerLayout>
             <Head title="Messagerie" />
 
-            {/* Conteneur 2 colonnes pleine hauteur */}
-            <div className="flex h-[calc(100vh-5rem)] -m-6 lg:-m-8 rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-white">
-
-                {/* ──────── COLONNE GAUCHE : Liste des conversations ──────── */}
-                <div className="w-full sm:w-80 flex-shrink-0 border-r border-gray-100 flex flex-col bg-white">
-                    {/* Header */}
-                    <div className="px-4 py-4 border-b border-gray-100 bg-[#8B4513] text-white">
-                        <h2 className="text-lg font-black">💬 Messages</h2>
+            <div className="flex h-[calc(100vh-5rem)] -m-6 lg:-m-8 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-[#1e1e1e] transition-colors">
+                {/* ──────── COLONNE GAUCHE ──────── */}
+                <div className="w-full sm:w-80 flex-shrink-0 border-r border-gray-100 dark:border-gray-800 flex flex-col bg-white dark:bg-[#1e1e1e] transition-colors">
+                    <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800 bg-[#8B4513] dark:bg-[#252525] text-white">
+                        <h2 className="text-lg font-black">Messages</h2>
                         <p className="text-xs text-white/70">{conversations.length} conversation(s)</p>
                     </div>
 
-                    {/* Liste */}
                     <div className="flex-1 overflow-y-auto">
                         {conversations.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full text-center p-6">
-                                <p className="text-4xl mb-3">📭</p>
-                                <p className="text-sm font-bold text-gray-600">Aucun message</p>
-                                <p className="text-xs text-gray-400 mt-1">Vos clients vous écriront ici</p>
+                                <p className="text-sm font-bold text-gray-600 dark:text-gray-400">Aucun message</p>
                             </div>
                         ) : (
                             conversations.map((conv) => {
@@ -135,8 +160,8 @@ export default function SellerInbox({ conversations: initialConvs, shop, authUse
                                     <button
                                         key={conv.id}
                                         onClick={() => openConversation(conv)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-gray-50 ${
-                                            isActive ? 'bg-[#8B4513]/10 border-l-4 border-l-[#8B4513]' : 'hover:bg-gray-50'
+                                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-gray-50 dark:border-gray-800 ${
+                                            isActive ? 'bg-[#8B4513]/10 dark:bg-white/5 border-l-4 border-l-[#8B4513]' : 'hover:bg-gray-50 dark:hover:bg-white/5'
                                         }`}
                                     >
                                         <div className="w-11 h-11 bg-indigo-500 rounded-full flex items-center justify-center text-white font-black text-base flex-shrink-0">
@@ -144,11 +169,11 @@ export default function SellerInbox({ conversations: initialConvs, shop, authUse
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-center">
-                                                <p className="font-bold text-gray-900 text-sm truncate">{clientName}</p>
-                                                {lastMsg && <span className="text-[10px] text-gray-400 flex-shrink-0 ml-1">{formatTime(lastMsg.created_at)}</span>}
+                                                <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{clientName}</p>
+                                                {lastMsg && <span className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0 ml-1">{formatTime(lastMsg.created_at)}</span>}
                                             </div>
-                                            <p className="text-xs text-gray-500 truncate mt-0.5">
-                                                {lastMsg ? lastMsg.content : 'Nouvelle conversation…'}
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                                {lastMsg ? (lastMsg.type === 'image' ? 'Image' : lastMsg.content) : 'Nouvelle conversation…'}
                                             </p>
                                         </div>
                                     </button>
@@ -158,43 +183,30 @@ export default function SellerInbox({ conversations: initialConvs, shop, authUse
                     </div>
                 </div>
 
-                {/* ──────── COLONNE DROITE : Zone de chat ──────── */}
-                <div className="flex-1 flex flex-col" style={{ background: '#E5DDD5' }}>
+                {/* ──────── COLONNE DROITE ──────── */}
+                <div className="flex-1 flex flex-col transition-all bg-[#E5DDD5] dark:bg-[#121212]">
                     {!activeConv ? (
-                        /* État vide */
                         <div className="flex flex-col items-center justify-center h-full text-center p-8 gap-4">
-                            <div className="w-24 h-24 bg-[#8B4513]/10 rounded-full flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-[#8B4513]/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p className="font-bold text-gray-600 text-lg">Sélectionnez une conversation</p>
-                                <p className="text-sm text-gray-400 mt-1">Cliquez sur un client à gauche pour lire ses messages</p>
-                            </div>
+                            <p className="font-bold text-gray-600 dark:text-gray-400 text-lg">Sélectionnez une conversation</p>
                         </div>
                     ) : (
                         <>
-                            {/* Header conversation */}
-                            <div className="bg-[#8B4513] text-white px-4 py-3 flex items-center gap-3 shadow-md flex-shrink-0">
+                            <div className="bg-[#8B4513] dark:bg-[#1e1e1e] text-white px-4 py-3 flex items-center gap-3 shadow-md z-10 transition-colors border-b dark:border-gray-800">
                                 <div className="w-9 h-9 bg-indigo-400 rounded-full flex items-center justify-center font-black flex-shrink-0">
                                     {(activeConv.user?.name ?? 'C').charAt(0).toUpperCase()}
                                 </div>
                                 <div>
                                     <p className="font-bold leading-tight">{activeConv.user?.name ?? 'Client'}</p>
-                                    <p className="text-xs text-white/70">Client · Connecté</p>
+                                    <p className="text-xs text-white/70">En ligne</p>
                                 </div>
                             </div>
 
-                            {/* Messages */}
                             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
                                 {loadingMessages ? (
                                     <div className="flex justify-center py-8">
                                         <div className="w-6 h-6 border-2 border-[#8B4513] border-t-transparent rounded-full animate-spin"></div>
                                     </div>
                                 ) : groupedMessages.map((msg) => {
-                                    // CLIENT = celui qui a ouvert la conversation (user_id)
-                                    // VENDEUR = tout autre expéditeur
                                     const isClient = msg.sender_id === activeConv.user_id;
                                     const senderName = msg.sender?.name ?? (isClient ? 'Client' : shopName);
 
@@ -203,7 +215,6 @@ export default function SellerInbox({ conversations: initialConvs, shop, authUse
                                             key={msg.id}
                                             className={`flex items-end gap-2 ${isClient ? 'flex-row' : 'flex-row-reverse'} ${msg.isFirst ? 'mt-4' : 'mt-0.5'}`}
                                         >
-                                            {/* Avatar */}
                                             <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-[11px] font-black text-white ${
                                                 isClient ? 'bg-indigo-500' : 'bg-[#8B4513]'
                                             } ${!msg.isLast ? 'opacity-0' : ''}`}>
@@ -211,25 +222,28 @@ export default function SellerInbox({ conversations: initialConvs, shop, authUse
                                             </div>
 
                                             <div className={`flex flex-col ${isClient ? 'items-start' : 'items-end'} max-w-[70%]`}>
-                                                {/* Nom sur le 1er message du groupe */}
                                                 {msg.isFirst && (
                                                     <span className={`text-[10px] font-bold mb-0.5 ${isClient ? 'text-indigo-600 ml-2' : 'text-[#8B4513] mr-2'}`}>
                                                         {senderName}
                                                     </span>
                                                 )}
 
-                                                {/* Bulle :
-                                                    Client  → Gauche + Vert  (#D9FDD3)
-                                                    Vendeur → Droite + Blanc
-                                                */}
-                                                <div className={`px-3 py-2 rounded-2xl shadow-sm text-sm leading-relaxed ${
-                                                    isClient
-                                                        ? 'bg-[#D9FDD3] text-gray-800 rounded-bl-md'
-                                                        : 'bg-white text-gray-800 rounded-br-md'
+                                                <div className={`px-2 py-1.5 rounded-2xl shadow-sm text-sm leading-relaxed transition-colors ${
+                                                    isClient ? 'bg-[#D9FDD3] dark:bg-[#056162] text-gray-800 dark:text-gray-100 rounded-bl-md' : 'bg-white dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 rounded-br-md'
                                                 }`}>
-                                                    <p>{msg.content}</p>
-                                                    <div className={`flex items-center gap-1 mt-0.5 ${isClient ? 'justify-start' : 'justify-end'}`}>
-                                                        <span className="text-[9px] text-gray-400">{formatTime(msg.created_at)}</span>
+                                                    {msg.type === 'image' && msg.image_path && (
+                                                        <div className="mb-1 rounded-lg overflow-hidden border border-black/5">
+                                                            <img 
+                                                                src={msg.image_path.startsWith('blob:') ? msg.image_path : `/storage/${msg.image_path}`} 
+                                                                alt="Attachment" 
+                                                                className="max-w-full max-h-72 object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                                                                onClick={() => window.open(msg.image_path.startsWith('blob:') ? msg.image_path : `/storage/${msg.image_path}`, '_blank')}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    {msg.content && <p className="px-1">{msg.content}</p>}
+                                                    <div className={`flex items-center gap-1 mt-0.5 px-1 ${isClient ? 'justify-start' : 'justify-end'}`}>
+                                                        <span className="text-[9px] text-gray-400 dark:text-gray-500">{formatTime(msg.created_at)}</span>
                                                         {!isClient && (
                                                             <svg className="h-3 w-3 text-[#53BDEB]" viewBox="0 0 16 11" fill="currentColor">
                                                                 <path d="M11.071.653a.75.75 0 0 1 .024 1.06l-6 6.5a.75.75 0 0 1-1.083.002L1.263 5.222a.75.75 0 0 1 1.085-1.036l2.25 2.357 5.413-5.866a.75.75 0 0 1 1.06-.024z"/>
@@ -245,28 +259,44 @@ export default function SellerInbox({ conversations: initialConvs, shop, authUse
                                 <div ref={bottomRef} />
                             </div>
 
-                            {/* Saisie */}
-                            <form onSubmit={sendMessage} className="bg-[#F0F2F5] border-t border-gray-200 p-2 flex items-center gap-2 flex-shrink-0">
-                                <input
-                                    ref={inputRef}
-                                    type="text"
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    placeholder="Répondre au client..."
-                                    className="flex-1 bg-white rounded-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#8B4513]/20 transition-all shadow-sm"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={!input.trim() || isSending}
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center text-white transition-all transform active:scale-90 flex-shrink-0 ${
-                                        input.trim() && !isSending ? 'bg-[#8B4513] hover:bg-[#70360f]' : 'bg-gray-300 cursor-not-allowed'
-                                    }`}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 rotate-45" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                    </svg>
-                                </button>
-                            </form>
+                            {/* Zone de saisie */}
+                            <div className="bg-[#F0F2F5] dark:bg-[#1e1e1e] border-t border-gray-200 dark:border-gray-800 p-2 flex flex-col gap-2 transition-colors">
+                                {imagePreview && (
+                                    <div className="flex items-center gap-2 px-2 py-1">
+                                        <div className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-[#8B4513] shadow-md">
+                                            <img src={imagePreview} className="w-full h-full object-cover" />
+                                            <button onClick={removeImage} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-black shadow-md hover:bg-red-600 transition-colors">
+                                                X
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                                <form onSubmit={sendMessage} className="flex items-center gap-2">
+                                    <button type="button" onClick={() => fileInputRef.current?.click()} className="px-3 py-2 text-gray-500 dark:text-gray-400 hover:text-[#8B4513] dark:hover:text-white transition-colors rounded-lg hover:bg-white/50 dark:hover:bg-white/5 text-[10px] font-black uppercase tracking-widest">
+                                        Joindre
+                                    </button>
+                                    <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+                                    
+                                    <input
+                                        ref={inputRef}
+                                        type="text"
+                                        value={input}
+                                        onChange={(e) => setInput(e.target.value)}
+                                        placeholder="Tapez un message..."
+                                        className="flex-1 bg-white dark:bg-[#252525] text-gray-900 dark:text-white border-none rounded-full px-5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#8B4513]/20 transition-all shadow-sm"
+                                    />
+                                    
+                                    <button
+                                        type="submit"
+                                        disabled={(!input.trim() && !imageFile) || isSending}
+                                        className={`px-4 h-11 rounded-full flex items-center justify-center text-white transition-all transform active:scale-95 shadow-md text-[10px] font-black uppercase tracking-widest ${
+                                            (input.trim() || imageFile) && !isSending ? 'bg-[#8B4513] hover:bg-[#70360f]' : 'bg-gray-300 cursor-not-allowed'
+                                        }`}
+                                    >
+                                        Envoyer
+                                    </button>
+                                </form>
+                            </div>
                         </>
                     )}
                 </div>

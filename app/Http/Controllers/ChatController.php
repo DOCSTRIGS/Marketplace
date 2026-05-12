@@ -64,13 +64,31 @@ class ChatController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'content' => 'required|string|max:2000',
+            'content' => 'nullable|string|max:2000',
+            'image' => 'nullable|image|max:5120', // 5MB max
         ]);
+
+        if (empty($validated['content']) && !$request->hasFile('image')) {
+            return response()->json(['error' => 'Message cannot be empty'], 422);
+        }
+
+        $imagePath = null;
+        $type = 'text';
+
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('messages/images', 'public');
+            $type = 'image';
+        }
 
         $message = $conversation->messages()->create([
             'sender_id' => $user->id,
             'content' => $validated['content'],
+            'type' => $type,
+            'image_path' => $imagePath,
         ]);
+
+        // Update conversation timestamp
+        $conversation->touch();
 
         // Broadcast to Reverb WebSocket
         broadcast(new MessageSent($message))->toOthers();

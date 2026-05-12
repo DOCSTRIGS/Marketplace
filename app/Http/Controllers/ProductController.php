@@ -14,7 +14,10 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with(['category.parent', 'shop', 'reviews']);
+        $query = Product::with(['category.parent', 'shop', 'reviews'])
+            ->whereHas('shop', function($q) {
+                $q->where('status', 'approved');
+            });
 
         // Filter by Category
         if ($request->has('category_id')) {
@@ -80,6 +83,7 @@ class ProductController extends Controller
             'price' => 'required|numeric',
             'description' => 'nullable|string',
             'stock' => 'required|integer',
+            'variants' => 'nullable|array',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
@@ -93,6 +97,7 @@ class ProductController extends Controller
         $product->price = $validated['price'];
         $product->description = $validated['description'];
         $product->stock = $validated['stock'];
+        $product->variants = $validated['variants'] ?? null;
         $product->shop_id = $shop->id;
 
         if ($request->hasFile('image')) {
@@ -117,6 +122,7 @@ class ProductController extends Controller
             'price' => 'required|numeric',
             'description' => 'nullable|string',
             'stock' => 'required|integer',
+            'variants' => 'nullable|array',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
@@ -125,6 +131,7 @@ class ProductController extends Controller
         $product->price = $validated['price'];
         $product->description = $validated['description'];
         $product->stock = $validated['stock'];
+        $product->variants = $validated['variants'] ?? null;
 
         if ($request->hasFile('image')) {
             $imageName = time().'.'.$request->image->extension();  

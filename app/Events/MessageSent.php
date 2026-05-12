@@ -31,8 +31,13 @@ class MessageSent implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
+        $recipientId = $this->message->sender_id === $this->message->conversation->user_id 
+            ? $this->message->conversation->shop->user_id 
+            : $this->message->conversation->user_id;
+
         return [
             new PrivateChannel('conversation.' . $this->message->conversation_id),
+            new PrivateChannel('user.' . $recipientId),
         ];
     }
 

@@ -71,12 +71,12 @@ export default function Delivery() {
     const formattedAmount = new Intl.NumberFormat('fr-FR').format(cartTotal);
 
     return (
-        <div className="min-h-screen bg-[#FDF8F4] py-12 px-4 sm:px-6 lg:px-8 font-sans">
+        <div className="min-h-screen bg-[#FDF8F4] dark:bg-[#121212] py-12 px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-300">
             <Head title="Informations de Livraison" />
 
             <div className="max-w-2xl mx-auto">
                 <div className="mb-8 flex items-center justify-between">
-                    <Link href={route('explore')} className="flex items-center text-gray-500 hover:text-gray-900 transition-colors font-bold text-sm">
+                    <Link href={route('explore')} className="flex items-center text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors font-bold text-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
@@ -89,10 +89,10 @@ export default function Delivery() {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+                <div className="bg-white dark:bg-[#1e1e1e] rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800 transition-colors">
                     <div className="p-8 sm:p-10">
-                        <h1 className="text-3xl font-black text-[#222222] mb-2 tracking-tight">Où devons-nous livrer ?</h1>
-                        <p className="text-gray-500 mb-8">Fournissez les détails pour recevoir votre commande rapidement.</p>
+                        <h1 className="text-3xl font-black text-[#222222] dark:text-white mb-2 tracking-tight transition-colors">Où devons-nous livrer ?</h1>
+                        <p className="text-gray-500 dark:text-gray-400 mb-8 transition-colors">Fournissez les détails pour recevoir votre commande rapidement.</p>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
                             
@@ -123,20 +123,20 @@ export default function Delivery() {
                             </button>
 
                             <div className="relative flex py-2 items-center">
-                                <div className="flex-grow border-t border-gray-200"></div>
-                                <span className="flex-shrink-0 mx-4 text-gray-400 text-xs font-bold uppercase tracking-widest">Ou</span>
-                                <div className="flex-grow border-t border-gray-200"></div>
+                                <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+                                <span className="flex-shrink-0 mx-4 text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-widest">Ou</span>
+                                <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
                             </div>
 
                             {/* Manual Input */}
                             <div>
-                                <label htmlFor="address" className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2">
+                                <label htmlFor="address" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest mb-2 transition-colors">
                                     Saisir une adresse manuellement
                                 </label>
                                 <textarea
                                     id="address"
                                     rows="3"
-                                    className="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-[#8B4513] focus:border-[#8B4513] sm:text-sm resize-none p-4 font-medium"
+                                    className="block w-full bg-white dark:bg-[#252525] border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl shadow-sm focus:ring-[#8B4513] focus:border-[#8B4513] sm:text-sm resize-none p-4 font-medium transition-colors"
                                     placeholder="Ex: Quartier Adidogomé, Maison blanche à côté de l'école..."
                                     value={address}
                                     onChange={(e) => setAddress(e.target.value)}
@@ -146,9 +146,9 @@ export default function Delivery() {
                                 </p>
                             </div>
 
-                            <div className="bg-gray-50 p-6 rounded-2xl flex justify-between items-center border border-gray-100">
+                            <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-2xl flex justify-between items-center border border-gray-100 dark:border-gray-800 transition-colors">
                                 <div>
-                                    <p className="text-sm font-bold text-gray-500">Total à payer</p>
+                                    <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Total à payer</p>
                                     <p className="text-2xl font-black text-[#B03A2E]">{formattedAmount} FCFA</p>
                                 </div>
                                 <button

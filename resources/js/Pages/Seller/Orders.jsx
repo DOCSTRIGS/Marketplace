@@ -1,6 +1,7 @@
 import React from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import SellerLayout from '@/Layouts/SellerLayout';
+import EmptyState from '@/Components/EmptyState';
 
 export default function Orders({ orders }) {
     const handleStatusUpdate = (id, status) => {
@@ -40,14 +41,9 @@ export default function Orders({ orders }) {
                     <p className="text-gray-600">Suivez et préparez les commandes de vos clients.</p>
                 </div>
                 <div className="relative w-full md:w-72">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                        </svg>
-                    </div>
                     <input
                         type="text"
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#8B4513] focus:border-[#8B4513] sm:text-sm"
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#8B4513] focus:border-[#8B4513] sm:text-sm"
                         placeholder="Rechercher une commande..."
                     />
                 </div>
@@ -56,16 +52,9 @@ export default function Orders({ orders }) {
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 {stats.map((stat) => (
-                    <div key={stat.name} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex items-center">
-                        <div className={`p-4 rounded-xl ${stat.bg} ${stat.color} mr-4`}>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={stat.icon} />
-                            </svg>
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-gray-500 mb-1">{stat.name}</p>
-                            <h3 className="text-2xl font-black text-gray-900">{stat.value}</h3>
-                        </div>
+                    <div key={stat.name} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                        <p className="text-xs font-bold text-gray-500 mb-1">{stat.name}</p>
+                        <h3 className="text-2xl font-black text-gray-900">{stat.value}</h3>
                     </div>
                 ))}
             </div>
@@ -161,8 +150,11 @@ export default function Orders({ orders }) {
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-20 text-center text-gray-400 font-bold uppercase text-xs tracking-widest">
-                                        Aucune commande pour le moment
+                                    <td colSpan="5" className="px-6 py-4">
+                                        <EmptyState 
+                                            title="Aucune commande"
+                                            description="Dès qu'un client passera une commande, elle apparaîtra ici."
+                                        />
                                     </td>
                                 </tr>
                             )}

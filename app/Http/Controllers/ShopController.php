@@ -48,8 +48,10 @@ class ShopController extends Controller
             });
         }
 
-        // Only include shops that have valid coordinates
-        $query->whereNotNull('latitude')->whereNotNull('longitude');
+        // Only include approved shops that have valid coordinates
+        $query->where('status', 'approved')
+              ->whereNotNull('latitude')
+              ->whereNotNull('longitude');
 
         $shops = $query->get()->map(function($shop) {
             return [
