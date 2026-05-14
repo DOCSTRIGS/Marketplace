@@ -106,10 +106,38 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->name('tracking');
 
+    // Admin Driver Management
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/admin/drivers', function() {
+            return redirect()->route('admin.dashboard', ['tab' => 'drivers']);
+        });
+        Route::get('/admin/drivers/{driver}', [App\Http\Controllers\Admin\DriverController::class, 'show'])->name('admin.drivers.show');
+        Route::post('/admin/drivers', [App\Http\Controllers\Admin\DriverController::class, 'store'])->name('admin.drivers.store');
+        Route::patch('/admin/drivers/{driver}', [App\Http\Controllers\Admin\DriverController::class, 'update'])->name('admin.drivers.update');
+        Route::get('/admin/drivers/fleet/positions', [App\Http\Controllers\Admin\DriverController::class, 'getFleetPositions'])->name('admin.drivers.fleet');
+        Route::delete('/admin/drivers/{driver}', [App\Http\Controllers\Admin\DriverController::class, 'destroy'])->name('admin.drivers.destroy');
+        
+        // General User Management
+        Route::post('/admin/users', [App\Http\Controllers\AdminController::class, 'storeUser'])->name('admin.users.store');
+        Route::patch('/admin/users/{id}', [App\Http\Controllers\AdminController::class, 'updateUser'])->name('admin.users.update');
+        Route::delete('/admin/users/{id}', [App\Http\Controllers\AdminController::class, 'deleteUser'])->name('admin.users.delete');
+    });
+
     // Profile Routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Driver Simulation Route
+    Route::post('/api/driver/update-location', [App\Http\Controllers\DriverController::class, 'updateLocation'])->name('driver.update-location');
+    Route::post('/api/driver/update-status/{order}', [App\Http\Controllers\DriverController::class, 'updateStatus'])->name('driver.update-status');
+    Route::get('/livreur/dashboard', [App\Http\Controllers\DriverController::class, 'dashboard'])->name('driver.dashboard');
+    Route::get('/livreur/portefeuille', [App\Http\Controllers\DriverController::class, 'earnings'])->name('driver.earnings');
+    Route::get('/livreur/performance', [App\Http\Controllers\DriverController::class, 'performance'])->name('driver.performance');
+    Route::get('/livreur/profil', [App\Http\Controllers\DriverController::class, 'profile'])->name('driver.profile');
+    Route::post('/livreur/profil', [App\Http\Controllers\DriverController::class, 'updateProfile'])->name('driver.profile.update');
+    Route::get('/livreur/commande/{order}', [App\Http\Controllers\DriverController::class, 'show'])->name('driver.tracking');
+    Route::get('/orders/{order}/tracking', [App\Http\Controllers\OrderTrackingController::class, 'getDriverPosition'])->name('orders.tracking');
 });
 
 // Public Routes

@@ -135,7 +135,28 @@ class OrderController extends Controller
         }
 
         $oldStatus = $order->status;
+
+        // Logic for automatic assignment when moving to 'preparing' (Seller accepting the order)
+        if ($validated['status'] === 'preparing' && $oldStatus !== 'preparing') {
+            $assignmentService = new \App\Services\DeliveryAssignmentService();
+            $driver = $assignmentService->assignClosestDriver($order);
+
+            if ($driver) {
+                // Generate secure delivery code (OTP)
+                $deliveryCode = rand(1000, 9999);
+                $order->update(['delivery_code' => $deliveryCode]);
+                
+                // Note: We could notify the user here with the code
+            } else {
+                // If no driver found, we still move to preparing but warn the seller
+                session()->flash('warning', 'Aucun livreur disponible pour le moment. La recherche continuera en arrière-plan.');
+            }
+        }
+
         $order->update(['status' => $validated['status']]);
+
+        // Broadcast status update
+        event(new \App\Events\OrderUpdated($order));
 
         // Si la commande passe à "delivered", on crédite le vendeur
         if ($validated['status'] === 'delivered' && $oldStatus !== 'delivered') {

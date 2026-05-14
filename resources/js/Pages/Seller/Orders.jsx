@@ -1,9 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import SellerLayout from '@/Layouts/SellerLayout';
 import EmptyState from '@/Components/EmptyState';
+import OrderTrackingDrawer from '@/Components/Seller/OrderTrackingDrawer';
+import { useToast } from '@/Contexts/ToastContext';
+import { useEffect } from 'react';
 
-export default function Orders({ orders }) {
+export default function Orders({ orders, auth }) {
+    const { addToast } = useToast();
+    const [trackingOrderId, setTrackingOrderId] = useState(null);
+    const [trackingOpen, setTrackingOpen] = useState(false);
+
+    // Listen for driver assignments in real-time
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.Echo && auth.user.shop) {
+            window.Echo.channel(`shop.${auth.user.shop.id}`)
+                .listen('.order.assigned', (e) => {
+                    addToast(`✅ Livreur trouvé pour la commande ${e.order.order_number} !`, 'success');
+                    // Refresh data to show tracking button
+                    router.reload({ only: ['orders'] });
+                })
+                .listen('.order.updated', (e) => {
+                    const statusMap = {
+                        'shipped': 'est en route',
+                        'delivered': 'a été livrée',
+                        'cancelled': 'a été annulée'
+                    };
+                    const message = statusMap[e.order.status] || `est maintenant : ${e.order.status}`;
+                    addToast(`📦 La commande ${e.order.order_number} ${message} !`, 'info');
+                    router.reload({ only: ['orders'] });
+                });
+        }
+        return () => {
+            if (window.Echo && auth.user.shop) {
+                window.Echo.leave(`shop.${auth.user.shop.id}`);
+            }
+        };
+    }, [auth.user.shop]);
+
+    const openTracking = (id) => {
+        setTrackingOrderId(id);
+        setTrackingOpen(true);
+    };
+
     const handleStatusUpdate = (id, status) => {
         if (confirm(`Voulez-vous marquer cette commande comme "${status}" ?`)) {
             router.patch(route('seller.orders.updateStatus', { id }), { status }, {
@@ -22,7 +61,7 @@ export default function Orders({ orders }) {
 
     const stats = [
         { name: 'À PRÉPARER', value: orders.filter(o => o.status === 'paid' || o.status === 'processing' || o.status === 'preparing').length, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-orange-500', bg: 'bg-orange-100' },
-        { name: 'REVENU TOTAL', value: new Intl.NumberFormat('fr-FR').format(orders.reduce((acc, o) => acc + parseFloat(o.total_amount), 0)) + ' F', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-green-500', bg: 'bg-green-100' },
+        { name: 'MES GAINS (NET)', value: new Intl.NumberFormat('fr-FR').format(orders.reduce((acc, o) => acc + parseFloat(o.seller_amount), 0)) + ' F', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-green-500', bg: 'bg-green-100' },
         { name: 'COMMANDES TOTALES', value: orders.length, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-blue-500', bg: 'bg-blue-100' },
     ];
 
@@ -80,7 +119,7 @@ export default function Orders({ orders }) {
                                     Articles
                                 </th>
                                 <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    Total FCFA
+                                    Net Vendeur (FCFA)
                                 </th>
                                 <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                                     Statut
@@ -114,7 +153,7 @@ export default function Orders({ orders }) {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                                        {new Intl.NumberFormat('fr-FR').format(order.total_amount)} F
+                                        {new Intl.NumberFormat('fr-FR').format(order.seller_amount)} F
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-3 py-1 inline-flex text-[10px] leading-5 font-black uppercase rounded-full ${
@@ -129,12 +168,43 @@ export default function Orders({ orders }) {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex items-center justify-end gap-2">
+                                            {order.status !== 'delivered' && (
+                                                <button 
+                                                    onClick={() => {
+                                                        const link = `${window.location.origin}/livreur/commande/${order.id}`;
+                                                        navigator.clipboard.writeText(link);
+                                                        alert("Lien livreur copié ! Envoyez-le par WhatsApp au livreur.");
+                                                    }}
+                                                    className="bg-green-50 text-green-600 p-2 rounded-xl hover:bg-green-100 transition-all border border-green-100 flex items-center gap-2"
+                                                    title="Copier le lien pour le livreur"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                                    </svg>
+                                                    <span className="text-[10px] font-black uppercase tracking-wider pr-1">Lien Livreur</span>
+                                                </button>
+                                            )}
+
+                                            {(order.status === 'preparing' || order.status === 'shipped') && (
+                                                <button 
+                                                    onClick={() => openTracking(order.id)}
+                                                    className="bg-white dark:bg-[#1e1e1e] text-blue-600 p-2 rounded-xl hover:bg-blue-50 transition-all border border-blue-100 flex items-center gap-2"
+                                                    title="Suivre le livreur"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
+                                                    <span className="text-[10px] font-black uppercase tracking-wider">Suivre</span>
+                                                </button>
+                                            )}
+
                                             {(order.status === 'paid' || order.status === 'processing' || order.status === 'pending') && (
                                                 <button 
                                                     onClick={() => handleStatusUpdate(order.id, 'preparing')}
                                                     className="bg-[#8B4513] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-[#70360f] transition-all"
                                                 >
-                                                    Commencer la Préparation
+                                                    Préparer
                                                 </button>
                                             )}
                                             {order.status === 'preparing' && (
@@ -142,7 +212,7 @@ export default function Orders({ orders }) {
                                                     onClick={() => handleStatusUpdate(order.id, 'shipped')}
                                                     className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-blue-700 transition-all"
                                                 >
-                                                    Confier au Livreur
+                                                    Expédier
                                                 </button>
                                             )}
                                             {order.status === 'shipped' && (
@@ -150,7 +220,7 @@ export default function Orders({ orders }) {
                                                     onClick={() => handleStatusUpdate(order.id, 'delivered')}
                                                     className="bg-green-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-green-700 transition-all"
                                                 >
-                                                    Confirmer Livraison
+                                                    Livré
                                                 </button>
                                             )}
                                             <button 
@@ -179,6 +249,12 @@ export default function Orders({ orders }) {
                     </table>
                 </div>
             </div>
+
+            <OrderTrackingDrawer 
+                orderId={trackingOrderId}
+                isOpen={trackingOpen}
+                onClose={() => setTrackingOpen(false)}
+            />
         </SellerLayout>
     );
 }

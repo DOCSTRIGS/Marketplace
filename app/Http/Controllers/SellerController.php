@@ -39,7 +39,7 @@ class SellerController extends Controller
         $monthlyRevenue = Order::where('shop_id', $shop->id)
             ->where('status', '!=', 'cancelled')
             ->whereMonth('created_at', now()->month)
-            ->sum('total_amount');
+            ->sum('seller_amount');
 
         $todayOrdersCount = Order::where('shop_id', $shop->id)
             ->whereDate('created_at', now())
@@ -49,7 +49,7 @@ class SellerController extends Controller
         $outOfStockCount = Product::where('shop_id', $shop->id)->where('stock', 0)->count();
 
         $stats = [
-            ['name' => 'Revenus du mois', 'value' => number_format($monthlyRevenue, 0, ',', ' ') . ' FCFA', 'change' => '+0%', 'trend' => 'neutral'],
+            ['name' => 'Mes Gains (Net)', 'value' => number_format($monthlyRevenue, 0, ',', ' ') . ' FCFA', 'change' => '+0%', 'trend' => 'neutral'],
             ['name' => 'Commandes du jour', 'value' => (string) $todayOrdersCount, 'change' => '+0', 'trend' => 'neutral'],
             ['name' => 'Produits actifs', 'value' => (string) $activeProductsCount, 'change' => '0', 'trend' => 'neutral'],
             ['name' => 'Produits en rupture', 'value' => (string) $outOfStockCount, 'change' => '0', 'trend' => 'neutral'],
@@ -65,7 +65,7 @@ class SellerController extends Controller
                 'id' => '#' . $order->order_number,
                 'customer' => $order->user->name,
                 'product' => 'Commande ' . $order->order_number, // We could fetch items too
-                'amount' => number_format($order->total_amount, 0, ',', ' ') . ' FCFA',
+                'amount' => number_format($order->seller_amount, 0, ',', ' ') . ' FCFA',
                 'status' => $this->translateStatus($order->status),
                 'date' => $order->created_at->diffForHumans(),
             ]);
@@ -77,7 +77,7 @@ class SellerController extends Controller
             $revenue = Order::where('shop_id', $shop->id)
                 ->whereDate('created_at', $date)
                 ->where('status', '!=', 'cancelled')
-                ->sum('total_amount');
+                ->sum('seller_amount');
 
             $chartData[] = [
                 'name' => $date->format('D'),

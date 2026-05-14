@@ -2,6 +2,8 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
 
+// Force restart to detect new Driver pages
+// Trigger restart for Profile page detection
 export default defineConfig({
     plugins: [
         laravel({
@@ -10,4 +12,10 @@ export default defineConfig({
         }),
         react(),
     ],
+    server: {
+        host: '0.0.0.0',
+        hmr: {
+            host: '192.168.1.90',
+        },
+    },
 });

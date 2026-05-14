@@ -11,8 +11,9 @@ export default function Navbar() {
     const { cartCount = 0 } = useCart() || {};
     const [isCartOpen, setIsCartOpen] = useState(false);
 
-    // Safer check for seller flow
+    // Safer check for roles/flows
     const isSellerFlow = auth?.user?.role === 'seller' || url?.startsWith('/seller') || url?.startsWith('/shops/create');
+    const isDriverFlow = auth?.user?.role === 'driver' || url?.startsWith('/driver');
 
     // Helper for safe route checking
     const isCurrent = (name) => {
@@ -56,6 +57,12 @@ export default function Navbar() {
                         </Link>
                         <Link href={getRoute('shops.create', '/shops/create')} className={`font-bold text-sm pb-1 ${isCurrent('shops.create') ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] hover:text-[#B03A2E]'}`}>
                             Ma Boutique
+                        </Link>
+                    </>
+                ) : isDriverFlow ? (
+                    <>
+                        <Link href={getRoute('driver.dashboard', '/driver/dashboard')} className={`font-bold text-sm pb-1 ${isCurrent('driver.dashboard') ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] hover:text-[#B03A2E]'}`}>
+                            Dashboard Livreur
                         </Link>
                     </>
                 ) : (
@@ -141,6 +148,8 @@ export default function Navbar() {
                             
                             {auth.user.role === 'seller' ? (
                                 <Dropdown.Link href={getRoute('seller.dashboard', '/seller/dashboard')}>Dashboard Vendeur</Dropdown.Link>
+                            ) : auth.user.role === 'driver' ? (
+                                <Dropdown.Link href={getRoute('driver.dashboard', '/driver/dashboard')}>Dashboard Livreur</Dropdown.Link>
                             ) : (
                                 <Dropdown.Link href={getRoute('profile.edit', '/profile')}>Mon Profil</Dropdown.Link>
                             )}

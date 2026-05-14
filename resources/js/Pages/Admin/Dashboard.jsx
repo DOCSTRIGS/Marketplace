@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
+import axios from 'axios';
+import DriverDetailsDrawer from '@/Components/Admin/DriverDetailsDrawer';
 import { 
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     BarChart, Bar, Cell, PieChart, Pie, Legend
 } from 'recharts';
 import ThemeToggle from '@/Components/ThemeToggle';
+import FleetMap from '@/Components/Admin/FleetMap';
 
 // ─── Confirm Modal (minimale, sans icones) ───────────────────────────────────
 function ConfirmModal({ isOpen, onClose, onConfirm, message }) {
@@ -181,13 +184,116 @@ function CategoryRow({ cat, subcategories, onDeleteCategory, onDeleteSubCategory
 }
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
-export default function AdminDashboard({ pendingShops, approvedShops, rejectedShops, stats, categories, users, reviews, withdrawals, chartData, categoryStats }) {
+export default function AdminDashboard({ pendingShops, approvedShops, rejectedShops, stats, categories, users, drivers, reviews, withdrawals, chartData, categoryStats }) {
     const { auth } = usePage().props;
+    
+    // Auto-detect tab from URL
+    const queryParams = new URLSearchParams(window.location.search);
+    const initialTab = queryParams.get('tab') || 'overview';
+    
+    const [activeTab, setActiveTab] = useState(initialTab);
     const { patch: patchAction, processing: actionProcessing } = useForm();
     const newCatForm = useForm({ name: '' });
-
-    const [activeTab, setActiveTab] = useState('overview');
     const [reviewToDelete, setReviewToDelete] = useState(null);
+
+    // User Management states
+    const [userModalOpen, setUserModalOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
+    const userForm = useForm({
+        name: '',
+        email: '',
+        password: '',
+        role: 'client'
+    });
+
+    const openUserModal = (user = null) => {
+        if (user) {
+            setEditingUser(user);
+            userForm.setData({
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                password: '' // Keep empty for edit
+            });
+        } else {
+            setEditingUser(null);
+            userForm.reset();
+        }
+        setUserModalOpen(true);
+    };
+
+    const submitUser = (e) => {
+        e.preventDefault();
+        if (editingUser) {
+            userForm.patch(route('admin.users.update', editingUser.id), {
+                onSuccess: () => setUserModalOpen(false)
+            });
+        } else {
+            userForm.post(route('admin.users.store'), {
+                onSuccess: () => setUserModalOpen(false)
+            });
+        }
+    };
+
+    const handleDeleteUser = (id) => {
+        if (confirm('Voulez-vous vraiment supprimer cet utilisateur ?')) {
+            router.delete(route('admin.users.delete', id));
+        }
+    };
+
+    // Driver Management states
+    const [driverModalOpen, setDriverModalOpen] = useState(false);
+    const [editingDriver, setEditingDriver] = useState(null);
+    const driverForm = useForm({
+        name: '',
+        email: '',
+        password: '',
+        driver_status: 'available'
+    });
+
+    const openDriverModal = (driver = null) => {
+        if (driver) {
+            setEditingDriver(driver);
+            driverForm.setData({
+                name: driver.name,
+                email: driver.email,
+                driver_status: driver.driver_status,
+                password: ''
+            });
+        } else {
+            setEditingDriver(null);
+            driverForm.reset();
+        }
+        setDriverModalOpen(true);
+    };
+
+    const submitDriver = (e) => {
+        e.preventDefault();
+        if (editingDriver) {
+            driverForm.patch(route('admin.drivers.update', editingDriver.id), {
+                onSuccess: () => setDriverModalOpen(false)
+            });
+        } else {
+            driverForm.post(route('admin.drivers.store'), {
+                onSuccess: () => setDriverModalOpen(false)
+            });
+        }
+    };
+
+    const handleDeleteDriver = (id) => {
+        if (confirm('Voulez-vous vraiment supprimer ce livreur ?')) {
+            router.delete(route('admin.drivers.destroy', id));
+        }
+    };
+
+    // Driver Details Drawer states
+    const [selectedDriverId, setSelectedDriverId] = useState(null);
+    const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
+
+    const openDriverDetails = (id) => {
+        setSelectedDriverId(id);
+        setDetailsDrawerOpen(true);
+    };
 
     const handleStatusUpdate = (shopId, status) => {
         if (confirm(`Êtes-vous sûr de vouloir passer cette boutique en statut : ${status} ?`)) {
@@ -225,7 +331,9 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
         { id: 'withdrawals', label: `Retraits${withdrawals.filter(w=>w.status==='pending').length > 0 ? ` (${withdrawals.filter(w=>w.status==='pending').length})` : ''}` },
         { id: 'reviews',    label: "Modération Avis" },
         { id: 'categories', label: "Catégories" },
+        { id: 'fleet',      label: "Suivi Flotte" },
         { id: 'users',      label: "Utilisateurs" },
+        { id: 'drivers',    label: "Livreurs" },
     ];
 
     return (
@@ -529,6 +637,22 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                     message="Voulez-vous vraiment supprimer cet avis ?"
                 />
 
+                {/* Fleet Map Tab */}
+                {activeTab === 'fleet' && (
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter uppercase">Suivi Global de la Flotte</h2>
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Localisation en temps réel de tous vos livreurs actifs</p>
+                            </div>
+                        </div>
+                        <FleetMap onDriverClick={(id) => {
+                            setSelectedDriverId(id);
+                            setShowDriverDrawer(true);
+                        }} />
+                    </div>
+                )}
+
                 {/* Rest of Tabs (Categories, Users) - Simplified for brevity but kept functional */}
                 {activeTab === 'categories' && (
                     <div className="space-y-8">
@@ -546,41 +670,300 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                 )}
 
                 {activeTab === 'users' && (
-                    <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-gray-50 dark:bg-[#252525] border-b border-gray-100 dark:border-gray-800">
-                                <tr><th className="px-6 py-4 dark:text-gray-400">Nom</th><th className="px-6 py-4 dark:text-gray-400">Email</th><th className="px-6 py-4 dark:text-gray-400">Rôle</th><th className="px-6 py-4 text-right dark:text-gray-400">Actions</th></tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                                {users.map(u => (
-                                    <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                        <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">{u.name}</td>
-                                        <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{u.email}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`uppercase text-[10px] font-black px-2 py-1 rounded-full ${u.role === 'admin' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>
-                                                {u.role}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            {u.id !== auth.user.id && (
-                                                <button 
-                                                    onClick={() => handleToggleAdmin(u)}
-                                                    className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
-                                                        u.role === 'admin' 
-                                                        ? 'bg-red-50 text-red-600 hover:bg-red-100' 
-                                                        : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-                                                    }`}
-                                                >
-                                                    {u.role === 'admin' ? 'Retirer Admin' : 'Nommer Admin'}
-                                                </button>
-                                            )}
-                                        </td>
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-black text-gray-900 dark:text-white">Liste des Utilisateurs</h2>
+                            <button 
+                                onClick={() => openUserModal()}
+                                className="bg-[#8B4513] text-white px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-lg"
+                            >
+                                + Ajouter un utilisateur
+                            </button>
+                        </div>
+
+                        <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-gray-50 dark:bg-[#252525] border-b border-gray-100 dark:border-gray-800">
+                                    <tr>
+                                        <th className="px-6 py-4 dark:text-gray-400">Nom</th>
+                                        <th className="px-6 py-4 dark:text-gray-400">Email</th>
+                                        <th className="px-6 py-4 dark:text-gray-400">Rôle</th>
+                                        <th className="px-6 py-4 text-right dark:text-gray-400">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                                    {users.map(u => (
+                                        <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                            <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">{u.name}</td>
+                                            <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{u.email}</td>
+                                            <td className="px-6 py-4">
+                                                <span className={`uppercase text-[10px] font-black px-2 py-1 rounded-full ${u.role === 'admin' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>
+                                                    {u.role}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <button 
+                                                        onClick={() => openUserModal(u)}
+                                                        className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                                        title="Modifier"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                    </button>
+                                                    {u.id !== auth.user.id && (
+                                                        <button 
+                                                            onClick={() => handleDeleteUser(u.id)}
+                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                            title="Supprimer"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
+
+                {activeTab === 'drivers' && (
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Gestion de la Flotte</h2>
+                            <button 
+                                onClick={() => openDriverModal()} 
+                                className="bg-[#8B4513] text-white px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-lg"
+                            >
+                                + Nouveau Livreur
+                            </button>
+                        </div>
+                        
+                        <div className="bg-white dark:bg-[#1e1e1e] rounded-[2.5rem] border border-gray-100 dark:border-gray-800 overflow-hidden shadow-xl transition-all">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-gray-50/50 dark:bg-[#252525] border-b border-gray-100 dark:border-gray-800">
+                                    <tr>
+                                        <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Livreur</th>
+                                        <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Livraisons</th>
+                                        <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Activité</th>
+                                        <th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                                    {drivers.map(d => (
+                                        <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+                                            <td className="px-8 py-6">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 bg-[#8B4513]/10 text-[#8B4513] rounded-xl flex items-center justify-center font-black">
+                                                        {d.name.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-gray-900 dark:text-white">{d.name}</div>
+                                                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{d.email}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-6 text-center">
+                                                <span className="text-lg font-black text-gray-900 dark:text-white">{d.deliveries_completed}</span>
+                                            </td>
+                                            <td className="px-8 py-6">
+                                                <div className="flex flex-col gap-1.5">
+                                                    <span className={`inline-flex w-fit px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${
+                                                        d.driver_status === 'available' ? 'bg-green-100 text-green-700' :
+                                                        d.driver_status === 'busy' ? 'bg-blue-100 text-blue-700' :
+                                                        d.driver_status === 'pause' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-400'
+                                                    }`}>
+                                                        {d.driver_status}
+                                                    </span>
+                                                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">
+                                                        Dernier signal : {new Date(d.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-6 text-right">
+                                                <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all">
+                                                    <button 
+                                                        onClick={() => openDriverDetails(d.id)} 
+                                                        className="p-2 text-gray-400 hover:text-[#8B4513] hover:bg-[#8B4513]/5 rounded-lg transition-all" 
+                                                        title="Détails"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                    </button>
+                                                    <button onClick={() => openDriverModal(d)} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all" title="Modifier">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                    </button>
+                                                    <button onClick={() => handleDeleteDriver(d.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Supprimer">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* User Modal */}
+                {userModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setUserModalOpen(false)} />
+                        <div className="relative bg-white dark:bg-[#1e1e1e] rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 border border-gray-100 dark:border-gray-800 transition-colors">
+                            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tight">
+                                {editingUser ? 'Modifier Utilisateur' : 'Nouvel Utilisateur'}
+                            </h2>
+                            <form onSubmit={submitUser} className="space-y-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Nom Complet</label>
+                                    <input 
+                                        type="text" 
+                                        value={userForm.data.name}
+                                        onChange={e => userForm.setData('name', e.target.value)}
+                                        className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Email</label>
+                                    <input 
+                                        type="email" 
+                                        value={userForm.data.email}
+                                        onChange={e => userForm.setData('email', e.target.value)}
+                                        className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
+                                        required
+                                    />
+                                </div>
+                                {!editingUser && (
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Mot de passe</label>
+                                        <input 
+                                            type="password" 
+                                            value={userForm.data.password}
+                                            onChange={e => userForm.setData('password', e.target.value)}
+                                            className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
+                                            required
+                                        />
+                                    </div>
+                                )}
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Rôle</label>
+                                    <select 
+                                        value={userForm.data.role}
+                                        onChange={e => userForm.setData('role', e.target.value)}
+                                        className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
+                                    >
+                                        <option value="client">Client</option>
+                                        <option value="seller">Vendeur</option>
+                                        <option value="admin">Administrateur</option>
+                                    </select>
+                                </div>
+                                <div className="flex gap-4 pt-6">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setUserModalOpen(false)}
+                                        className="flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest bg-gray-100 dark:bg-[#252525] text-gray-500 hover:bg-gray-200 transition-all"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button 
+                                        type="submit"
+                                        disabled={userForm.processing}
+                                        className="flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest bg-[#8B4513] text-white shadow-xl hover:scale-105 transition-all disabled:opacity-50"
+                                    >
+                                        {editingUser ? 'Mettre à jour' : 'Créer'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+                {/* Driver Modal */}
+                {driverModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDriverModalOpen(false)} />
+                        <div className="relative bg-white dark:bg-[#1e1e1e] rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 border border-gray-100 dark:border-gray-800 transition-colors">
+                            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tight">
+                                {editingDriver ? 'Modifier Livreur' : 'Nouveau Livreur'}
+                            </h2>
+                            <form onSubmit={submitDriver} className="space-y-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Nom du Livreur</label>
+                                    <input 
+                                        type="text" 
+                                        value={driverForm.data.name}
+                                        onChange={e => driverForm.setData('name', e.target.value)}
+                                        className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Email Professionnel</label>
+                                    <input 
+                                        type="email" 
+                                        value={driverForm.data.email}
+                                        onChange={e => driverForm.setData('email', e.target.value)}
+                                        className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
+                                        required
+                                    />
+                                </div>
+                                {!editingDriver && (
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Mot de passe</label>
+                                        <input 
+                                            type="password" 
+                                            value={driverForm.data.password}
+                                            onChange={e => driverForm.setData('password', e.target.value)}
+                                            className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
+                                            required
+                                        />
+                                    </div>
+                                )}
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Statut Initial</label>
+                                    <select 
+                                        value={driverForm.data.driver_status}
+                                        onChange={e => driverForm.setData('driver_status', e.target.value)}
+                                        className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
+                                    >
+                                        <option value="available">Disponible</option>
+                                        <option value="offline">Hors Ligne</option>
+                                        <option value="pause">En Pause</option>
+                                    </select>
+                                </div>
+                                <div className="flex gap-4 pt-6">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setDriverModalOpen(false)}
+                                        className="flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest bg-gray-100 dark:bg-[#252525] text-gray-500 hover:bg-gray-200 transition-all"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button 
+                                        type="submit"
+                                        disabled={driverForm.processing}
+                                        className="flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest bg-[#8B4513] text-white shadow-xl hover:scale-105 transition-all disabled:opacity-50"
+                                    >
+                                        {editingDriver ? 'Mettre à jour' : 'Enregistrer'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* Driver Details Slide-over Drawer */}
+                <DriverDetailsDrawer 
+                    driverId={selectedDriverId}
+                    isOpen={detailsDrawerOpen}
+                    onClose={() => setDetailsDrawerOpen(false)}
+                />
             </div>
         </div>
     );

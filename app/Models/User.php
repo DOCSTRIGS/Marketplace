@@ -23,6 +23,20 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'driver_status',
+        'last_latitude',
+        'last_longitude',
+        'pause_started_at',
+        'deliveries_completed',
+        'last_online_at',
+        'phone',
+        'vehicle_type',
+        'vehicle_model',
+        'vehicle_plate',
+        'vehicle_description',
+        'vehicle_image',
+        'license_image',
+        'insurance_image',
     ];
 
     /**
@@ -45,7 +59,19 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'pause_started_at' => 'datetime',
+            'last_online_at' => 'datetime',
         ];
+    }
+
+    public function isDriver()
+    {
+        return $this->role === 'driver';
+    }
+
+    public function isAvailable()
+    {
+        return $this->role === 'driver' && $this->driver_status === 'available';
     }
 
     public function shop()
@@ -61,6 +87,11 @@ class User extends Authenticatable
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function assignedOrders()
+    {
+        return $this->hasMany(Order::class, 'driver_id');
     }
 
     public function conversations()

@@ -37,7 +37,10 @@ class AdminController extends Controller
         ];
 
         $categories = Category::withCount('children')->get();
-        $users = User::latest()->get();
+        $users = User::where('role', '!=', 'driver')->latest()->get();
+        $drivers = User::where('role', 'driver')
+            ->orderByRaw('updated_at DESC')
+            ->get();
         $reviews = Review::with(['user', 'product.shop'])->latest()->get();
         $withdrawals = Withdrawal::with('shop.user')->latest()->get();
 
@@ -82,6 +85,7 @@ class AdminController extends Controller
             'stats'         => $stats,
             'categories'    => $categories,
             'users'         => $users,
+            'drivers'       => $drivers,
             'reviews'       => $reviews,
             'withdrawals'   => $withdrawals,
             'chartData'     => $chartData,
@@ -107,6 +111,49 @@ class AdminController extends Controller
         $shop = Shop::findOrFail($id);
         $shop->delete();
         return redirect()->back()->with('success', 'Boutique supprimée avec succès.');
+    }
+
+    public function storeUser(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8',
+            'role' => 'required|string|in:client,seller,admin'
+        ]);
+
+        User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
+            'role' => $validated['role']
+        ]);
+
+        return redirect()->back()->with('success', 'Utilisateur créé avec succès.');
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $id,
+            'role' => 'required|string|in:client,seller,admin'
+        ]);
+
+        $user->update($validated);
+
+        return redirect()->back()->with('success', 'Utilisateur mis à jour.');
+    }
+
+    public function deleteUser($id)
+    {
+        $user = User::findOrFail($id);
+        if ($user->id === auth()->id()) {
+            return redirect()->back()->with('error', 'Impossible de vous supprimer vous-même.');
+        }
+        $user->delete();
+        return redirect()->back()->with('success', 'Utilisateur supprimé.');
     }
 
     public function toggleAdminRole($id)

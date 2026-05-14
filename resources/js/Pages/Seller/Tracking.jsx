@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Head, router } from '@inertiajs/react';
+import axios from 'axios';
 import SellerLayout from '@/Layouts/SellerLayout';
 import EmptyState from '@/Components/EmptyState';
 import { 
@@ -42,21 +43,35 @@ const Directions = ({ origin, destination, waypoints }) => {
     const routesLibrary = useMapsLibrary('routes');
     const [directionsService, setDirectionsService] = useState();
     const [directionsRenderer, setDirectionsRenderer] = useState();
+    const [routeInfo, setRouteInfo] = useState(null);
 
     useEffect(() => {
         if (!routesLibrary || !map) return;
         setDirectionsService(new routesLibrary.DirectionsService());
         
-        // We use the default Google Maps rendering for the line (which includes the nice outline automatically)
+        // We use the default Google Maps rendering for the line
         setDirectionsRenderer(new routesLibrary.DirectionsRenderer({
             map,
-            suppressMarkers: true, // We keep our custom beautiful markers
-            preserveViewport: true, // Don't auto-zoom, let the map handle its default center/zoom
+            suppressMarkers: true,
+            preserveViewport: true,
+            polylineOptions: {
+                strokeColor: '#3B82F6',
+                strokeOpacity: 0.8,
+                strokeWeight: 6,
+            }
         }));
     }, [routesLibrary, map]);
 
+    const lastRequest = React.useRef(null);
+
     useEffect(() => {
         if (!directionsService || !directionsRenderer || !origin || !destination) return;
+
+        // Optimization: Don't request if points haven't moved significantly
+        const originStr = `${origin.lat},${origin.lng}`;
+        const destStr = `${destination.lat},${destination.lng}`;
+        if (lastRequest.current === `${originStr}-${destStr}`) return;
+        lastRequest.current = `${originStr}-${destStr}`;
 
         const request = {
             origin: origin,
@@ -66,10 +81,18 @@ const Directions = ({ origin, destination, waypoints }) => {
         };
 
         directionsService.route(request, (response, status) => {
-            if (status === 'OK') {
+            if (status === 'OK' && response) {
                 directionsRenderer.setDirections(response);
+                const leg = response.routes[0].legs[0];
+                setRouteInfo({
+                    distance: leg.distance.text,
+                    duration: leg.duration.text
+                });
+            } else if (status === 'REQUEST_DENIED') {
+                console.warn("Directions API non activée ou clé restreinte.");
+                if (directionsRenderer) directionsRenderer.setDirections({ routes: [] });
             } else {
-                console.error("Directions request failed due to " + status);
+                console.error("Directions request failed: " + status);
             }
         });
     }, [directionsService, directionsRenderer, origin, destination, waypoints]);
@@ -83,17 +106,52 @@ const Directions = ({ origin, destination, waypoints }) => {
         }
     }, [directionsRenderer]);
 
-    return null;
+    if (!routeInfo) return null;
+
+    return (
+        <MapControl position={window.google.maps.ControlPosition.TOP_CENTER}>
+            <div className="mt-4 bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-md px-6 py-3 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 flex items-center gap-6 animate-in fade-in slide-in-from-top-4 duration-700">
+                <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Distance</span>
+                    <span className="text-sm font-black text-gray-900 dark:text-white">{routeInfo.distance}</span>
+                </div>
+                <div className="w-px h-4 bg-gray-100 dark:bg-gray-800"></div>
+                <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-[#8B4513]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Arrivée dans</span>
+                    <span className="text-sm font-black text-[#8B4513]">{routeInfo.duration}</span>
+                </div>
+            </div>
+        </MapControl>
+    );
 };
 
 export default function Tracking({ order }) {
-    // Auto-refresh every 30 seconds if an order exists
     useEffect(() => {
         if (!order) return;
         const interval = setInterval(() => {
             router.reload({ preserveScroll: true });
         }, 30000);
         return () => clearInterval(interval);
+    }, [order]);
+
+    // NEW: Listen for Driver Location updates via Reverb
+    const [driverLocation, setDriverLocation] = useState(null);
+
+    useEffect(() => {
+        if (!order || !window.Echo) return;
+
+        const channel = window.Echo.channel(`order.${order.id}`)
+            .listen('.driver.location.updated', (e) => {
+                setDriverLocation({ lat: parseFloat(e.latitude), lng: parseFloat(e.longitude) });
+            });
+
+        return () => {
+            window.Echo.leave(`order.${order.id}`);
+        };
     }, [order]);
 
     if (!order) {
@@ -203,7 +261,7 @@ export default function Tracking({ order }) {
                                 </div>
                             </AdvancedMarker>
 
-                            {/* User Marker */}
+                            {/* Client Marker */}
                             <AdvancedMarker position={customerLocation}>
                                 <div className="flex flex-col items-center">
                                     <div className="mb-1 px-2 py-0.5 bg-[#4285F4] rounded-full text-[8px] font-black shadow-lg text-white uppercase tracking-tighter">CLIENT</div>
@@ -211,11 +269,29 @@ export default function Tracking({ order }) {
                                 </div>
                             </AdvancedMarker>
 
+                            {/* Driver Marker (Moto Verte) */}
+                            {driverLocation && (
+                                <AdvancedMarker position={driverLocation} zIndex={100}>
+                                    <div className="flex flex-col items-center">
+                                        <div className="bg-green-600 text-white text-[9px] font-black px-3 py-1.5 rounded-xl shadow-2xl mb-2 flex items-center gap-2 border border-white/10 whitespace-nowrap scale-110">
+                                            <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                                            LIVREUR EN ROUTE
+                                        </div>
+                                        <div className="w-12 h-12 bg-white rounded-full border-4 border-green-500 shadow-2xl flex items-center justify-center">
+                                            {/* Icône Moto */}
+                                            <svg className="w-7 h-7 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M19.5,12c-1.38,0-2.5,1.12-2.5,2.5s1.12,2.5,2.5,2.5s2.5-1.12,2.5-2.5S20.88,12,19.5,12z M4.5,12c-1.38,0-2.5,1.12-2.5,2.5 s1.12,2.5,2.5,2.5s2.5-1.12,2.5-2.5S5.88,12,4.5,12z M17,8l-1.5-2H11l1.5,2H17z M18,10l-2-3H10l-2,3H3v2h18v-2H18z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </AdvancedMarker>
+                            )}
+
                             <Directions 
-                                origin={shopLocation} 
+                                origin={driverLocation || shopLocation} 
                                 destination={customerLocation} 
                             />
-                            <LocateMeControl location={shopLocation} />
+                            <LocateMeControl location={driverLocation || shopLocation} />
                         </Map>
                     </APIProvider>
                 </div>

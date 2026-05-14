@@ -1,0 +1,39 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('orders', function (Blueprint $table) {
+            $table->timestamp('picked_up_at')->nullable()->after('driver_id');
+            $table->timestamp('delivered_at')->nullable()->after('picked_up_at');
+        });
+
+        Schema::create('driver_logs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('event_type'); // pause_start, pause_end, duty_start, duty_end
+            $table->timestamp('occurred_at');
+            $table->json('metadata')->nullable(); // For coordinates or extra info
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('driver_logs');
+        Schema::table('orders', function (Blueprint $table) {
+            $table->dropColumn(['picked_up_at', 'delivered_at']);
+        });
+    }
+};
