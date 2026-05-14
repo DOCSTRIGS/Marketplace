@@ -7,42 +7,81 @@ import {
     Map, 
     AdvancedMarker, 
     useMap,
+    useMapsLibrary,
+    MapControl
 } from '@vis.gl/react-google-maps';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-// Custom Polyline component for Google Maps
-const Polyline = (props) => {
+// Control to recenter map on user (Shop)
+const LocateMeControl = ({ location }) => {
     const map = useMap();
-    const [polyline, setPolyline] = useState(null);
+    if (!map || !location) return null;
+
+    return (
+        <MapControl position={window.google.maps.ControlPosition.RIGHT_BOTTOM}>
+            <button
+                onClick={() => {
+                    map.panTo(location);
+                    map.setZoom(15);
+                }}
+                className="w-10 h-10 bg-white dark:bg-[#1e1e1e] rounded-full shadow-lg flex items-center justify-center mr-[10px] mb-[100px] border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#252525] transition-all hover:scale-105 active:scale-95"
+                title="Ma Boutique"
+            >
+                <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+                </svg>
+            </button>
+        </MapControl>
+    );
+};
+
+// Component to render real Google Maps directions (following roads)
+const Directions = ({ origin, destination, waypoints }) => {
+    const map = useMap();
+    const routesLibrary = useMapsLibrary('routes');
+    const [directionsService, setDirectionsService] = useState();
+    const [directionsRenderer, setDirectionsRenderer] = useState();
 
     useEffect(() => {
-        if (!map || !window.google) return;
+        if (!routesLibrary || !map) return;
+        setDirectionsService(new routesLibrary.DirectionsService());
         
-        try {
-            const line = new google.maps.Polyline({
-                path: props.path,
-                geodesic: true,
-                strokeColor: '#96370B',
-                strokeOpacity: 0.8,
-                strokeWeight: 4,
-                icons: [{
-                    icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 4 },
-                    offset: '0',
-                    repeat: '20px'
-                }],
-            });
+        // We use the default Google Maps rendering for the line (which includes the nice outline automatically)
+        setDirectionsRenderer(new routesLibrary.DirectionsRenderer({
+            map,
+            suppressMarkers: true, // We keep our custom beautiful markers
+            preserveViewport: true, // Don't auto-zoom, let the map handle its default center/zoom
+        }));
+    }, [routesLibrary, map]);
 
-            line.setMap(map);
-            setPolyline(line);
+    useEffect(() => {
+        if (!directionsService || !directionsRenderer || !origin || !destination) return;
 
-            return () => {
-                line.setMap(null);
-            };
-        } catch (e) {
-            console.error("Polyline error:", e);
+        const request = {
+            origin: origin,
+            destination: destination,
+            waypoints: waypoints?.map(w => ({ location: w, stopover: false })) || [],
+            travelMode: window.google.maps.TravelMode.DRIVING,
+        };
+
+        directionsService.route(request, (response, status) => {
+            if (status === 'OK') {
+                directionsRenderer.setDirections(response);
+            } else {
+                console.error("Directions request failed due to " + status);
+            }
+        });
+    }, [directionsService, directionsRenderer, origin, destination, waypoints]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (directionsRenderer) {
+                directionsRenderer.setMap(null);
+            }
         }
-    }, [map, props.path]);
+    }, [directionsRenderer]);
 
     return null;
 };
@@ -78,9 +117,9 @@ export default function Tracking({ order }) {
         status: order.status
     };
 
-    const shopLocation = { lat: parseFloat(order.shop?.latitude || 6.1366), lng: parseFloat(order.shop?.longitude || 1.2222) };
+    const shopLocation = { lat: parseFloat(order.shop?.latitude || 6.1256), lng: parseFloat(order.shop?.longitude || 1.2254) };
     const deliveryLocation = { lat: 6.1550, lng: 1.2150 }; // Simulated delivery position
-    const customerLocation = { lat: 6.1666, lng: 1.1833 }; // Target location
+    const customerLocation = { lat: 6.1636, lng: 1.2152 }; // Target location (user's real testing location)
 
     const routeCoords = [shopLocation, deliveryLocation, customerLocation];
 
@@ -156,27 +195,27 @@ export default function Tracking({ order }) {
                             mapTypeControl={false}
                             streetViewControl={false}
                         >
+                            {/* Shop Marker */}
                             <AdvancedMarker position={shopLocation}>
-                                <div className="bg-white p-2 rounded-lg shadow-md border border-gray-100">
-                                    <span className="text-[10px] font-black text-gray-700 uppercase">Ma Boutique</span>
+                                <div className="flex flex-col items-center">
+                                    <div className="mb-1 px-2 py-0.5 bg-[#EA4335] rounded-full text-[8px] font-black shadow-lg text-white uppercase tracking-tighter">BOUTIQUE</div>
+                                    <div className="w-5 h-5 rounded-full border-[3px] border-white shadow-xl flex items-center justify-center bg-[#EA4335]"></div>
                                 </div>
                             </AdvancedMarker>
 
+                            {/* User Marker */}
                             <AdvancedMarker position={customerLocation}>
-                                <div className="bg-white p-2 rounded-lg shadow-md border border-gray-100">
-                                    <span className="text-[10px] font-black text-gray-700 uppercase">Client</span>
+                                <div className="flex flex-col items-center">
+                                    <div className="mb-1 px-2 py-0.5 bg-[#4285F4] rounded-full text-[8px] font-black shadow-lg text-white uppercase tracking-tighter">CLIENT</div>
+                                    <div className="w-5 h-5 rounded-full border-[3px] border-white shadow-xl flex items-center justify-center bg-[#4285F4]"></div>
                                 </div>
                             </AdvancedMarker>
 
-                            <AdvancedMarker position={deliveryLocation}>
-                                <div className="relative">
-                                    <div className="absolute -inset-4 bg-[#8B4513]/20 rounded-full animate-ping"></div>
-                                    <div className="relative bg-[#8B4513] w-4 h-4 rounded-full shadow-2xl border-2 border-white z-10">
-                                    </div>
-                                </div>
-                            </AdvancedMarker>
-
-                            <Polyline path={routeCoords} />
+                            <Directions 
+                                origin={shopLocation} 
+                                destination={customerLocation} 
+                            />
+                            <LocateMeControl location={shopLocation} />
                         </Map>
                     </APIProvider>
                 </div>

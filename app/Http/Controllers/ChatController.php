@@ -31,6 +31,12 @@ class ChatController extends Controller
             'shop_id' => $shop->id,
         ]);
 
+        // Mark messages as read
+        $conversation->messages()
+            ->where('sender_id', '!=', $authUser->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
         $messages = $conversation->messages()->with('sender')->orderBy('created_at')->get();
 
         return Inertia::render('Chat/Conversation', [
@@ -51,6 +57,12 @@ class ChatController extends Controller
         if ($user->id !== $conversation->user_id && $user->id !== $conversation->shop->user_id) {
             abort(403);
         }
+
+        // Mark messages as read
+        $conversation->messages()
+            ->where('sender_id', '!=', $user->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
 
         $messages = $conversation->messages()->with('sender')->orderBy('created_at')->get();
         return response()->json($messages);

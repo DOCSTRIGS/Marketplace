@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    'fedapay' => [
+        'public_key' => env('FEDAPAY_PUBLIC_KEY'),
+        'secret_key' => env('FEDAPAY_SECRET_KEY'),
+        'environment' => env('FEDAPAY_ENVIRONMENT', 'sandbox'),
+    ],
+
+    'kkiapay' => [
+        'public_key' => env('KKIAPAY_PUBLIC_KEY'),
+        'secret_key' => env('KKIAPAY_SECRET_KEY'),
+        'secret' => env('KKIAPAY_SECRET'),
+        'environment' => env('KKIAPAY_ENVIRONMENT', 'sandbox'),
+    ],
+
 ];

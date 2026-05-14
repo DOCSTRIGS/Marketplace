@@ -2,9 +2,14 @@ import React, { useState } from 'react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import { useCart } from '@/Contexts/CartContext';
+import { useToast } from '@/Contexts/ToastContext';
+import { router } from '@inertiajs/react';
 
 export default function ProductDetail({ product }) {
     const { auth } = usePage().props;
+    const { addToCart: addItemToCart } = useCart();
+    const { addToast } = useToast();
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState('description');
@@ -26,26 +31,14 @@ export default function ProductDetail({ product }) {
     };
 
     const addToCart = () => {
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const existingItem = cart.find(item => item.id === product.id);
-        
-        if (existingItem) {
-            existingItem.quantity += quantity;
-        } else {
-            cart.push({
-                id: product.id,
-                name: product.name,
-                price: product.price,
-                image: images[0],
-                quantity: quantity,
-                shop_id: product.shop_id,
-                shop_name: product.shop?.name
-            });
+        if (!auth.user) {
+            addToast('Veuillez vous connecter pour ajouter des produits au panier', 'error');
+            router.visit(route('login'));
+            return;
         }
-        
-        localStorage.setItem('cart', JSON.stringify(cart));
-        window.dispatchEvent(new Event('cart-updated'));
-        alert('Produit ajouté au panier !');
+
+        addItemToCart(product, quantity);
+        addToast('Produit ajouté au panier !', 'success');
     };
 
     return (
@@ -53,24 +46,24 @@ export default function ProductDetail({ product }) {
             <Head title={`${product.name} - LoméShop`} />
             <Navbar />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-12">
                 {/* Breadcrumbs */}
-                <nav className="flex mb-8 text-sm font-medium">
-                    <Link href={route('home')} className="text-gray-400 hover:text-[#8B4513]">Accueil</Link>
-                    <span className="mx-2 text-gray-300">/</span>
-                    <Link href={route('explore')} className="text-gray-400 hover:text-[#8B4513]">Boutique</Link>
-                    <span className="mx-2 text-gray-300">/</span>
-                    <span className="text-[#8B4513]">{product.name}</span>
+                <nav className="flex mb-10 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
+                    <Link href={route('home')} className="hover:text-[#8B4513] transition-colors">Accueil</Link>
+                    <span className="mx-3">/</span>
+                    <Link href={route('explore')} className="hover:text-[#8B4513] transition-colors">Boutique</Link>
+                    <span className="mx-3">/</span>
+                    <span className="text-gray-900 dark:text-white">{product.name}</span>
                 </nav>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-                    {/* Left: Images */}
-                    <div className="space-y-4">
-                        <div className="aspect-square rounded-[40px] overflow-hidden bg-gray-50 dark:bg-[#1e1e1e] border border-gray-100 dark:border-gray-800 shadow-sm transition-colors">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 mb-24">
+                    {/* Images - Left Column (7/12) */}
+                    <div className="lg:col-span-7 space-y-6">
+                        <div className="w-full aspect-[4/5] sm:aspect-square lg:aspect-[4/5] rounded-lg bg-gray-100 dark:bg-[#1e1e1e] overflow-hidden">
                             <img 
                                 src={images[selectedImage]} 
                                 alt={product.name} 
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
                             />
                         </div>
                         <div className="grid grid-cols-4 gap-4">
@@ -78,7 +71,7 @@ export default function ProductDetail({ product }) {
                                 <button 
                                     key={idx}
                                     onClick={() => setSelectedImage(idx)}
-                                    className={`aspect-square rounded-2xl overflow-hidden border-2 transition-all ${selectedImage === idx ? 'border-[#8B4513] shadow-md scale-95' : 'border-transparent hover:border-gray-200'}`}
+                                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImage === idx ? 'border-[#8B4513]' : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'}`}
                                 >
                                     <img src={img} alt="" className="w-full h-full object-cover" />
                                 </button>
@@ -86,214 +79,195 @@ export default function ProductDetail({ product }) {
                         </div>
                     </div>
 
-                    {/* Right: Product Info */}
-                    <div className="flex flex-col">
-                        <div className="mb-6">
-                            <Link href={`/explore?category_id=${product.category_id}`} className="inline-block px-3 py-1 bg-[#8B4513]/5 dark:bg-[#8B4513]/20 text-[#8B4513] text-[10px] font-black uppercase tracking-widest rounded-full mb-3">
-                                {product.category?.name}
-                            </Link>
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-2 leading-tight">{product.name}</h1>
+                    {/* Product Info - Right Column (5/12) */}
+                    <div className="lg:col-span-5 flex flex-col py-4">
+                        <div className="mb-10">
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4">
+                                EDITION LIMITEE • {product.category?.name || 'LOMÉ'}
+                            </h4>
                             
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="flex items-center text-yellow-400">
-                                    {[...Array(5)].map((_, i) => (
-                                    {[...Array(5)].map((_, i) => (
-                                        <svg key={i} className={`w-4 h-4 ${i < Math.floor(product.reviews?.reduce((acc, r) => acc + r.rating, 0) / (product.reviews?.length || 1)) ? 'fill-current' : 'text-gray-200 dark:text-gray-700'}`} viewBox="0 0 20 20">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                        </svg>
-                                    ))}
-                                    <span className="ml-2 text-sm font-bold text-gray-500 dark:text-gray-400">({product.reviews?.length || 0} avis)</span>
-                                </div>
-                                <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-                                <span className={`text-sm font-bold ${product.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                                    {product.stock > 0 ? `En stock (${product.stock})` : 'Rupture de stock'}
-                                </span>
-                            </div>
-
-                            <p className="text-3xl font-black text-[#D35400] mb-8">
-                                {new Intl.NumberFormat('fr-FR').format(product.price)} F
-                            </p>
-
-                            <p className="text-gray-500 dark:text-gray-400 leading-relaxed font-medium mb-8">
+                            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white mb-6 leading-[1.1] tracking-tight">{product.name}</h1>
+                            
+                            <p className="text-gray-600 dark:text-gray-400 leading-relaxed font-medium text-base mb-8">
                                 {product.description}
                             </p>
+
+                            <div className="flex items-end gap-4 mb-10">
+                                <p className="text-3xl font-black text-[#8B4513] tracking-tight">
+                                    {new Intl.NumberFormat('fr-FR').format(product.price)} FCFA
+                                </p>
+                                <p className="text-sm font-bold text-gray-400 line-through mb-1">
+                                    {new Intl.NumberFormat('fr-FR').format(product.price * 1.2)} FCFA
+                                </p>
+                            </div>
                         </div>
 
                         {/* Variantes */}
-                        {product.variants && product.variants.length > 0 && (
-                            <div className="mb-8 space-y-4">
-                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Options disponibles</h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {product.variants.map((v, i) => (
-                                        <div key={i} className="px-4 py-2 bg-gray-50 dark:bg-[#1e1e1e] border border-gray-100 dark:border-gray-800 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 transition-colors">
-                                            <span className="text-gray-400 dark:text-gray-500 mr-2">{v.name}:</span>
-                                            {v.value}
-                                        </div>
-                                    ))}
+                        {product.variants && product.variants.length > 0 ? (
+                            <div className="mb-10 space-y-6">
+                                <div>
+                                    <h4 className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-[0.1em] mb-3">Format</h4>
+                                    <div className="flex flex-wrap gap-3">
+                                        {product.variants.map((v, i) => (
+                                            <button key={i} className="px-6 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-xs font-bold text-gray-900 dark:text-white hover:border-[#8B4513] transition-colors">
+                                                {v.value}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="mb-10">
+                                <h4 className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-[0.1em] mb-3">Quantité</h4>
+                                <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-md w-[140px] h-12">
+                                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-12 h-full flex items-center justify-center text-gray-500 hover:text-black">-</button>
+                                    <span className="flex-1 text-center font-bold text-sm">{quantity}</span>
+                                    <button onClick={() => setQuantity(quantity + 1)} className="w-12 h-full flex items-center justify-center text-gray-500 hover:text-black">+</button>
                                 </div>
                             </div>
                         )}
 
-                        <div className="mt-auto space-y-6">
-                            <div className="flex items-center gap-6">
-                                <div className="flex items-center bg-gray-50 dark:bg-[#1e1e1e] rounded-2xl p-1 border border-gray-100 dark:border-gray-800 transition-colors">
-                                    <button 
-                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                        className="w-10 h-10 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-bold"
-                                    >
-                                        -
-                                    </button>
-                                    <span className="w-12 text-center font-black dark:text-white">{quantity}</span>
-                                    <button 
-                                        onClick={() => setQuantity(quantity + 1)}
-                                        className="w-10 h-10 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-bold"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                                <button 
-                                    onClick={addToCart}
-                                    className="flex-1 bg-[#1a1a1a] text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-gray-200 hover:bg-black transition-all"
-                                >
-                                    Ajouter au panier
-                                </button>
-                            </div>
+                        <div className="space-y-4">
+                            <button 
+                                onClick={addToCart}
+                                className="w-full bg-[#6B4423] text-white py-4 rounded-md font-bold text-xs uppercase tracking-[0.1em] hover:bg-[#5A381C] transition-colors flex items-center justify-center gap-3"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                                Ajouter au panier
+                            </button>
+                            
+                            <Link 
+                                href={route('chat.show', product.shop_id)}
+                                className="w-full flex items-center justify-center gap-2 py-4 bg-transparent border border-gray-200 dark:border-gray-700 rounded-md text-xs font-bold uppercase tracking-[0.1em] text-gray-900 dark:text-white hover:border-gray-400 transition-colors"
+                            >
+                                Contacter le vendeur
+                            </Link>
+                        </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <Link 
-                                    href={route('chat.show', product.shop_id)}
-                                    className="flex items-center justify-center gap-2 py-3 border-2 border-gray-100 dark:border-gray-800 rounded-2xl text-xs font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                    </svg>
-                                    Contacter le vendeur
-                                </Link>
-                                <button className="flex items-center justify-center gap-2 py-3 border-2 border-gray-100 dark:border-gray-800 rounded-2xl text-xs font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                                    </svg>
-                                    Partager
-                                </button>
+                        <div className="grid grid-cols-2 gap-6 mt-10 pt-8 border-t border-gray-100 dark:border-gray-800">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2 text-gray-900 dark:text-white">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">En stock</span>
+                                </div>
+                                <p className="text-[10px] text-gray-500">Expédié sous 24h</p>
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2 mb-2 text-gray-900 dark:text-white">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Paiement sécurisé</span>
+                                </div>
+                                <p className="text-[10px] text-gray-500">Protection acheteur</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Tabs: Description, Shop, Reviews */}
-                <div className="border-t border-gray-100 dark:border-gray-800 pt-12 transition-colors">
-                    <div className="flex gap-8 mb-12 overflow-x-auto pb-4">
-                        {['description', 'vendeur', 'avis'].map((tab) => (
-                            <button 
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`text-sm font-black uppercase tracking-widest pb-2 border-b-2 transition-all ${activeTab === tab ? 'border-[#8B4513] text-[#8B4513]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
-                            >
-                                {tab}
-                                {tab === 'avis' && ` (${product.reviews?.length || 0})`}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="max-w-3xl">
-                        {activeTab === 'description' && (
-                            <div className="prose prose-sm font-medium text-gray-600 max-w-none">
-                                <p>{product.description}</p>
-                            </div>
-                        )}
-
-                        {activeTab === 'vendeur' && (
-                            <div className="bg-gray-50 dark:bg-[#1e1e1e] rounded-[32px] p-8 flex items-center gap-6 transition-colors">
-                                <div className="w-20 h-20 rounded-full bg-white dark:bg-[#252525] flex items-center justify-center border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
-                                    <img src={product.shop?.logo || `https://ui-avatars.com/api/?name=${product.shop?.name}&background=8B4513&color=fff`} alt="" />
+                {/* Artisan Section (Replaces Tabs) */}
+                <div className="bg-[#FAF9F6] dark:bg-[#1A1A1A] rounded-2xl p-8 lg:p-16 mb-24 relative overflow-hidden">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                        <div className="order-2 lg:order-1 relative z-10">
+                            <h4 className="text-[10px] font-black text-[#8B4513] uppercase tracking-[0.2em] mb-4">L'histoire de la boutique</h4>
+                            <h2 className="text-3xl lg:text-4xl font-black text-gray-900 dark:text-white mb-6 leading-tight">
+                                {product.shop?.name || 'Artisan Local'}
+                            </h2>
+                            <p className="text-gray-600 dark:text-gray-400 font-medium leading-relaxed mb-6">
+                                Installé dans son atelier depuis plusieurs années, cet artisan ne se contente pas de fabriquer, il dialogue avec la matière. Chaque pièce est le fruit d'un travail méticuleux et d'une passion transmise de génération en génération.
+                            </p>
+                            <p className="text-gray-600 dark:text-gray-400 font-medium leading-relaxed italic mb-8 border-l-4 border-[#8B4513] pl-4">
+                                "Notre terre possède une âme. Mon rôle est simplement de la laisser s'exprimer à travers des lignes qui parlent à notre époque."
+                            </p>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
+                                    <img src={product.shop?.logo || `https://ui-avatars.com/api/?name=${product.shop?.name}&background=8B4513&color=fff`} alt="" className="w-full h-full object-cover" />
                                 </div>
                                 <div>
-                                    <h4 className="text-xl font-black text-gray-900 dark:text-white mb-1">{product.shop?.name}</h4>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 font-bold mb-4">{product.shop?.neighborhood?.name}, Lomé</p>
-                                    <Link href={`/shop/${product.shop_id}`} className="text-xs font-black text-[#8B4513] uppercase tracking-widest hover:underline">Visiter la boutique</Link>
+                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{product.shop?.name}</p>
+                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">{product.shop?.neighborhood?.name || 'Lomé'}</p>
                                 </div>
                             </div>
-                        )}
+                        </div>
+                        <div className="order-1 lg:order-2 relative">
+                            <div className="aspect-[4/5] rounded-xl overflow-hidden shadow-2xl">
+                                <img src={product.shop?.logo || images[0]} alt="Artisan" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="absolute -bottom-6 -left-6 bg-[#6B4423] text-white p-6 rounded-lg shadow-xl max-w-[200px]">
+                                <p className="text-2xl font-black mb-1">100%</p>
+                                <p className="text-[9px] uppercase tracking-[0.1em] font-bold leading-tight">Authentique &<br/>Local</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                        {activeTab === 'avis' && (
-                            <div className="space-y-12">
-                                {/* Formulaire Avis */}
-                                {auth.user ? (
-                                    <div className="bg-white dark:bg-[#1e1e1e] rounded-3xl border border-gray-100 dark:border-gray-800 p-8 shadow-sm transition-colors">
-                                        <h4 className="text-lg font-black text-gray-900 dark:text-white mb-6">Laisser un avis</h4>
-                                        <form onSubmit={submitReview} className="space-y-6">
-                                            <div className="flex items-center gap-4">
-                                                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Note</p>
-                                                <div className="flex gap-1">
-                                                    {[1, 2, 3, 4, 5].map((star) => (
-                                                        <button 
-                                                            key={star}
-                                                            type="button"
-                                                            onClick={() => setData('rating', star)}
-                                                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${data.rating >= star ? 'bg-yellow-400 text-white' : 'bg-gray-100 text-gray-300'}`}
-                                                        >
-                                                            ★
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <textarea 
-                                                    value={data.comment}
-                                                    onChange={e => setData('comment', e.target.value)}
-                                                    className="w-full rounded-2xl border-gray-100 dark:border-gray-800 bg-white dark:bg-[#252525] text-gray-900 dark:text-white focus:ring-[#8B4513] focus:border-[#8B4513] p-4 text-sm font-medium transition-colors"
-                                                    placeholder="Partagez votre expérience..."
-                                                    rows="4"
-                                                    required
-                                                ></textarea>
-                                            </div>
-                                            <button 
-                                                type="submit" 
-                                                disabled={processing}
-                                                className="bg-[#8B4513] text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-[#8B4513]/20 disabled:opacity-50"
-                                            >
-                                                Envoyer mon avis
-                                            </button>
-                                        </form>
+                {/* Details & Recommandations */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 mb-24 border-t border-gray-100 dark:border-gray-800 pt-16">
+                    <div className="lg:col-span-4">
+                        <h3 className="text-sm font-black uppercase tracking-[0.1em] text-gray-900 dark:text-white mb-8">Détails Techniques</h3>
+                        <div className="space-y-4 text-sm">
+                            <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
+                                <span className="text-gray-500">Catégorie</span>
+                                <span className="font-bold text-gray-900 dark:text-white">{product.category?.name || '-'}</span>
+                            </div>
+                            <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
+                                <span className="text-gray-500">Stock disponible</span>
+                                <span className="font-bold text-gray-900 dark:text-white">{product.stock} unités</span>
+                            </div>
+                            <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
+                                <span className="text-gray-500">Localisation</span>
+                                <span className="font-bold text-gray-900 dark:text-white">{product.shop?.neighborhood?.name || 'Lomé'}</span>
+                            </div>
+                            <div className="flex justify-between pb-2">
+                                <span className="text-gray-500">Entretien</span>
+                                <span className="font-bold text-gray-900 dark:text-white">Nettoyage à sec uniquement</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-8">
+                        <h3 className="text-sm font-black uppercase tracking-[0.1em] text-gray-900 dark:text-white mb-8">Avis Clients ({product.reviews?.length || 0})</h3>
+                        <div className="space-y-8">
+                            {/* Formulaire Avis */}
+                            {auth.user ? (
+                                <form onSubmit={submitReview} className="bg-gray-50 dark:bg-[#1e1e1e] p-6 rounded-lg mb-8">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <p className="text-xs font-bold text-gray-500">Votre note:</p>
+                                        <div className="flex gap-1">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <button key={star} type="button" onClick={() => setData('rating', star)} className={`text-xl ${data.rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}>★</button>
+                                            ))}
+                                        </div>
                                     </div>
+                                    <textarea 
+                                        value={data.comment} onChange={e => setData('comment', e.target.value)}
+                                        className="w-full rounded-md border-gray-200 dark:border-gray-700 bg-white dark:bg-[#252525] focus:border-[#8B4513] focus:ring-0 text-sm mb-4"
+                                        placeholder="Partagez votre expérience..." rows="3" required
+                                    ></textarea>
+                                    <button type="submit" disabled={processing} className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-2 rounded text-xs font-bold uppercase tracking-wider disabled:opacity-50 hover:bg-gray-800 transition-colors">Envoyer</button>
+                                </form>
+                            ) : (
+                                <p className="text-sm text-gray-500 mb-8">Veuillez <Link href="/login" className="text-[#8B4513] underline">vous connecter</Link> pour laisser un avis.</p>
+                            )}
+
+                            {/* Liste */}
+                            <div className="space-y-6">
+                                {product.reviews?.length > 0 ? (
+                                    product.reviews.map((review) => (
+                                        <div key={review.id} className="pb-6 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className="flex text-yellow-400 text-xs">
+                                                    {[...Array(5)].map((_, i) => <span key={i} className={i < review.rating ? 'text-yellow-400' : 'text-gray-200'}>★</span>)}
+                                                </div>
+                                                <span className="font-bold text-sm text-gray-900 dark:text-white ml-2">{review.user?.name}</span>
+                                                <span className="text-xs text-gray-400 ml-auto">{new Date(review.created_at).toLocaleDateString('fr-FR')}</span>
+                                            </div>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">{review.comment}</p>
+                                        </div>
+                                    ))
                                 ) : (
-                                    <div className="bg-gray-50 dark:bg-[#1e1e1e] rounded-2xl p-6 text-center border border-gray-100 dark:border-gray-800">
-                                        <p className="text-sm font-bold text-gray-500 dark:text-gray-400">
-                                            Veuillez <Link href="/login" className="text-[#8B4513] underline">vous connecter</Link> pour laisser un avis.
-                                        </p>
-                                    </div>
+                                    <p className="text-gray-400 text-sm">Aucun avis pour le moment.</p>
                                 )}
-
-                                {/* Liste des Avis */}
-                                <div className="space-y-8">
-                                    {product.reviews?.length > 0 ? (
-                                        product.reviews.map((review) => (
-                                            <div key={review.id} className="flex gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#252525] flex-shrink-0 flex items-center justify-center text-gray-400 font-black text-xs">
-                                                    {review.user?.name.charAt(0)}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <h5 className="font-black text-gray-900 dark:text-white text-sm">{review.user?.name}</h5>
-                                                        <span className="text-[10px] font-bold text-gray-400">{new Date(review.created_at).toLocaleDateString('fr-FR')}</span>
-                                                    </div>
-                                                    <div className="flex text-yellow-400 mb-2">
-                                                        {[...Array(5)].map((_, i) => (
-                                                            <span key={i} className={i < review.rating ? 'text-yellow-400' : 'text-gray-200'}>★</span>
-                                                        ))}
-                                                    </div>
-                                                    <p className="text-sm font-medium text-gray-600 leading-relaxed">
-                                                        {review.comment}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-gray-400 font-bold text-sm text-center py-8">Aucun avis pour le moment.</p>
-                                    )}
-                                </div>
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
             </main>

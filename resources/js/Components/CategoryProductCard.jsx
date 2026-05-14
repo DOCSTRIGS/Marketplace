@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useCart } from '@/Contexts/CartContext';
 import { useToast } from '@/Contexts/ToastContext';
 
 export default function CategoryProductCard({ product, index = 0 }) {
+    const { auth } = usePage().props;
     const { addToCart } = useCart();
     const { addToast } = useToast();
     const [adding, setAdding] = useState(false);
@@ -15,6 +16,13 @@ export default function CategoryProductCard({ product, index = 0 }) {
     const handleQuickAdd = (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        if (!auth.user) {
+            addToast('Veuillez vous connecter pour ajouter des produits au panier', 'error');
+            router.visit(route('login'));
+            return;
+        }
+
         addToCart(product);
         setAdding(true);
         addToast(`"${product.name}" ajouté au panier !`, 'success');

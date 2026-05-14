@@ -42,6 +42,14 @@ class HandleInertiaRequests extends Middleware
                     return 0;
                 }
             })(),
+            'pendingOrdersCount' => (function() use ($request) {
+                try {
+                    return $request->user() ? $request->user()->pendingOrdersCount() : 0;
+                } catch (\Exception $e) {
+                    \Log::error('Error counting pending orders: ' . $e->getMessage());
+                    return 0;
+                }
+            })(),
         ];
     }
 }

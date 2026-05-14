@@ -77,20 +77,32 @@ class User extends Authenticatable
 
     public function unreadMessagesCount()
     {
-        // If user is a seller, they care about messages in their shop's conversations
+        // If user is a seller, count how many UNIQUE CLIENTS have sent unread messages
         if ($this->role === 'seller' && $this->shop) {
-            return Message::whereHas('conversation', function($q) {
-                $q->where('shop_id', $this->shop->id);
-            })->where('sender_id', '!=', $this->id)
-              ->whereNull('read_at')
-              ->count();
+            return Conversation::where('shop_id', $this->shop->id)
+                ->whereHas('messages', function($q) {
+                    $q->where('sender_id', '!=', $this->id)
+                      ->whereNull('read_at');
+                })->count();
         }
 
-        // For clients
-        return Message::whereHas('conversation', function($q) {
-            $q->where('user_id', $this->id);
-        })->where('sender_id', '!=', $this->id)
-          ->whereNull('read_at')
-          ->count();
+        // For clients, count how many UNIQUE SHOPS have sent unread messages
+        return Conversation::where('user_id', $this->id)
+            ->whereHas('messages', function($q) {
+                $q->where('sender_id', '!=', $this->id)
+                  ->whereNull('read_at');
+            })->count();
+    }
+
+    public function pendingOrdersCount()
+    {
+        if ($this->role === 'seller' && $this->shop) {
+            // Count all orders awaiting seller action: 
+            // pending (unpaid but created), paid (confirmed), processing/preparing (in progress)
+            return Order::where('shop_id', $this->shop->id)
+                ->whereIn('status', ['pending', 'paid', 'processing', 'preparing'])
+                ->count();
+        }
+        return 0;
     }
 }

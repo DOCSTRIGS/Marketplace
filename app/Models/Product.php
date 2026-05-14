@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
+    use SoftDeletes;
     protected $fillable = ['shop_id', 'category_id', 'name', 'slug', 'description', 'price', 'stock', 'variants', 'status', 'images'];
 
     protected function casts(): array

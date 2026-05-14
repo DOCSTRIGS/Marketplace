@@ -86,6 +86,14 @@ class OrderController extends Controller
             $createdOrders[] = $order;
         }
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'reference' => $paymentReference,
+                'total_amount' => array_sum(array_map(fn($o) => $o->total_amount, $createdOrders)),
+                'kkiapay_public_key' => config('services.kkiapay.public_key')
+            ]);
+        }
+
         return redirect()->route('checkout.show', ['reference' => $paymentReference]);
     }
 
@@ -135,6 +143,24 @@ class OrderController extends Controller
         }
 
         return back()->with('success', 'Statut mis à jour avec succès.');
+    }
+
+    /**
+     * Remove the specified order from storage (Soft Delete).
+     */
+    public function destroy($id)
+    {
+        $order = Order::findOrFail($id);
+        
+        // Security check: only the shop owner can delete their order
+        $shop = Auth::user()->shop;
+        if (!$shop || $order->shop_id !== $shop->id) {
+            abort(403);
+        }
+
+        $order->delete();
+
+        return back()->with('success', 'Commande supprimée avec succès.');
     }
 
     /**

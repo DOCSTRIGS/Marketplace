@@ -1,115 +1,109 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 
-export default function Checkout({ reference, orders, totalAmount }) {
-    const [method, setMethod] = useState('tmoney');
-    const [phone, setPhone] = useState('');
+export default function Checkout({ reference, orders, totalAmount, fedapay_public_key }) {
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState('');
 
     const formattedAmount = new Intl.NumberFormat('fr-FR').format(totalAmount);
 
-    const handlePayment = (e) => {
+    const handlePayment = async (e) => {
         e.preventDefault();
         
-        if (!phone || phone.length < 8) {
-            setError('Veuillez entrer un numéro de téléphone valide.');
+        if (fedapay_public_key === 'pk_sandbox_placeholder') {
+            setError('Configuration FedaPay manquante (Clé API non définie).');
             return;
         }
 
         setIsProcessing(true);
         setError('');
 
-        // Simuler le délai de l'API (FedaPay/PayGate)
-        setTimeout(() => {
-            router.post(route('checkout.process'), {
-                reference: reference,
-                payment_method: method === 'tmoney' ? 'T-Money' : 'Flooz',
-                phone_number: phone
-            }, {
-                onError: (errors) => {
-                    setIsProcessing(false);
-                    setError(errors.message || 'Le paiement a échoué. Veuillez réessayer.');
+        try {
+            // Appeler notre backend pour initialiser la transaction
+            const response = await fetch(route('checkout.fedapay'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ reference: reference })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Erreur lors de l\'initialisation du paiement');
+            }
+
+            // Ouvrir le modal FedaPay
+            FedaPay.init({
+                public_key: fedapay_public_key,
+                transaction: {
+                    id: data.token,
+                    token: data.token
+                },
+                onComplete: (reason) => {
+                    if (reason.status === 'approved') {
+                        router.visit(route('checkout.success', { reference: reference }));
+                    } else {
+                        setIsProcessing(false);
+                    }
                 }
             });
-        }, 2000);
+
+            FedaPay.open();
+
+        } catch (err) {
+            setIsProcessing(false);
+            setError(err.message);
+        }
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
+        <div className="min-h-screen bg-gray-50 dark:bg-[#121212] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans transition-colors">
             <Head title="Paiement Sécurisé" />
 
             <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8 text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#B03A2E]/10 mb-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#B03A2E]/10 mb-4 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-[#B03A2E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                 </div>
-                <h2 className="text-3xl font-extrabold text-gray-900">
+                <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white transition-colors">
                     Paiement Sécurisé
                 </h2>
-                <p className="mt-2 text-sm text-gray-600 font-medium">
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 font-medium transition-colors">
                     Réf : {reference}
                 </p>
             </div>
 
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-8 px-4 shadow-2xl sm:rounded-3xl sm:px-10 border border-gray-100 relative overflow-hidden">
+                <div className="bg-white dark:bg-[#1e1e1e] py-8 px-4 shadow-2xl sm:rounded-3xl sm:px-10 border border-gray-100 dark:border-gray-800 relative overflow-hidden transition-colors">
                     
                     {/* Decorative Top Bar */}
                     <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#F1C40F] via-[#2ECC71] to-[#3498DB]"></div>
 
                     <div className="mb-8 text-center">
-                        <p className="text-gray-500 text-sm font-bold uppercase tracking-widest mb-2">Montant à payer</p>
-                        <div className="text-5xl font-black text-[#222222] tracking-tighter">
+                        <p className="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase tracking-widest mb-2 transition-colors">Montant à payer</p>
+                        <div className="text-5xl font-black text-[#222222] dark:text-white tracking-tighter transition-colors">
                             {formattedAmount} <span className="text-2xl text-gray-400">FCFA</span>
                         </div>
                     </div>
 
                     <form onSubmit={handlePayment} className="space-y-6">
-                        {/* Method Selection */}
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 uppercase mb-3">
-                                Choisir un moyen de paiement
-                            </label>
-                            <div className="grid grid-cols-2 gap-4">
-                                <label className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all ${method === 'tmoney' ? 'border-[#F1C40F] bg-[#F1C40F]/5' : 'border-gray-200 hover:border-gray-300'}`}>
-                                    <input type="radio" name="method" value="tmoney" className="sr-only" checked={method === 'tmoney'} onChange={() => setMethod('tmoney')} />
-                                    <div className="w-10 h-10 bg-[#F1C40F] rounded-full flex items-center justify-center font-black text-black">T</div>
-                                    <span className="font-bold text-sm">T-Money</span>
-                                </label>
-
-                                <label className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all ${method === 'flooz' ? 'border-[#2980B9] bg-[#2980B9]/5' : 'border-gray-200 hover:border-gray-300'}`}>
-                                    <input type="radio" name="method" value="flooz" className="sr-only" checked={method === 'flooz'} onChange={() => setMethod('flooz')} />
-                                    <div className="w-10 h-10 bg-[#2980B9] rounded-full flex items-center justify-center font-black text-white">F</div>
-                                    <span className="font-bold text-sm">Flooz</span>
-                                </label>
-                            </div>
+                        <div className="bg-gray-50 dark:bg-white/5 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 mb-6 transition-colors">
+                            <h4 className="font-bold text-gray-900 dark:text-white mb-2 transition-colors">Instructions</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors">
+                                Cliquez sur le bouton ci-dessous pour ouvrir la fenêtre de paiement sécurisée de <strong>FedaPay</strong>. 
+                                Vous pourrez choisir votre moyen de paiement préféré (T-Money, Flooz ou Carte).
+                            </p>
                         </div>
 
-                        {/* Phone Number Input */}
-                        <div>
-                            <label htmlFor="phone" className="block text-xs font-bold text-gray-700 uppercase mb-2">
-                                Numéro de téléphone
-                            </label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span className="text-gray-500 sm:text-sm font-bold">
-                                        +228
-                                    </span>
-                                </div>
-                                <input
-                                    type="tel"
-                                    id="phone"
-                                    className="focus:ring-[#B03A2E] focus:border-[#B03A2E] block w-full pl-14 sm:text-lg border-gray-300 rounded-xl py-4 font-bold"
-                                    placeholder="Ex: 90 00 00 00"
-                                    value={phone}
-                                    onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
-                                    disabled={isProcessing}
-                                />
+                        {error && (
+                            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/50 rounded-xl">
+                                <p className="text-sm text-red-600 dark:text-red-400 font-medium">{error}</p>
                             </div>
-                            {error && <p className="mt-2 text-sm text-red-600 font-medium">{error}</p>}
-                        </div>
+                        )}
 
                         {/* Submit Button */}
                         <div>

@@ -8,49 +8,86 @@ import {
     AdvancedMarker, 
     InfoWindow,
     useMap,
-    useMapsLibrary
+    useMapsLibrary,
+    MapControl
 } from '@vis.gl/react-google-maps';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-// Custom Polyline component for Google Maps
-const Polyline = (props) => {
+// Control to recenter map on user
+const LocateMeControl = ({ location }) => {
     const map = useMap();
-    const [polyline, setPolyline] = useState(null);
+    if (!map || !location) return null;
+
+    return (
+        <MapControl position={window.google.maps.ControlPosition.RIGHT_BOTTOM}>
+            <button
+                onClick={() => {
+                    map.panTo(location);
+                    map.setZoom(15);
+                }}
+                className="w-10 h-10 bg-white dark:bg-[#1e1e1e] rounded-full shadow-lg flex items-center justify-center mr-[10px] mb-[100px] border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#252525] transition-all hover:scale-105 active:scale-95"
+                title="Voir ma position"
+            >
+                <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+                </svg>
+            </button>
+        </MapControl>
+    );
+};
+
+// Component to render real Google Maps directions (following roads)
+const Directions = ({ origin, destination, waypoints }) => {
+    const map = useMap();
+    const routesLibrary = useMapsLibrary('routes');
+    const [directionsService, setDirectionsService] = useState();
+    const [directionsRenderer, setDirectionsRenderer] = useState();
 
     useEffect(() => {
-        if (!map || !window.google) return;
+        if (!routesLibrary || !map) return;
+        setDirectionsService(new routesLibrary.DirectionsService());
         
-        try {
-            const line = new google.maps.Polyline({
-                path: props.path,
-                geodesic: true,
-                strokeColor: '#96370B',
-                strokeOpacity: 0.8,
-                strokeWeight: 4,
-                icons: [{
-                    icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 4 },
-                    offset: '0',
-                    repeat: '20px'
-                }],
-            });
+        // We use the default Google Maps rendering for the line (which includes the nice outline automatically)
+        setDirectionsRenderer(new routesLibrary.DirectionsRenderer({
+            map,
+            suppressMarkers: true, // We keep our custom beautiful markers
+            preserveViewport: true, // Don't auto-zoom, let the map handle its default center/zoom
+        }));
+    }, [routesLibrary, map]);
 
-            line.setMap(map);
-            setPolyline(line);
+    useEffect(() => {
+        if (!directionsService || !directionsRenderer || !origin || !destination) return;
 
-            return () => {
-                line.setMap(null);
-            };
-        } catch (e) {
-            console.error("Polyline error:", e);
+        const request = {
+            origin: origin,
+            destination: destination,
+            waypoints: waypoints?.map(w => ({ location: w, stopover: false })) || [],
+            travelMode: window.google.maps.TravelMode.DRIVING,
+        };
+
+        directionsService.route(request, (response, status) => {
+            if (status === 'OK') {
+                directionsRenderer.setDirections(response);
+            } else {
+                console.error("Directions request failed due to " + status);
+            }
+        });
+    }, [directionsService, directionsRenderer, origin, destination, waypoints]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (directionsRenderer) {
+                directionsRenderer.setMap(null);
+            }
         }
-    }, [map, props.path]);
+    }, [directionsRenderer]);
 
     return null;
 };
 
-export default function Tracking({ order: initialOrder }) {
-    const [order, setOrder] = useState(initialOrder);
+export default function Tracking({ order }) {
 
     const shopLocation = order?.shop?.latitude ? { lat: parseFloat(order.shop.latitude), lng: parseFloat(order.shop.longitude) } : { lat: 6.1366, lng: 1.2222 };
     const deliveryLocation = { lat: 6.1550, lng: 1.2150 };
@@ -66,6 +103,15 @@ export default function Tracking({ order: initialOrder }) {
         return () => navigator.geolocation.clearWatch(watchId);
     }, []);
 
+    // Auto-rafraîchissement toutes les 10 secondes pour voir le changement de statut en direct
+    useEffect(() => {
+        if (!order) return;
+        const interval = setInterval(() => {
+            router.reload({ only: ['order'], preserveScroll: true });
+        }, 10000);
+        return () => clearInterval(interval);
+    }, [order]);
+
     const routeCoords = useMemo(() => [
         shopLocation,
         { lat: 6.1450, lng: 1.2200 },
@@ -73,6 +119,9 @@ export default function Tracking({ order: initialOrder }) {
         { lat: 6.1600, lng: 1.1900 },
         customerLocation
     ], [customerLocation, shopLocation]);
+
+    // Déterminer l'étape actuelle
+    const isStepActive = (statusList) => statusList.includes(order?.status);
 
     return (
         <div className="h-screen flex flex-col bg-white dark:bg-[#121212] overflow-hidden font-sans transition-colors duration-300">
@@ -131,21 +180,28 @@ export default function Tracking({ order: initialOrder }) {
                                             <div className="absolute -left-[11px] top-0 w-5 h-5 rounded-full border-4 bg-[#8B4513] border-[#8B4513]/20"></div>
                                             <div className="flex flex-col -mt-1">
                                                 <span className="font-black text-xs text-gray-900 dark:text-white">Commande validée</span>
-                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Enregistré</span>
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Paiement reçu</span>
                                             </div>
                                         </div>
                                         <div className="relative pl-8">
-                                            <div className={`absolute -left-[11px] top-0 w-5 h-5 rounded-full border-4 transition-all duration-500 ${['Préparé', 'Expédié', 'En route', 'Livré'].includes(order.status) ? 'bg-[#8B4513] border-[#8B4513]/20' : 'bg-white dark:bg-[#1e1e1e] border-gray-100 dark:border-gray-800'}`}></div>
+                                            <div className={`absolute -left-[11px] top-0 w-5 h-5 rounded-full border-4 transition-all duration-500 ${isStepActive(['preparing', 'shipped', 'delivered']) ? 'bg-[#8B4513] border-[#8B4513]/20' : 'bg-white dark:bg-[#1e1e1e] border-gray-100 dark:border-gray-800'}`}></div>
                                             <div className="flex flex-col -mt-1">
-                                                <span className={`font-black text-xs ${['Préparé', 'Expédié', 'En route', 'Livré'].includes(order.status) ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-700'}`}>Préparation terminée</span>
-                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Logistique boutique</span>
+                                                <span className={`font-black text-xs ${isStepActive(['preparing', 'shipped', 'delivered']) ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-700'}`}>En préparation</span>
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Le vendeur prépare votre colis</span>
                                             </div>
                                         </div>
                                         <div className="relative pl-8">
-                                            <div className={`absolute -left-[11px] top-0 w-5 h-5 rounded-full border-4 transition-all duration-500 ${['En route', 'Livré'].includes(order.status) ? 'bg-[#8B4513] border-[#8B4513]/20 scale-125' : 'bg-white dark:bg-[#1e1e1e] border-gray-100 dark:border-gray-800'}`}></div>
+                                            <div className={`absolute -left-[11px] top-0 w-5 h-5 rounded-full border-4 transition-all duration-500 ${isStepActive(['shipped', 'delivered']) ? 'bg-[#8B4513] border-[#8B4513]/20' : 'bg-white dark:bg-[#1e1e1e] border-gray-100 dark:border-gray-800'}`}></div>
                                             <div className="flex flex-col -mt-1">
-                                                <span className={`font-black text-xs ${['En route', 'Livré'].includes(order.status) ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-700'}`}>Livreur en route</span>
-                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Suivi temps réel</span>
+                                                <span className={`font-black text-xs ${isStepActive(['shipped', 'delivered']) ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-700'}`}>Expédiée</span>
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Le livreur a récupéré le colis</span>
+                                            </div>
+                                        </div>
+                                        <div className="relative pl-8">
+                                            <div className={`absolute -left-[11px] top-0 w-5 h-5 rounded-full border-4 transition-all duration-500 ${isStepActive(['delivered']) ? 'bg-green-500 border-green-500/20' : 'bg-white dark:bg-[#1e1e1e] border-gray-100 dark:border-gray-800'}`}></div>
+                                            <div className="flex flex-col -mt-1">
+                                                <span className={`font-black text-xs ${isStepActive(['delivered']) ? 'text-green-600' : 'text-gray-300 dark:text-gray-700'}`}>Livrée</span>
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Profitez de votre achat !</span>
                                             </div>
                                         </div>
                                     </div>
@@ -153,12 +209,18 @@ export default function Tracking({ order: initialOrder }) {
 
                                 {/* Actions */}
                                 <div className="pt-10 space-y-4">
-                                    <button className="w-full py-5 bg-gray-900 dark:bg-[#8B4513] text-white font-black rounded-2xl text-[10px] uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all">
-                                        Contacter le livreur
-                                    </button>
-                                    <button className="w-full py-5 bg-white dark:bg-transparent text-gray-400 dark:text-gray-500 font-black rounded-2xl text-[10px] uppercase tracking-[0.2em] border-2 border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
+                                    <Link 
+                                        href={route('chat.show', { shop: order.shop_id })}
+                                        className="block w-full py-5 bg-gray-900 dark:bg-[#8B4513] text-white text-center font-black rounded-2xl text-[10px] uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all"
+                                    >
+                                        Contacter la boutique
+                                    </Link>
+                                    <Link 
+                                        href={route('chat.show', { shop: order.shop_id })}
+                                        className="block w-full py-5 bg-white dark:bg-transparent text-gray-400 dark:text-gray-500 text-center font-black rounded-2xl text-[10px] uppercase tracking-[0.2em] border-2 border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                                    >
                                         Signaler un problème
-                                    </button>
+                                    </Link>
                                 </div>
                             </div>
                         )}
@@ -172,39 +234,30 @@ export default function Tracking({ order: initialOrder }) {
                             defaultCenter={deliveryLocation}
                             defaultZoom={13}
                             mapId="bf50a87343b44b8b"
-                            disableDefaultUI={true}
                         >
                             {order && (
                                 <>
                                     {/* Shop Marker */}
                                     <AdvancedMarker position={shopLocation}>
                                         <div className="flex flex-col items-center">
-                                            <div className="mb-1 px-2 py-1 bg-white dark:bg-[#1e1e1e] rounded-full text-[8px] font-black shadow-lg text-[#8B4513] border border-[#8B4513]/10 uppercase">BOUTIQUE</div>
-                                            <div className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 shadow-xl flex items-center justify-center bg-white dark:bg-[#1e1e1e] overflow-hidden transition-transform hover:scale-110">
-                                                <img src={order.shop?.image || 'https://via.placeholder.com/150'} className="w-full h-full object-cover" />
-                                            </div>
+                                            <div className="mb-1 px-2 py-0.5 bg-[#EA4335] rounded-full text-[8px] font-black shadow-lg text-white uppercase tracking-tighter">BOUTIQUE</div>
+                                            <div className="w-5 h-5 rounded-full border-[3px] border-white dark:border-gray-800 shadow-xl flex items-center justify-center bg-[#EA4335]"></div>
                                         </div>
                                     </AdvancedMarker>
 
                                     {/* User Marker */}
                                     <AdvancedMarker position={customerLocation}>
                                         <div className="flex flex-col items-center">
-                                            <div className="mb-1 px-2 py-1 bg-[#8B4513] rounded-full text-[8px] font-black shadow-lg text-white uppercase tracking-tighter">MA POSITION</div>
-                                            <div className="w-8 h-8 rounded-full border-4 border-white dark:border-gray-800 shadow-xl flex items-center justify-center bg-[#8B4513]"></div>
+                                            <div className="mb-1 px-2 py-0.5 bg-[#4285F4] rounded-full text-[8px] font-black shadow-lg text-white uppercase tracking-tighter">MA POSITION</div>
+                                            <div className="w-5 h-5 rounded-full border-[3px] border-white dark:border-gray-800 shadow-xl flex items-center justify-center bg-[#4285F4]"></div>
                                         </div>
                                     </AdvancedMarker>
 
-                                    {/* Courier Marker */}
-                                    <AdvancedMarker position={deliveryLocation}>
-                                        <div className="relative">
-                                            <div className="absolute inset-0 bg-[#8B4513] rounded-full animate-ping opacity-25 scale-150"></div>
-                                            <div className="w-7 h-7 bg-[#8B4513] rounded-full border-4 border-white dark:border-gray-800 shadow-2xl relative z-10 flex items-center justify-center">
-                                                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                                            </div>
-                                        </div>
-                                    </AdvancedMarker>
-
-                                    <Polyline path={routeCoords} />
+                                    <Directions 
+                                        origin={shopLocation} 
+                                        destination={customerLocation} 
+                                    />
+                                    <LocateMeControl location={customerLocation} />
                                 </>
                             )}
                         </Map>

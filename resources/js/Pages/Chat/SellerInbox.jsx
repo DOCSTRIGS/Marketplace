@@ -146,10 +146,34 @@ export default function SellerInbox({ conversations: initialConvs, shop, authUse
                         <p className="text-xs text-white/70">{conversations.length} conversation(s)</p>
                     </div>
 
+                    {/* Search Bar for Seller */}
+                    <div className="p-3 border-b border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-black/10">
+                        <div className="relative">
+                            <input 
+                                type="text"
+                                placeholder="Rechercher un client..."
+                                className="w-full bg-white dark:bg-[#252525] border-none rounded-xl text-xs font-bold py-2.5 pl-9 pr-4 focus:ring-2 focus:ring-[#8B4513]/20 dark:text-white transition-all shadow-sm"
+                                onChange={(e) => {
+                                    const q = e.target.value.toLowerCase();
+                                    if (!q) {
+                                        setConversations(initialConvs);
+                                        return;
+                                    }
+                                    setConversations(initialConvs.filter(c => 
+                                        (c.user?.name || '').toLowerCase().includes(q)
+                                    ));
+                                }}
+                            />
+                            <svg className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                    </div>
+
                     <div className="flex-1 overflow-y-auto">
                         {conversations.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full text-center p-6">
-                                <p className="text-sm font-bold text-gray-600 dark:text-gray-400">Aucun message</p>
+                                <p className="text-xs font-bold text-gray-400 dark:text-gray-500 italic">Aucun résultat trouvé</p>
                             </div>
                         ) : (
                             conversations.map((conv) => {

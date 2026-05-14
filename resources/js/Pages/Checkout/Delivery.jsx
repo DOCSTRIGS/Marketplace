@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 import { useCart } from '@/Contexts/CartContext';
 import { useToast } from '@/Contexts/ToastContext';
+import axios from 'axios';
 
-export default function Delivery() {
+export default function Delivery({ auth }) {
     const { cart, cartTotal, clearCart } = useCart();
     const { addToast } = useToast();
     
@@ -42,7 +43,7 @@ export default function Delivery() {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!address.trim()) {
@@ -52,18 +53,42 @@ export default function Delivery() {
 
         setIsSubmitting(true);
 
-        router.post(route('orders.store'), {
-            items: cart.map(item => ({ id: item.id, quantity: item.quantity })),
-            delivery_address: address
-        }, {
-            onSuccess: () => {
+        try {
+            // 1. Créer la commande
+            const orderResponse = await axios.post(route('orders.store'), {
+                items: cart.map(item => ({ id: item.id, quantity: item.quantity })),
+                delivery_address: address
+            });
+
+            const { reference, kkiapay_public_key, total_amount } = orderResponse.data;
+
+            // 3. Configurer les écouteurs KkiaPay (évite l'erreur DataCloneError)
+            addKkiapayListener('success', (response) => {
                 clearCart();
-            },
-            onError: () => {
+                router.visit(route('checkout.success', { reference: reference }));
+            });
+
+            addKkiapayListener('failed', (error) => {
                 setIsSubmitting(false);
-                addToast('Une erreur est survenue lors de la création de la commande.', 'error');
-            }
-        });
+                addToast('Le paiement a échoué.', 'error');
+            });
+
+            // 4. Ouvrir KkiaPay
+            openKkiapayWidget({
+                amount: total_amount,
+                key: kkiapay_public_key,
+                sandbox: true,
+                data: reference,
+                position: 'center',
+                name: auth.user.name,
+                email: auth.user.email,
+            });
+
+        } catch (error) {
+            console.error(error);
+            setIsSubmitting(false);
+            addToast(error.response?.data?.message || 'Une erreur est survenue lors de la commande.', 'error');
+        }
     };
 
     if (cart.length === 0) return null;

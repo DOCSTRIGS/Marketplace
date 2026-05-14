@@ -41,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/orders', [App\Http\Controllers\SellerController::class, 'orders'])->name('orders');
         Route::patch('/orders/{id}/status', [App\Http\Controllers\OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+        Route::delete('/orders/{id}', [App\Http\Controllers\OrderController::class, 'destroy'])->name('orders.destroy');
 
         Route::get('/tracking', [App\Http\Controllers\SellerController::class, 'tracking'])->name('tracking');
 
@@ -84,12 +85,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/checkout/delivery', [App\Http\Controllers\CheckoutController::class, 'delivery'])->name('checkout.delivery');
     Route::get('/checkout/{reference}', [App\Http\Controllers\CheckoutController::class, 'show'])->name('checkout.show');
     Route::post('/checkout/process', [App\Http\Controllers\CheckoutController::class, 'process'])->name('checkout.process');
+    Route::post('/checkout/fedapay', [App\Http\Controllers\CheckoutController::class, 'createTransaction'])->name('checkout.fedapay');
     Route::get('/checkout/{reference}/success', [App\Http\Controllers\CheckoutController::class, 'success'])->name('checkout.success');
 
     Route::get('/tracking', function (Request $request) {
         $order = null;
         if ($request->has('order_id')) {
-            $order = \App\Models\Order::with(['orderItems.product', 'shop']).find($request->order_id);
+            $order = \App\Models\Order::with(['orderItems.product', 'shop'])->find($request->order_id);
         }
         
         if (!$order) {
