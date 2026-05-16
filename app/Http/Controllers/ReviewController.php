@@ -3,28 +3,45 @@
 namespace App\Http\Controllers;
 
 use App\Models\Review;
-use App\Models\Product;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends Controller
 {
-    public function store(Request $request, $productId)
+    /**
+     * Store a review for an order (Product + Driver)
+     */
+    public function store(Request $request, Order $order)
     {
+        // 1. Security Check: Order must belong to user and be delivered
+        if ($order->user_id !== Auth::id() || $order->status !== 'delivered') {
+            return response()->json(['success' => false, 'message' => 'Action non autorisée.'], 403);
+        }
+
         $request->validate([
-            'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'required|string|max:1000',
+            'reviews' => 'required|array',
+            'reviews.*.type' => 'required|in:product,driver',
+            'reviews.*.id' => 'required|integer', // product_id or driver_id
+            'reviews.*.rating' => 'required|integer|min:1|max:5',
+            'reviews.*.comment' => 'nullable|string|max:1000',
         ]);
 
-        $product = Product::findOrFail($productId);
+        foreach ($request->reviews as $reviewData) {
+            Review::updateOrCreate(
+                [
+                    'user_id' => Auth::id(),
+                    'order_id' => $order->id,
+                    'type' => $reviewData['type'],
+                    $reviewData['type'] === 'product' ? 'product_id' : 'driver_id' => $reviewData['id'],
+                ],
+                [
+                    'rating' => $reviewData['rating'],
+                    'comment' => $reviewData['comment'],
+                ]
+            );
+        }
 
-        Review::create([
-            'user_id' => Auth::id(),
-            'product_id' => $product->id,
-            'rating' => $request->rating,
-            'comment' => $request->comment,
-        ]);
-
-        return back()->with('success', 'Merci pour votre avis !');
+        return response()->json(['success' => true, 'message' => 'Merci pour votre avis !']);
     }
 }

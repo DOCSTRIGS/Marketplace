@@ -44,25 +44,24 @@ class AdminController extends Controller
         $reviews = Review::with(['user', 'product.shop'])->latest()->get();
         $withdrawals = Withdrawal::with('shop.user')->latest()->get();
 
-        // Real Chart data for the last 7 days
+        // Real Chart data for the last 7 days + Comparison with previous week
         $chartData = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i);
+            $prevDate = now()->subDays($i + 7);
+            
             $dateString = $date->format('d/m');
             
-            $revenue = Order::whereDate('created_at', $date)
-                ->where('status', '!=', 'cancelled')
-                ->sum('total_amount');
+            $revenue = Order::whereDate('created_at', $date)->where('status', '!=', 'cancelled')->sum('total_amount');
+            $prevRevenue = Order::whereDate('created_at', $prevDate)->where('status', '!=', 'cancelled')->sum('total_amount');
                 
-            $commission = Order::whereDate('created_at', $date)
-                ->where('status', '!=', 'cancelled')
-                ->sum('commission_amount');
-
+            $commission = Order::whereDate('created_at', $date)->where('status', '!=', 'cancelled')->sum('commission_amount');
             $ordersCount = Order::whereDate('created_at', $date)->count();
 
             $chartData[] = [
                 'name' => $dateString,
                 'revenue' => (float) $revenue,
+                'prev_revenue' => (float) $prevRevenue,
                 'commission' => (float) $commission,
                 'orders' => $ordersCount,
             ];
@@ -239,5 +238,42 @@ class AdminController extends Controller
         $category->delete();
 
         return redirect()->back()->with('success', 'Catégorie supprimée avec succès.');
+    }
+
+    public function financialReport()
+    {
+        $orders = Order::with('shop.user')
+            ->where('status', '!=', 'cancelled')
+            ->latest()
+            ->paginate(20);
+
+        $totalRevenue = Order::where('status', '!=', 'cancelled')->sum('total_amount');
+        $totalCommissions = Order::where('status', '!=', 'cancelled')->sum('commission_amount');
+        $pendingWithdrawals = Withdrawal::where('status', 'pending')->sum('amount');
+
+        return Inertia::render('Admin/Finance', [
+            'orders' => $orders,
+            'stats' => [
+                'total_revenue' => (float)$totalRevenue,
+                'total_commissions' => (float)$totalCommissions,
+                'pending_withdrawals' => (float)$pendingWithdrawals,
+            ]
+        ]);
+    }
+
+    public function verifyKYC(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:approved,rejected',
+            'note' => 'nullable|string'
+        ]);
+
+        $shop = Shop::findOrFail($id);
+        $shop->update([
+            'is_verified' => $request->status === 'approved',
+            'admin_note' => $request->note
+        ]);
+
+        return redirect()->back()->with('success', 'Statut de vérification mis à jour.');
     }
 }

@@ -1,5 +1,6 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Link } from '@inertiajs/react';
+import { motion } from 'framer-motion';
 
 export default function GuestLayout({ children }) {
     return (
@@ -10,9 +11,15 @@ export default function GuestLayout({ children }) {
                 </Link>
             </div>
 
-            <div className="mt-8 w-full overflow-hidden bg-white px-8 py-10 shadow-xl shadow-[#8B4513]/5 sm:max-w-md sm:rounded-[32px] border border-[#8B4513]/10">
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="mt-8 w-full overflow-hidden bg-white px-8 py-10 shadow-xl shadow-[#8B4513]/5 sm:max-w-md sm:rounded-[32px] border border-[#8B4513]/10"
+            >
                 {children}
-            </div>
+            </motion.div>
         </div>
     );
 }

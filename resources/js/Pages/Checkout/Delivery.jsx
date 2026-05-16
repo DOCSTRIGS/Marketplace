@@ -9,6 +9,8 @@ export default function Delivery({ auth }) {
     const { addToast } = useToast();
     
     const [address, setAddress] = useState('');
+    const [clientLat, setClientLat] = useState(null);
+    const [clientLng, setClientLng] = useState(null);
     const [isLocating, setIsLocating] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -25,8 +27,8 @@ export default function Delivery({ auth }) {
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
                     const { latitude, longitude } = position.coords;
-                    // On pourrait utiliser Google Maps API pour le Reverse Geocoding ici.
-                    // Pour le moment, on met les coordonnées ou on simule une adresse.
+                    setClientLat(latitude);
+                    setClientLng(longitude);
                     setAddress(`Ma position actuelle (Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)})`);
                     setIsLocating(false);
                     addToast('Position récupérée avec succès !', 'success');
@@ -57,7 +59,9 @@ export default function Delivery({ auth }) {
             // 1. Créer la commande
             const orderResponse = await axios.post(route('orders.store'), {
                 items: cart.map(item => ({ id: item.id, quantity: item.quantity })),
-                delivery_address: address
+                delivery_address: address,
+                latitude: clientLat,
+                longitude: clientLng
             });
 
             const { reference, kkiapay_public_key, total_amount } = orderResponse.data;

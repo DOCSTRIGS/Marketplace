@@ -107,9 +107,9 @@ export default function Products({ products, categories }) {
             {/* Toolbar */}
             <div className="bg-white dark:bg-[#1e1e1e] p-4 rounded-t-2xl border border-gray-200 dark:border-gray-800 border-b-0 flex flex-col md:flex-row justify-between items-center gap-4 transition-colors">
                 <div className="flex space-x-1 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-                    {tabs.map((tab) => (
+                    {tabs.map((tab, idx) => (
                         <button 
-                            key={tab}
+                            key={`${tab}-${idx}`}
                             onClick={() => setActiveTab(tab)}
                             className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
                                 activeTab === tab 
@@ -280,7 +280,7 @@ export default function Products({ products, categories }) {
                                 {data.variants.length > 0 ? (
                                     <div className="space-y-2">
                                         {data.variants.map((variant, index) => (
-                                            <div key={index} className="flex gap-2 items-center">
+                                            <div key={`variant-${index}`} className="flex gap-2 items-center">
                                                 <input 
                                                     type="text"
                                                     placeholder="Type (ex: Taille)"

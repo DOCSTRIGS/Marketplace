@@ -23,6 +23,14 @@ export default {
                 background: '#FDF8F4',
                 surface: '#FFFFFF',
             },
+            keyframes: {
+                shimmer: {
+                    '100%': { transform: 'translateX(100%)' },
+                }
+            },
+            animation: {
+                shimmer: 'shimmer 1.5s infinite',
+            }
         },
     },
 

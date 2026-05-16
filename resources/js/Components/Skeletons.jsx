@@ -65,4 +65,32 @@ export const OrderSkeleton = () => (
     </div>
 );
 
+// Skeleton pour une table
+export const TableSkeleton = ({ rows = 5, cols = 4 }) => (
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
+        <div className="bg-gray-50 h-12 w-full" />
+        <div className="p-0 divide-y divide-gray-50">
+            {[...Array(rows)].map((_, i) => (
+                <div key={i} className="p-6 flex gap-4">
+                    {[...Array(cols)].map((_, j) => (
+                        <div key={j} className="h-4 bg-gray-200 rounded-full flex-grow" />
+                    ))}
+                </div>
+            ))}
+        </div>
+    </div>
+);
+
+// Skeleton pour des stats
+export const StatsSkeleton = ({ count = 3 }) => (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-pulse">
+        {[...Array(count)].map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <div className="h-2 bg-gray-200 rounded-full w-16 mb-3" />
+                <div className="h-8 bg-gray-200 rounded-full w-24" />
+            </div>
+        ))}
+    </div>
+);
+
 export default ProductCardSkeleton;

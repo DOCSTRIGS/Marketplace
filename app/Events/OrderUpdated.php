@@ -28,6 +28,7 @@ class OrderUpdated implements ShouldBroadcast
             new Channel('shop.' . $this->order->shop_id),
             new Channel('order.' . $this->order->id),
             new Channel('user.' . $this->order->user_id),
+            new Channel('orders'),
         ];
     }
 

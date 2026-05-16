@@ -57,17 +57,31 @@ export default function DriverTracking({ order }) {
     const [lastPos, setLastPos] = useState(null);
     const [deliveryCode, setDeliveryCode] = useState('');
     const [statusText, setStatusText] = useState('Prêt à livrer');
+    const [isSimulating, setIsSimulating] = useState(false);
 
     const shopLocation = useMemo(() => ({
         lat: parseFloat(order.shop.latitude),
         lng: parseFloat(order.shop.longitude)
     }), [order.shop]);
 
-    // Destination (using shop coords as proxy if user coords missing, but we'll try to find client)
+    // Smart Destination Logic: 
+    // - If status is 'accepted' or 'preparing' -> Destination is the SHOP
+    // - If status is 'shipped' -> Destination is the CLIENT
     const clientLocation = useMemo(() => ({
-        lat: 6.1366, // Default to center of Lome if unknown
-        lng: 1.2222
-    }), []);
+        lat: parseFloat(order.user.last_latitude) || 6.1366,
+        lng: parseFloat(order.user.last_longitude) || 1.2222
+    }), [order.user]);
+
+    const targetDestination = useMemo(() => {
+        if (order.status === 'shipped') return clientLocation;
+        return shopLocation;
+    }, [order.status, clientLocation, shopLocation]);
+
+    const targetWaypoints = useMemo(() => {
+        // If we are already shipped, we don't need the shop waypoint anymore
+        if (order.status === 'shipped') return [];
+        return []; // Keep it simple for now
+    }, [order.status]);
 
     useEffect(() => {
         let watchId = null;
@@ -84,26 +98,61 @@ export default function DriverTracking({ order }) {
         };
 
         if (isTracking) {
-            setStatusText('Livraison en cours...');
+            setStatusText(order.status === 'shipped' ? 'Livraison vers le client...' : 'Route vers la boutique...');
             requestWakeLock();
             
-            // Set status to "shipped"
-            axios.post(route('driver.update-status', { order: order.id }), {
-                status: 'shipped'
-            });
+            // If the driver starts tracking and status was accepted, move to preparing (or keep shipped if already)
+            if (order.status === 'accepted') {
+                axios.post(route('driver.update-status', { order: order.id }), {
+                    status: 'shipped' // The user said "after picking up it goes to client", 
+                                     // but usually the driver marks as picked up.
+                                     // I'll let the seller click 'shipped' as per your workflow.
+                });
+            }
+
+            // Offline Resiliency: Sync pending positions
+            const syncPendingPositions = async () => {
+                const pending = JSON.parse(localStorage.getItem('pending_positions') || '[]');
+                if (pending.length === 0) return;
+
+                try {
+                    await axios.post(route('driver.sync-positions'), { positions: pending });
+                    localStorage.removeItem('pending_positions');
+                    console.log(`Synced ${pending.length} offline positions.`);
+                } catch (err) {
+                    console.warn("Sync failed, will retry later.");
+                }
+            };
+
+            syncPendingPositions();
 
             watchId = navigator.geolocation.watchPosition(
-                (position) => {
+                async (position) => {
                     const { latitude, longitude } = position.coords;
                     const newPos = { lat: latitude, lng: longitude };
                     setLastPos(newPos);
                     
-                    // Update server & broadcast via Reverb
-                    axios.post(route('driver.update-location'), {
+                    const posData = {
                         order_id: order.id,
                         latitude,
-                        longitude
-                    });
+                        longitude,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    try {
+                        // Update server & broadcast via Reverb
+                        await axios.post(route('driver.update-location'), posData);
+                        // If success, check if we have other pending to sync
+                        syncPendingPositions();
+                    } catch (err) {
+                        // Cache it if failed
+                        const pending = JSON.parse(localStorage.getItem('pending_positions') || '[]');
+                        pending.push(posData);
+                        // Keep only last 50 to avoid bloat
+                        if (pending.length > 50) pending.shift();
+                        localStorage.setItem('pending_positions', JSON.stringify(pending));
+                        console.warn("Position cached offline.");
+                    }
                 },
                 (err) => console.error(err),
                 { enableHighAccuracy: true }
@@ -169,8 +218,8 @@ export default function DriverTracking({ order }) {
 
                         <Directions 
                             origin={lastPos || shopLocation} 
-                            destination={clientLocation} 
-                            waypoints={lastPos ? [shopLocation] : []}
+                            destination={targetDestination} 
+                            waypoints={targetWaypoints}
                         />
                     </Map>
                 </APIProvider>
@@ -241,8 +290,5 @@ export default function DriverTracking({ order }) {
                 </div>
             </div>
         </div>
-    );
-}
-     </div>
     );
 }

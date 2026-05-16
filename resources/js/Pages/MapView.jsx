@@ -144,13 +144,26 @@ const MapInner = ({ shops, activeShopId, setActiveShopId, userLocation, setUserL
     );
 };
 
-const OrderModal = ({ product, onClose }) => {
+const OrderModal = ({ product, userLocation, onClose }) => {
     if (!product) return null;
     const { data, setData, post, processing, success } = useForm({
         product_id: product.id,
         quantity: 1,
         delivery_address: 'Totsi, Lomé (Ma position actuelle)',
+        latitude: null,
+        longitude: null,
     });
+
+    useEffect(() => {
+        if (userLocation && userLocation.lat && userLocation.lng) {
+            setData({
+                ...data,
+                latitude: userLocation.lat,
+                longitude: userLocation.lng,
+                delivery_address: `Ma position (Lat: ${userLocation.lat.toFixed(4)}, Lng: ${userLocation.lng.toFixed(4)})`
+            });
+        }
+    }, [userLocation]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -655,7 +668,8 @@ export default function MapView({ initialShops }) {
 
                     {selectedProduct && (
                         <OrderModal 
-                            product={selectedProduct} 
+                            product={selectedProduct}
+                            userLocation={userLocation}
                             onClose={() => setSelectedProduct(null)} 
                         />
                     )}

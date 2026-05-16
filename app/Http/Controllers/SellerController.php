@@ -27,9 +27,13 @@ class SellerController extends Controller
     public function dashboard()
     {
         $user = Auth::user();
-        $shop = Shop::where('user_id', $user->id)->first();
+        $shop = $user->shop;
 
-        if (!$shop || $shop->status !== 'approved') {
+        if (!$shop) {
+            return redirect()->route('shops.create');
+        }
+
+        if ($shop->status !== 'approved') {
             return Inertia::render('Seller/PendingApproval', [
                 'shop' => $shop
             ]);
@@ -144,6 +148,7 @@ class SellerController extends Controller
     {
         return Inertia::render('Seller/Settings', [
             'user' => Auth::user(),
+            'shop' => Auth::user()->shop,
         ]);
     }
 
@@ -201,6 +206,21 @@ class SellerController extends Controller
 
         return Inertia::render('Seller/Tracking', [
             'order' => $order
+        ]);
+    }
+    public function wallet()
+    {
+        $shop = Auth::user()->shop;
+        if (!$shop) return redirect()->route('shops.create');
+
+        $transactions = \App\Models\Transaction::where('user_id', Auth::id())
+            ->with('order')
+            ->latest()
+            ->get();
+
+        return Inertia::render('Seller/Wallet', [
+            'shop' => $shop,
+            'transactions' => $transactions
         ]);
     }
 }

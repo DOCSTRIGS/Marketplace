@@ -24,7 +24,7 @@ export default function FleetMap({ onDriverClick }) {
                 .listen('.driver.location.updated', (e) => {
                     setDrivers(prev => prev.map(d => 
                         d.id === e.driverId 
-                        ? { ...d, last_latitude: e.latitude, last_longitude: e.longitude }
+                        ? { ...d, last_latitude: e.latitude, last_longitude: e.longitude, driver_status: e.status }
                         : d
                     ));
                 });

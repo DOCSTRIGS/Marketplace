@@ -4,6 +4,7 @@ import { useCart } from '@/Contexts/CartContext';
 import CartDrawer from './CartDrawer';
 import Dropdown from './Dropdown';
 import ThemeToggle from './ThemeToggle';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
     const { url, props } = usePage();
@@ -34,7 +35,8 @@ export default function Navbar() {
     };
 
     return (
-        <nav className="h-[80px] bg-[#FDF8F4] dark:bg-[#1a1a1a] flex items-center justify-between px-6 md:px-12 sticky top-0 z-50 border-b border-transparent dark:border-gray-800 transition-colors duration-300">
+        <>
+            <nav className="h-[80px] bg-[#FDF8F4]/80 dark:bg-[#1a1a1a]/80 backdrop-blur-md flex items-center justify-between px-6 md:px-12 sticky top-0 z-50 border-b border-gray-100/50 dark:border-gray-800 transition-colors duration-300">
             {/* Logo */}
             <div className="flex items-center">
                 <Link href={isSellerFlow ? getRoute('seller.dashboard', '/seller/dashboard') : getRoute('home', '/')} className="flex items-center">
@@ -123,6 +125,9 @@ export default function Navbar() {
                         )}
                     </button>
                 )}
+                {/* Notifications Bell */}
+                {auth?.user && <NotificationBell user={auth.user} />}
+
                 {/* Theme Toggle */}
                 <ThemeToggle />
 
@@ -169,7 +174,8 @@ export default function Navbar() {
                 )}
             </div>
 
-            <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
         </nav>
+        <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+    </>
     );
 }

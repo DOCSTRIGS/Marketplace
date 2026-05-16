@@ -18,16 +18,18 @@ class DriverLocationUpdated implements ShouldBroadcast
     public $driverId;
     public $latitude;
     public $longitude;
+    public $status;
 
     /**
      * Create a new event instance.
      */
-    public function __construct($orderId, $latitude, $longitude, $driverId = null)
+    public function __construct($orderId, $latitude, $longitude, $driverId)
     {
         $this->orderId = $orderId;
         $this->latitude = $latitude;
         $this->longitude = $longitude;
-        $this->driverId = $driverId ?? (auth()->check() ? auth()->id() : null);
+        $this->driverId = $driverId;
+        $this->status = \App\Models\User::find($driverId)->driver_status;
     }
 
     /**
@@ -37,10 +39,13 @@ class DriverLocationUpdated implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
-        return [
-            new Channel('order.' . $this->orderId),
-            new Channel('fleet'),
-        ];
+        $channels = [new Channel('fleet')];
+
+        if ($this->orderId) {
+            $channels[] = new Channel('order.' . $this->orderId);
+        }
+
+        return $channels;
     }
 
     public function broadcastAs()

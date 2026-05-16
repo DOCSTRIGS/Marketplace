@@ -8,6 +8,8 @@ import {
 } from 'recharts';
 import ThemeToggle from '@/Components/ThemeToggle';
 import FleetMap from '@/Components/Admin/FleetMap';
+import AdminNavbar from '@/Components/Admin/AdminNavbar';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Confirm Modal (minimale, sans icones) ───────────────────────────────────
 function ConfirmModal({ isOpen, onClose, onConfirm, message }) {
@@ -332,37 +334,40 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
         { id: 'reviews',    label: "Modération Avis" },
         { id: 'categories', label: "Catégories" },
         { id: 'fleet',      label: "Suivi Flotte" },
+        { id: 'finance',    label: "Finances", link: route('admin.finance') },
         { id: 'users',      label: "Utilisateurs" },
         { id: 'drivers',    label: "Livreurs" },
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-[#121212] p-8 font-sans transition-colors duration-300">
+        <div className="min-h-screen bg-gray-50 dark:bg-[#121212] font-sans transition-colors duration-300">
             <Head title="Admin Dashboard" />
 
-            <div className="max-w-7xl mx-auto">
-                <header className="mb-10 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-white">Administration LoméShop</h1>
-                        <p className="text-gray-500 dark:text-gray-400 mt-1">Plateforme de gestion centralisée.</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <ThemeToggle />
-                        <span className="bg-[#8B4513] text-white px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-widest">Admin: {auth.user.name}</span>
-                        <Link href={route('logout')} method="post" as="button" className="text-gray-500 hover:text-red-500 font-bold text-sm">Déconnexion</Link>
-                    </div>
+            <AdminNavbar activeTab={activeTab} />
+
+            <div className="max-w-7xl mx-auto px-8 py-10">
+                <header className="mb-10">
+                    <motion.div 
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                    >
+                        <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter uppercase">Administration</h1>
+                        <p className="text-gray-500 dark:text-gray-400 mt-1 uppercase text-[10px] font-black tracking-widest">Espace de gestion centralisée</p>
+                    </motion.div>
                 </header>
 
-                <div className="flex space-x-2 mb-8 bg-white dark:bg-[#1e1e1e] p-2 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-x-auto transition-colors">
-                    {tabs.map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                            className={`px-5 py-3 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === tab.id ? 'bg-[#8B4513] text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
+                {/* Remove the old tabs div as it's now in the navbar */}
 
-                {activeTab === 'overview' && (
+
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        {activeTab === 'overview' && (
                     <div className="space-y-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                             {[
@@ -385,10 +390,25 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 <div className="h-[300px] w-full">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={chartData}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
+                                            <defs>
+                                                <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#8B4513" stopOpacity={0.3}/>
+                                                    <stop offset="95%" stopColor="#8B4513" stopOpacity={0}/>
+                                                </linearGradient>
+                                                <linearGradient id="colorPrev" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#9ca3af" stopOpacity={0.1}/>
+                                                    <stop offset="95%" stopColor="#9ca3af" stopOpacity={0}/>
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" strokeOpacity={0.1} />
                                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#9ca3af'}} />
-                                            <Tooltip contentStyle={{ backgroundColor: '#1e1e1e', borderRadius: '16px', border: 'none', color: '#fff', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.5)' }} />
-                                            <Area type="monotone" dataKey="commission" stroke="#8B4513" strokeWidth={3} fill="#8B4513" fillOpacity={0.1} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#9ca3af'}} tickFormatter={(val) => `${val/1000}k`} />
+                                            <Tooltip 
+                                                contentStyle={{ backgroundColor: '#1e1e1e', borderRadius: '16px', border: 'none', color: '#fff', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.5)' }} 
+                                                itemStyle={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase' }}
+                                            />
+                                            <Area type="monotone" name="Semaine Actuelle" dataKey="revenue" stroke="#8B4513" strokeWidth={3} fill="url(#colorRev)" />
+                                            <Area type="monotone" name="Semaine Précédente" dataKey="prev_revenue" stroke="#9ca3af" strokeWidth={2} strokeDasharray="5 5" fill="url(#colorPrev)" />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -482,20 +502,41 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                             ) : (
                                 <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
                                     {pendingShops.map(shop => (
-                                        <div key={shop.id} className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-sm border border-orange-100 dark:border-orange-900/30 p-6 flex flex-col">
-                                            <div className="flex-1">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <h3 className="font-black text-lg text-gray-900 dark:text-white">{shop.name}</h3>
-                                                    <span className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg">Nouveau</span>
+                                            <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-sm border border-orange-100 dark:border-orange-900/30 p-6 flex flex-col">
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <h3 className="font-black text-lg text-gray-900 dark:text-white">{shop.name}</h3>
+                                                        <span className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg">Nouveau</span>
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{shop.user?.name} - {shop.neighborhood?.name || 'Lomé'}</p>
+                                                    
+                                                    {/* KYC Section */}
+                                                    <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 mb-4 border border-gray-100 dark:border-gray-800">
+                                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3">Documents KYC</p>
+                                                        <div className="flex gap-4">
+                                                            {shop.id_card_path ? (
+                                                                <a href={`/storage/${shop.id_card_path}`} target="_blank" className="flex-1 text-[10px] font-bold text-[#8B4513] hover:underline flex items-center gap-2 bg-white dark:bg-[#121212] p-2 rounded-lg border border-gray-100 dark:border-gray-800">
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                                    Voir CNI
+                                                                </a>
+                                                            ) : <span className="flex-1 text-[10px] text-gray-400 italic">CNI manquante</span>}
+                                                            
+                                                            {shop.license_path ? (
+                                                                <a href={`/storage/${shop.license_path}`} target="_blank" className="flex-1 text-[10px] font-bold text-[#8B4513] hover:underline flex items-center gap-2 bg-white dark:bg-[#121212] p-2 rounded-lg border border-gray-100 dark:border-gray-800">
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                                    Voir Permis
+                                                                </a>
+                                                            ) : <span className="flex-1 text-[10px] text-gray-400 italic">Permis manquant</span>}
+                                                        </div>
+                                                    </div>
+
+                                                    {shop.description && <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-4">"{shop.description}"</p>}
                                                 </div>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{shop.user?.name} - {shop.neighborhood?.name || 'Lomé'}</p>
-                                                {shop.description && <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-4">"{shop.description}"</p>}
+                                                <div className="flex gap-3 mt-auto">
+                                                    <button onClick={() => handleStatusUpdate(shop.id, 'approved')} className="flex-1 bg-green-500 hover:bg-green-600 transition-colors text-white font-bold py-2.5 rounded-xl text-sm shadow-md shadow-green-500/20">Approuver</button>
+                                                    <button onClick={() => handleStatusUpdate(shop.id, 'rejected')} className="flex-1 bg-red-50 hover:bg-red-100 transition-colors text-red-600 font-bold py-2.5 rounded-xl text-sm border border-red-100">Rejeter</button>
+                                                </div>
                                             </div>
-                                            <div className="flex gap-3 mt-auto">
-                                                <button onClick={() => handleStatusUpdate(shop.id, 'approved')} className="flex-1 bg-green-500 hover:bg-green-600 transition-colors text-white font-bold py-2.5 rounded-xl text-sm shadow-md shadow-green-500/20">Approuver</button>
-                                                <button onClick={() => handleStatusUpdate(shop.id, 'rejected')} className="flex-1 bg-red-50 hover:bg-red-100 transition-colors text-red-600 font-bold py-2.5 rounded-xl text-sm border border-red-100">Rejeter</button>
-                                            </div>
-                                        </div>
                                     ))}
                                 </div>
                             )}
@@ -957,6 +998,8 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                         </div>
                     </div>
                 )}
+                </motion.div>
+                </AnimatePresence>
 
                 {/* Driver Details Slide-over Drawer */}
                 <DriverDetailsDrawer 

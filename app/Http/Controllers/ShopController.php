@@ -128,4 +128,30 @@ class ShopController extends Controller
     {
         return Inertia::render('Seller/LiveTracking');
     }
+
+    /**
+     * Update KYC documents for the shop.
+     */
+    public function updateKYC(Request $request)
+    {
+        $request->validate([
+            'id_card' => 'nullable|image|max:2048',
+            'license' => 'nullable|image|max:2048',
+        ]);
+
+        $shop = Auth::user()->shop;
+        if (!$shop) return back()->with('error', 'Boutique non trouvée.');
+
+        if ($request->hasFile('id_card')) {
+            $shop->id_card_path = $request->file('id_card')->store('kyc/id_cards', 'public');
+        }
+
+        if ($request->hasFile('license')) {
+            $shop->license_path = $request->file('license')->store('kyc/licenses', 'public');
+        }
+
+        $shop->save();
+
+        return back()->with('success', 'Documents KYC mis à jour. L\'admin les examinera bientôt.');
+    }
 }

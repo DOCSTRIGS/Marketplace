@@ -16,7 +16,7 @@ class DriverController extends Controller
         
         // Stats pour le nouveau design
         $stats = [
-            'earnings_today' => 24500, // Simulé pour le design
+            'earnings_today' => 24500,
             'primes_today' => 1200,
             'rating' => 4.9,
             'acceptance_rate' => 98,
@@ -27,30 +27,53 @@ class DriverController extends Controller
                 'badges' => ['trophy', 'bolt', 'lock']
             ],
             'vehicle' => [
-                'name' => 'Moto (Haoussa 150)',
+                'name' => $driver->vehicle_model ?? 'Moto (Haoussa 150)',
                 'expiry' => '45j'
             ]
         ];
 
+        // 1. Commandes disponibles (en attente de livreur)
+        $availableOrders = Order::whereIn('status', ['pending', 'preparing'])
+            ->whereNull('driver_id')
+            ->with(['shop', 'user'])
+            ->latest()
+            ->take(10)
+            ->get();
+
+        // 2. Commandes en cours pour ce livreur
         $activeOrders = Order::where('driver_id', $driver->id)
             ->whereIn('status', ['accepted', 'preparing', 'shipped'])
             ->with(['shop', 'user', 'orderItems.product'])
             ->get();
 
+        // 3. Historique récent (livré)
+        $history = Order::where('driver_id', $driver->id)
+            ->where('status', 'delivered')
+            ->with(['shop', 'user'])
+            ->latest()
+            ->take(5)
+            ->get();
+
         return Inertia::render('Driver/Dashboard', [
+            'availableOrders' => $availableOrders,
             'activeOrders' => $activeOrders,
+            'history' => $history,
             'stats' => $stats
         ]);
     }
 
-    public function earnings()
+    public function history()
     {
-        return Inertia::render('Driver/Earnings');
-    }
+        $driver = auth()->user();
+        $orders = Order::where('driver_id', $driver->id)
+            ->where('status', 'delivered')
+            ->with(['shop', 'user', 'orderItems.product'])
+            ->latest()
+            ->paginate(15);
 
-    public function performance()
-    {
-        return Inertia::render('Driver/Performance');
+        return Inertia::render('Driver/History', [
+            'orders' => $orders
+        ]);
     }
 
 
@@ -64,39 +87,104 @@ class DriverController extends Controller
     public function updateLocation(Request $request)
     {
         $request->validate([
-            'order_id' => 'required|exists:orders,id',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
+            'order_id' => 'nullable|exists:orders,id',
         ]);
 
+        $user = auth()->user();
+        
+        // 1. Update permanent location in DB (for Admin Fleet View)
+        $user->update([
+            'last_latitude' => $request->latitude,
+            'last_longitude' => $request->longitude,
+            'last_location_update' => now(),
+        ]);
+
+        // 2. Broadcast for Admin (Global Fleet Channel)
         broadcast(new \App\Events\DriverLocationUpdated(
-            $request->order_id,
+            null, // No specific order needed for global fleet
             $request->latitude,
             $request->longitude,
-            auth()->id()
+            $user->id
         ))->toOthers();
 
-        return response()->json(['status' => 'success']);
+        // 3. Broadcast for Client/Seller (Specific Order Channel)
+        if ($request->order_id) {
+            broadcast(new \App\Events\DriverLocationUpdated(
+                $request->order_id,
+                $request->latitude,
+                $request->longitude,
+                $user->id
+            ))->toOthers();
+        }
+
+        return response()->json(['status' => 'success', 'lat' => $request->latitude, 'lng' => $request->longitude]);
+    }
+
+    public function syncPositions(Request $request)
+    {
+        $request->validate([
+            'positions' => 'required|array',
+            'positions.*.latitude' => 'required|numeric',
+            'positions.*.longitude' => 'required|numeric',
+            'positions.*.order_id' => 'required|exists:orders,id',
+        ]);
+
+        $user = auth()->user();
+        $latest = end($request->positions);
+
+        // Update permanent location with the latest one
+        $user->update([
+            'last_latitude' => $latest['latitude'],
+            'last_longitude' => $latest['longitude'],
+            'last_location_update' => now(),
+        ]);
+
+        // Broadcast the latest position to keep tracking updated
+        broadcast(new \App\Events\DriverLocationUpdated(
+            $latest['order_id'],
+            $latest['latitude'],
+            $latest['longitude'],
+            $user->id
+        ))->toOthers();
+
+        return response()->json(['status' => 'success', 'synced' => count($request->positions)]);
     }
 
     public function updateStatus(Request $request, Order $order)
     {
+        // 1. Security Check: Only the assigned driver can update status
+        if ($order->driver_id !== auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'Action non autorisée.'], 403);
+        }
+
         $validated = $request->validate([
             'status' => 'required|string|in:shipped,delivered',
-            'delivery_code' => 'required_if:status,delivered|nullable|string'
+            'delivery_code' => 'nullable|string'
         ]);
 
         $oldStatus = $order->status;
         $updateData = ['status' => $validated['status']];
 
-        // Validate Delivery Code for completion
+        // 2. Strict OTP Check for delivery completion
         if ($validated['status'] === 'delivered') {
-            if ($validated['delivery_code'] != $order->delivery_code) {
+            if (!$validated['delivery_code'] || $validated['delivery_code'] != $order->delivery_code) {
                 return response()->json([
                     'success' => false, 
-                    'message' => 'Code de livraison incorrect. Veuillez demander le code au client.'
+                    'message' => 'Code de livraison invalide. La livraison ne peut pas être confirmée sans le code du client.'
                 ], 422);
             }
+
+            // Record transaction for seller
+            \App\Models\Transaction::create([
+                'user_id' => $order->shop->user_id,
+                'order_id' => $order->id,
+                'amount' => $order->seller_amount,
+                'type' => 'credit',
+                'description' => "Vente - Commande #{$order->order_number}",
+                'status' => 'completed'
+            ]);
         }
 
         // Log Picked Up time
@@ -108,6 +196,9 @@ class DriverController extends Controller
         if ($validated['status'] === 'delivered' && $oldStatus !== 'delivered') {
             $updateData['delivered_at'] = now();
             
+            // Increment shop balance (Crucial: was missing here!)
+            $order->shop->increment('balance', $order->seller_amount);
+
             // Increment driver stats
             $order->driver->increment('deliveries_completed');
             
@@ -119,6 +210,26 @@ class DriverController extends Controller
 
         // Broadcast status update
         event(new \App\Events\OrderUpdated($order));
+
+        // Send Notifications
+        if ($order->status === 'shipped') {
+            $order->user->notify(new \App\Notifications\OrderNotification(
+                $order, 
+                "Votre commande #{$order->order_number} est en route !",
+                'info'
+            ));
+        } elseif ($order->status === 'delivered') {
+            $order->shop->user->notify(new \App\Notifications\OrderNotification(
+                $order, 
+                "La commande #{$order->order_number} a été livrée avec succès.",
+                'success'
+            ));
+            $order->user->notify(new \App\Notifications\OrderNotification(
+                $order, 
+                "Merci ! Votre commande #{$order->order_number} a été livrée avec succès (OTP: {$order->delivery_code}).",
+                'success'
+            ));
+        }
 
         return response()->json(['success' => true]);
     }
@@ -168,5 +279,61 @@ class DriverController extends Controller
         $user->update($validated);
 
         return back()->with('success', 'Profil mis à jour avec succès.');
+    }
+
+    public function acceptOrder(Order $order)
+    {
+        // Vérifier si la commande est toujours disponible
+        if ($order->driver_id) {
+            return back()->with('error', 'Cette commande a déjà été prise par un autre livreur.');
+        }
+
+        $order->update([
+            'driver_id' => auth()->id(),
+            'status' => 'accepted'
+        ]);
+
+        // Notifications
+        $order->user->notify(new \App\Notifications\OrderNotification(
+            $order, 
+            "Votre commande #{$order->order_number} est en préparation.",
+            'info'
+        ));
+
+        $order->shop->user->notify(new \App\Notifications\OrderNotification(
+            $order, 
+            "Un livreur est en route pour récupérer la commande #{$order->order_number}.",
+            'success'
+        ));
+
+        // Marquer le livreur comme occupé
+        auth()->user()->update(['driver_status' => 'busy']);
+
+        // Notifier les parties concernées
+        event(new \App\Events\OrderUpdated($order));
+
+        return back()->with('success', 'Mission acceptée ! En route pour la boutique.');
+    }
+
+    public function updateAvailability(Request $request)
+    {
+        $validated = $request->validate([
+            'status' => 'required|string|in:available,offline',
+        ]);
+
+        $user = auth()->user();
+        $user->update([
+            'driver_status' => $validated['status']
+        ]);
+
+        // Broadcast to Admin (Fleet Channel)
+        broadcast(new \App\Events\DriverLocationUpdated(
+            null, 
+            $user->last_latitude,
+            $user->last_longitude,
+            $user->id
+        ))->toOthers();
+
+        return response()->json(['success' => true, 'status' => $validated['status']]);
     }
 }

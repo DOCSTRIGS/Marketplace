@@ -25,7 +25,16 @@ class OrderController extends Controller
             'items.*.id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'delivery_address' => 'required|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
+
+        if (isset($validated['latitude']) && isset($validated['longitude'])) {
+            $user = Auth::user();
+            $user->last_latitude = $validated['latitude'];
+            $user->last_longitude = $validated['longitude'];
+            $user->save();
+        }
 
         $itemsByShop = [];
         foreach ($validated['items'] as $itemData) {
@@ -59,6 +68,7 @@ class OrderController extends Controller
                 'delivery_address' => $validated['delivery_address'],
                 'payment_method' => 'Flooz/T-Money',
                 'payment_reference' => $paymentReference,
+                'delivery_code' => rand(1000, 9999),
             ]);
 
             foreach ($items as $item) {
@@ -76,12 +86,15 @@ class OrderController extends Controller
                 // Log error or ignore if mail not configured
             }
 
-            // Send Email to Client
-            try {
-                Mail::to($order->user->email)->send(new OrderConfirmedClient($order));
-            } catch (\Exception $e) {
-                // Log error
-            }
+            // Send Notification to Client with OTP
+            $order->user->notify(new \App\Notifications\OrderNotification(
+                $order, 
+                "Votre commande #{$order->order_number} est enregistrée ! Code de réception : {$order->delivery_code}",
+                'success'
+            ));
+
+            // Real-time broadcast for Seller
+            event(new \App\Events\OrderUpdated($order));
 
             $createdOrders[] = $order;
         }
@@ -141,19 +154,16 @@ class OrderController extends Controller
             $assignmentService = new \App\Services\DeliveryAssignmentService();
             $driver = $assignmentService->assignClosestDriver($order);
 
-            if ($driver) {
-                // Generate secure delivery code (OTP)
-                $deliveryCode = rand(1000, 9999);
-                $order->update(['delivery_code' => $deliveryCode]);
-                
-                // Note: We could notify the user here with the code
-            } else {
+            if (!$driver) {
                 // If no driver found, we still move to preparing but warn the seller
                 session()->flash('warning', 'Aucun livreur disponible pour le moment. La recherche continuera en arrière-plan.');
             }
         }
 
-        $order->update(['status' => $validated['status']]);
+        // Only update status if it wasn't already moved to 'shipped' by the service
+        if ($order->status !== 'shipped') {
+            $order->update(['status' => $validated['status']]);
+        }
 
         // Broadcast status update
         event(new \App\Events\OrderUpdated($order));
@@ -161,6 +171,16 @@ class OrderController extends Controller
         // Si la commande passe à "delivered", on crédite le vendeur
         if ($validated['status'] === 'delivered' && $oldStatus !== 'delivered') {
             $order->shop->increment('balance', $order->seller_amount);
+            
+            // Enregistrer la transaction dans l'historique
+            \App\Models\Transaction::create([
+                'user_id' => $order->shop->user_id,
+                'order_id' => $order->id,
+                'amount' => $order->seller_amount,
+                'type' => 'credit',
+                'description' => "Vente - Commande {$order->order_number}",
+                'status' => 'completed'
+            ]);
         }
 
         return back()->with('success', 'Statut mis à jour avec succès.');

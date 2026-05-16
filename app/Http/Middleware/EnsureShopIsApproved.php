@@ -18,8 +18,16 @@ class EnsureShopIsApproved
         if ($request->user() && $request->user()->role === 'seller') {
             $shop = $request->user()->shop;
             
-            // Allow access to logout, dashboard, settings and tracking to prevent loops or allow viewing empty state
-            $excludedRoutes = ['seller.dashboard', 'logout', 'seller.settings', 'seller.settings.update', 'seller.tracking'];
+            // Allow access to logout, dashboard, settings, tracking and SHOP CREATION to prevent loops
+            $excludedRoutes = [
+                'seller.dashboard', 
+                'logout', 
+                'seller.settings', 
+                'seller.settings.update', 
+                'seller.tracking',
+                'shops.create',
+                'shops.store'
+            ];
             
             if (!$shop || $shop->status !== 'approved') {
                 if (!in_array($request->route() ? $request->route()->getName() : null, $excludedRoutes)) {

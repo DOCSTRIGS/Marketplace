@@ -67,7 +67,10 @@ export default function OrderTrackingDrawer({ orderId, isOpen, onClose }) {
                                 <div className="flex-grow relative">
                                     <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
                                         <Map
-                                            defaultCenter={{ lat: trackingData.shop.lat, lng: trackingData.shop.lng }}
+                                            defaultCenter={{ 
+                                                lat: parseFloat(trackingData.shop.lat) || 6.1372, 
+                                                lng: parseFloat(trackingData.shop.lng) || 1.2125 
+                                            }}
                                             defaultZoom={14}
                                             mapId="bf50a87343b44b8b"
                                             disableDefaultUI={true}
@@ -122,31 +125,49 @@ function MapContent({ trackingData }) {
     useEffect(() => {
         if (!map || !trackingData) return;
         
+        const shopLat = parseFloat(trackingData.shop.lat);
+        const shopLng = parseFloat(trackingData.shop.lng);
+        const driverLat = parseFloat(trackingData.driver?.lat);
+        const driverLng = parseFloat(trackingData.driver?.lng);
+
         const bounds = new window.google.maps.LatLngBounds();
-        bounds.extend({ lat: trackingData.shop.lat, lng: trackingData.shop.lng });
-        if (trackingData.driver) {
-            bounds.extend({ lat: trackingData.driver.lat, lng: trackingData.driver.lng });
+        
+        if (isFinite(shopLat) && isFinite(shopLng)) {
+            bounds.extend({ lat: shopLat, lng: shopLng });
         }
-        map.fitBounds(bounds, { padding: 80 });
+
+        if (trackingData.driver && isFinite(driverLat) && isFinite(driverLng)) {
+            bounds.extend({ lat: driverLat, lng: driverLng });
+        }
+
+        // Only fit bounds if they are not empty
+        if (!bounds.isEmpty()) {
+            map.fitBounds(bounds, { padding: 80 });
+        }
     }, [map, trackingData]);
+
+    const shopPos = { lat: parseFloat(trackingData.shop.lat), lng: parseFloat(trackingData.shop.lng) };
+    const driverPos = trackingData.driver ? { lat: parseFloat(trackingData.driver.lat), lng: parseFloat(trackingData.driver.lng) } : null;
 
     return (
         <>
             {/* Shop Marker */}
-            <AdvancedMarker position={{ lat: trackingData.shop.lat, lng: trackingData.shop.lng }}>
-                <div className="relative group">
-                    <div className="bg-white dark:bg-[#1e1e1e] px-3 py-1 rounded-full shadow-xl border border-gray-100 dark:border-gray-800 mb-2 whitespace-nowrap">
-                        <p className="text-[8px] font-black text-[#8B4513] uppercase tracking-widest">Ma Boutique</p>
+            {isFinite(shopPos.lat) && isFinite(shopPos.lng) && (
+                <AdvancedMarker position={shopPos}>
+                    <div className="relative group">
+                        <div className="bg-white dark:bg-[#1e1e1e] px-3 py-1 rounded-full shadow-xl border border-gray-100 dark:border-gray-800 mb-2 whitespace-nowrap">
+                            <p className="text-[8px] font-black text-[#8B4513] uppercase tracking-widest">Ma Boutique</p>
+                        </div>
+                        <div className="w-10 h-10 bg-[#8B4513] rounded-2xl flex items-center justify-center text-white shadow-2xl ring-4 ring-white dark:ring-[#121212]">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        </div>
                     </div>
-                    <div className="w-10 h-10 bg-[#8B4513] rounded-2xl flex items-center justify-center text-white shadow-2xl ring-4 ring-white dark:ring-[#121212]">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                    </div>
-                </div>
-            </AdvancedMarker>
+                </AdvancedMarker>
+            )}
 
             {/* Driver Marker */}
-            {trackingData.driver && (
-                <AdvancedMarker position={{ lat: trackingData.driver.lat, lng: trackingData.driver.lng }}>
+            {driverPos && isFinite(driverPos.lat) && isFinite(driverPos.lng) && (
+                <AdvancedMarker position={driverPos}>
                     <div className="relative group flex flex-col items-center">
                         <div className="absolute -top-10 bg-black text-white px-3 py-1 rounded-full shadow-xl whitespace-nowrap">
                             <p className="text-[8px] font-black uppercase tracking-widest">Livreur en route</p>

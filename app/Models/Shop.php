@@ -10,7 +10,8 @@ class Shop extends Model
         'user_id', 'neighborhood_id', 'name', 'slug', 'description', 
         'logo', 'cover_image', 'latitude', 'longitude', 'slogan', 
         'phone', 'categories', 'delivery_available', 'delivery_fee', 
-        'coverage_area', 'balance', 'status'
+        'coverage_area', 'balance', 'status', 'is_verified',
+        'id_card_path', 'license_path', 'admin_note'
     ];
 
     protected function casts(): array

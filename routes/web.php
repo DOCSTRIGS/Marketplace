@@ -49,6 +49,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/wallet/withdraw', [App\Http\Controllers\WithdrawalController::class, 'requestWithdrawal'])->name('wallet.withdraw');
         Route::get('/settings', [App\Http\Controllers\SellerController::class, 'settings'])->name('settings');
         Route::post('/settings', [App\Http\Controllers\SellerController::class, 'updateSettings'])->name('settings.update');
+        Route::post('/kyc', [App\Http\Controllers\ShopController::class, 'updateKYC'])->name('kyc.update');
         Route::get('/chat', [App\Http\Controllers\ChatController::class, 'shopConversations'])->name('chat');
     });
 
@@ -121,7 +122,17 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/admin/users', [App\Http\Controllers\AdminController::class, 'storeUser'])->name('admin.users.store');
         Route::patch('/admin/users/{id}', [App\Http\Controllers\AdminController::class, 'updateUser'])->name('admin.users.update');
         Route::delete('/admin/users/{id}', [App\Http\Controllers\AdminController::class, 'deleteUser'])->name('admin.users.delete');
+        Route::get('/admin/finance', [App\Http\Controllers\AdminController::class, 'financialReport'])->name('admin.finance');
+        Route::post('/admin/shops/{id}/verify', [App\Http\Controllers\AdminController::class, 'verifyKYC'])->name('admin.shops.verify');
     });
+
+    // Review Routes
+    Route::post('/orders/{order}/review', [App\Http\Controllers\ReviewController::class, 'store'])->name('orders.review.store');
+
+    // Notification Routes
+    Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
 
     // Profile Routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -130,14 +141,17 @@ Route::middleware(['auth'])->group(function () {
 
     // Driver Simulation Route
     Route::post('/api/driver/update-location', [App\Http\Controllers\DriverController::class, 'updateLocation'])->name('driver.update-location');
+    Route::post('/api/driver/sync-positions', [App\Http\Controllers\DriverController::class, 'syncPositions'])->name('driver.sync-positions');
     Route::post('/api/driver/update-status/{order}', [App\Http\Controllers\DriverController::class, 'updateStatus'])->name('driver.update-status');
     Route::get('/livreur/dashboard', [App\Http\Controllers\DriverController::class, 'dashboard'])->name('driver.dashboard');
-    Route::get('/livreur/portefeuille', [App\Http\Controllers\DriverController::class, 'earnings'])->name('driver.earnings');
-    Route::get('/livreur/performance', [App\Http\Controllers\DriverController::class, 'performance'])->name('driver.performance');
+    Route::get('/livreur/historique', [App\Http\Controllers\DriverController::class, 'history'])->name('driver.history');
     Route::get('/livreur/profil', [App\Http\Controllers\DriverController::class, 'profile'])->name('driver.profile');
     Route::post('/livreur/profil', [App\Http\Controllers\DriverController::class, 'updateProfile'])->name('driver.profile.update');
     Route::get('/livreur/commande/{order}', [App\Http\Controllers\DriverController::class, 'show'])->name('driver.tracking');
     Route::get('/orders/{order}/tracking', [App\Http\Controllers\OrderTrackingController::class, 'getDriverPosition'])->name('orders.tracking');
+    Route::post('/livreur/commande/{order}/accept', [App\Http\Controllers\DriverController::class, 'acceptOrder'])->name('driver.orders.accept');
+    Route::post('/livreur/commande/{order}/update-status', [App\Http\Controllers\DriverController::class, 'updateStatus'])->name('driver.orders.update-status');
+    Route::post('/livreur/update-availability', [App\Http\Controllers\DriverController::class, 'updateAvailability'])->name('driver.update-availability');
 });
 
 // Public Routes

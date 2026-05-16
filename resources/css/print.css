@@ -1,0 +1,42 @@
+@media print {
+    /* Hide UI elements */
+    nav, footer, button, .no-print, aside, header {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+        color: black !important;
+        margin: 0;
+        padding: 20px;
+        font-size: 12pt;
+    }
+
+    .invoice-card {
+        box-shadow: none !important;
+        border: 1px solid #eee !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .print-only {
+        display: block !important;
+    }
+    
+    .status-badge {
+        border: 1px solid #000 !important;
+        background: none !important;
+        color: black !important;
+    }
+
+    /* Keep the logo colors if possible, otherwise grayscale */
+    .logo-text {
+        color: #D35400 !important;
+        -webkit-print-color-adjust: exact;
+    }
+}
+
+.print-only {
+    display: none;
+}

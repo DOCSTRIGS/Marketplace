@@ -19,7 +19,8 @@ class Order extends Model
         'delivery_address', 
         'payment_method', 
         'driver_id', 
-        'payment_reference'
+        'payment_reference',
+        'delivery_code'
     ];
 
     public function user()

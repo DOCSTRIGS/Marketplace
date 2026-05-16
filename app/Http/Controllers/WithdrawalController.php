@@ -21,9 +21,51 @@ class WithdrawalController extends Controller
             ->latest()
             ->get();
 
+        $transactions = \App\Models\Transaction::where('user_id', Auth::id())
+            ->latest()
+            ->get();
+
+        // Calculate monthly reports (Consistency: use Order table for all monthly performance metrics)
+        $thisMonth = now()->startOfMonth();
+        $lastMonth = now()->subMonth()->startOfMonth();
+
+        // 1. Expected Earnings from this month's orders
+        $thisMonthEarnings = \App\Models\Order::where('shop_id', $shop->id)
+            ->whereIn('status', ['delivered', 'shipped', 'preparing', 'pending'])
+            ->where('created_at', '>=', $thisMonth)
+            ->sum('seller_amount');
+
+        $lastMonthEarnings = \App\Models\Order::where('shop_id', $shop->id)
+            ->whereIn('status', ['delivered', 'shipped', 'preparing', 'pending'])
+            ->where('created_at', '>=', $lastMonth)
+            ->where('created_at', '<', $thisMonth)
+            ->sum('seller_amount');
+
+        $totalOrders = \App\Models\Order::where('shop_id', $shop->id)
+            ->whereIn('status', ['delivered', 'shipped', 'preparing', 'pending'])
+            ->where('created_at', '>=', $thisMonth)
+            ->count();
+
+        // 2. Volume and Commissions
+        $totalVolume = \App\Models\Order::where('shop_id', $shop->id)
+            ->whereIn('status', ['delivered', 'shipped', 'preparing', 'pending'])
+            ->where('created_at', '>=', $thisMonth)
+            ->sum('total_amount');
+        
+        $commissions = $totalVolume - $thisMonthEarnings;
+
         return inertia('Seller/Wallet', [
+            'shop' => $shop,
             'withdrawals' => $withdrawals,
-            'balance' => $shop->balance
+            'transactions' => $transactions,
+            'balance' => $shop->balance,
+            'reports' => [
+                'thisMonthEarnings' => $thisMonthEarnings,
+                'lastMonthEarnings' => $lastMonthEarnings,
+                'totalOrders' => $totalOrders,
+                'commissions' => max(0, $commissions),
+                'growth' => $lastMonthEarnings > 0 ? round((($thisMonthEarnings - $lastMonthEarnings) / $lastMonthEarnings) * 100) : 0
+            ]
         ]);
     }
 
@@ -45,7 +87,7 @@ class WithdrawalController extends Controller
         }
 
         // Create withdrawal request
-        Withdrawal::create([
+        $withdrawal = Withdrawal::create([
             'shop_id' => $shop->id,
             'amount' => $validated['amount'],
             'status' => 'pending',
@@ -55,6 +97,16 @@ class WithdrawalController extends Controller
 
         // Deduct from balance immediately to prevent double request
         $shop->decrement('balance', $validated['amount']);
+
+        // Record debit transaction linked to withdrawal
+        \App\Models\Transaction::create([
+            'user_id' => $shop->user_id,
+            'withdrawal_id' => $withdrawal->id,
+            'amount' => $validated['amount'],
+            'type' => 'debit',
+            'description' => "Retrait ({$validated['payment_method']})",
+            'status' => 'pending'
+        ]);
 
         return back()->with('success', 'Votre demande de retrait a été envoyée.');
     }
@@ -91,6 +143,14 @@ class WithdrawalController extends Controller
             'status' => $request->status,
             'admin_note' => $request->admin_note
         ]);
+
+        // Sync Financial Transaction
+        $transaction = \App\Models\Transaction::where('withdrawal_id', $withdrawal->id)->first();
+        if ($transaction) {
+            $transaction->update([
+                'status' => $request->status === 'approved' ? 'completed' : 'cancelled'
+            ]);
+        }
 
         // If rejected, refund the shop balance
         if ($request->status === 'rejected') {

@@ -42,11 +42,7 @@ class DeliveryAssignmentService
                 $driver->last_longitude
             );
 
-            // Optimization: Ignore drivers further than 15km
-            if ($distance > 15) continue;
-
-            // Simple intelligence: we prefer the closest, but also those with high completed deliveries
-            // Score = Distance (lower is better) - (Deliveries / 100) (higher is better)
+            // Score = Distance (lower is better) - (Deliveries / 10) (higher is better)
             $score = $distance - ($driver->deliveries_completed / 10); 
 
             $candidates[] = [
@@ -62,24 +58,25 @@ class DeliveryAssignmentService
         $closestDriver = !empty($candidates) ? $candidates[0]['driver'] : null;
         $minDistance = !empty($candidates) ? $candidates[0]['distance'] : null;
 
-        // 3. Assign the order if a driver was found
-        if ($closestDriver) {
-            $order->update([
-                'driver_id' => $closestDriver->id,
-                'status' => 'shipped' // Automatically mark as shipped/in delivery
-            ]);
-
-            // Mark driver as busy
-            $closestDriver->update(['driver_status' => 'busy']);
-
-            // Trigger Real-time Notification
-            event(new \App\Events\OrderAssignedToDriver($order, $closestDriver->id));
-
-            Log::info("Order #{$order->id} assigned to Driver #{$closestDriver->id} (Distance: {$minDistance}km)");
-            return $closestDriver;
+        // Fallback: If no driver with GPS was found, just pick the first available driver
+        if (!$closestDriver && !$drivers->isEmpty()) {
+            $closestDriver = $drivers->first();
+            Log::info("No GPS data found for drivers. Assigning Order #{$order->id} to first available Driver #{$closestDriver->id} as fallback.");
         }
 
-        return null;
+        // 3. Notify the closest drivers (don't assign yet, wait for manual acceptance)
+        foreach ($candidates as $candidate) {
+            $candidate['driver']->notify(new \App\Notifications\OrderNotification(
+                $order, 
+                "Une nouvelle mission est disponible près de vous : #{$order->order_number}",
+                'info'
+            ));
+        }
+
+        // Broadcast to all drivers in range
+        event(new \App\Events\OrderUpdated($order));
+
+        return null; // Return null because we didn't assign yet
     }
 
     /**

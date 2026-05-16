@@ -50,6 +50,15 @@ class HandleInertiaRequests extends Middleware
                     return 0;
                 }
             })(),
+            'adminCounts' => [
+                'pendingShops' => \App\Models\Shop::where('status', 'pending')->count(),
+                'pendingWithdrawals' => \App\Models\Withdrawal::where('status', 'pending')->count(),
+            ],
+            'flash' => [
+                'message' => fn () => $request->session()->get('message'),
+                'error' => fn () => $request->session()->get('error'),
+                'success' => fn () => $request->session()->get('success'),
+            ],
         ];
     }
 }

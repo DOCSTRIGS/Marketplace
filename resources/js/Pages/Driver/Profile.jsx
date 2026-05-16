@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { Head, Link, useForm } from '@inertiajs/react';
 
 export default function DriverProfile({ auth, user }) {
-    const [status, setStatus] = useState('available');
+    const [status, setStatus] = useState(auth.user.driver_status || 'available');
+    
+    const handleStatusChange = (newStatus) => {
+        setStatus(newStatus);
+        axios.post(route('driver.update-availability'), { status: newStatus })
+            .catch(err => console.error(err));
+    };
+
+    const [showPassword, setShowPassword] = useState(false);
     
     const { data, setData, post, processing, errors } = useForm({
         name: user.name || '',
@@ -27,35 +36,35 @@ export default function DriverProfile({ auth, user }) {
     };
 
     return (
-        <div className="min-h-screen bg-white font-['Outfit',sans-serif] text-[#1a1a1a] antialiased">
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
-                .rounded-card { border-radius: 32px; }
-                .text-spacing { letter-spacing: 0.1em; }
-                input, textarea, select { border: 1px solid #F3F4F6 !important; border-radius: 16px !important; padding: 12px 20px !important; font-size: 14px !important; font-weight: 600 !important; }
-                input:focus, textarea:focus { border-color: #8B4513 !important; ring: 0 !important; outline: none !important; }
-            `}</style>
-            
+        <div className="min-h-screen bg-white text-[#1a1a1a] antialiased">
             <Head title="Mon Profil Livreur" />
+
 
             <header className="h-20 px-12 flex items-center justify-between border-b border-gray-100 sticky top-0 bg-white z-50">
                 <div className="flex items-center gap-10">
                     <h1 className="text-2xl font-black text-[#D35400] tracking-tighter">LoméShop</h1>
                     <nav className="flex items-center gap-8">
                         <div className="flex gap-6 text-[11px] font-black uppercase text-spacing">
-                            <Link href={route('driver.dashboard')} className="text-gray-400 hover:text-black">Tableau de bord</Link>
-                            <Link href={route('driver.earnings')} className="text-gray-400 hover:text-black">Portefeuille</Link>
-                            <Link href={route('driver.performance')} className="text-gray-400 hover:text-black">Performance</Link>
+                            <Link href={route('driver.dashboard')} className="text-gray-400 hover:text-black">Missions</Link>
+                            <Link href={route('driver.history')} className="text-gray-400 hover:text-black">Historique</Link>
                             <Link href={route('driver.profile')} className="text-[#8B4513] border-b-2 border-[#8B4513] pb-1">Profil</Link>
                         </div>
                         <div className="w-[1px] h-6 bg-gray-200 mx-2"></div>
                         <div className="bg-[#F2F2F2] p-1 rounded-full flex items-center">
-                            <button onClick={() => setStatus('available')} className={`px-6 py-2 rounded-full text-[10px] font-bold uppercase transition-all ${status === 'available' ? 'bg-[#8B4513] text-white' : 'text-gray-400'}`}>En ligne</button>
-                            <button onClick={() => setStatus('offline')} className={`px-6 py-2 rounded-full text-[10px] font-bold uppercase transition-all ${status === 'offline' ? 'bg-[#8B4513] text-white' : 'text-gray-400'}`}>Hors ligne</button>
+                            <button onClick={() => handleStatusChange('available')} className={`px-6 py-2 rounded-full text-[10px] font-bold uppercase transition-all ${status === 'available' ? 'bg-[#8B4513] text-white' : 'text-gray-400'}`}>En ligne</button>
+                            <button onClick={() => handleStatusChange('offline')} className={`px-6 py-2 rounded-full text-[10px] font-bold uppercase transition-all ${status === 'offline' ? 'bg-[#8B4513] text-white' : 'text-gray-400'}`}>Hors ligne</button>
                         </div>
                     </nav>
                 </div>
                 <div className="flex items-center gap-6">
+                    <Link 
+                        href={route('logout')} 
+                        method="post" 
+                        as="button" 
+                        className="text-[10px] font-black uppercase text-red-500 hover:bg-red-50 px-4 py-2 rounded-xl transition-all"
+                    >
+                        Déconnexion
+                    </Link>
                     <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden ml-2 border border-gray-100">
                         <img src={auth.user.profile_photo_url} className="w-full h-full object-cover" alt="" />
                     </div>
@@ -72,23 +81,44 @@ export default function DriverProfile({ auth, user }) {
                     {/* SECTION PERSONNELLE */}
                     <div className="col-span-4 space-y-8">
                         <div className="bg-gray-50 rounded-[40px] p-10 space-y-6">
-                            <h3 className="text-sm font-black uppercase tracking-widest text-[#8B4513]">Infos Personnelles</h3>
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-black uppercase tracking-widest text-[#8B4513]">Infos Personnelles</h3>
+                            </div>
                             
                             <div className="space-y-4">
                                 <div>
                                     <label className="text-[10px] font-black uppercase text-gray-400 ml-2 mb-2 block">Nom Complet</label>
-                                    <input type="text" value={data.name} onChange={e => setData('name', e.target.value)} className="w-full" />
+                                    <input type="text" value={data.name} onChange={e => setData('name', e.target.value)} className="w-full premium-input" />
                                     {errors.name && <p className="text-red-500 text-[10px] mt-1">{errors.name}</p>}
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black uppercase text-gray-400 ml-2 mb-2 block">Téléphone</label>
-                                    <input type="text" value={data.phone} onChange={e => setData('phone', e.target.value)} className="w-full" placeholder="+228 XX XX XX XX" />
+                                    <input type="text" value={data.phone} onChange={e => setData('phone', e.target.value)} className="w-full premium-input" placeholder="+228 XX XX XX XX" />
                                 </div>
                                 <div className="pt-4 border-t border-gray-200 mt-4">
-                                    <h4 className="text-[10px] font-black uppercase text-gray-400 mb-4">Changer le mot de passe</h4>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="text-[10px] font-black uppercase text-gray-400">Changer le mot de passe</h4>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="text-[9px] font-black uppercase text-[#8B4513] hover:underline"
+                                        >
+                                            {showPassword ? 'Masquer' : 'Afficher'}
+                                        </button>
+                                    </div>
                                     <div className="space-y-4">
-                                        <input type="password" placeholder="Nouveau mot de passe" onChange={e => setData('password', e.target.value)} className="w-full" />
-                                        <input type="password" placeholder="Confirmer" onChange={e => setData('password_confirmation', e.target.value)} className="w-full" />
+                                                <input 
+                                                    type={showPassword ? "text" : "password"} 
+                                                    placeholder="Nouveau mot de passe" 
+                                                    onChange={e => setData('password', e.target.value)} 
+                                                    className="w-full premium-input" 
+                                                />
+                                                <input 
+                                                    type={showPassword ? "text" : "password"} 
+                                                    placeholder="Confirmer" 
+                                                    onChange={e => setData('password_confirmation', e.target.value)} 
+                                                    className="w-full premium-input" 
+                                                />
                                     </div>
                                     {errors.password && <p className="text-red-500 text-[10px] mt-1">{errors.password}</p>}
                                 </div>
@@ -105,7 +135,7 @@ export default function DriverProfile({ auth, user }) {
                                 <div className="space-y-6">
                                     <div>
                                         <label className="text-[10px] font-black uppercase text-gray-400 ml-2 mb-2 block">Type de véhicule</label>
-                                        <select value={data.vehicle_type} onChange={e => setData('vehicle_type', e.target.value)} className="w-full">
+                                        <select value={data.vehicle_type} onChange={e => setData('vehicle_type', e.target.value)} className="w-full premium-input">
                                             <option value="moto">Moto</option>
                                             <option value="voiture">Voiture</option>
                                             <option value="velo">Vélo / Scooter</option>
@@ -113,17 +143,17 @@ export default function DriverProfile({ auth, user }) {
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black uppercase text-gray-400 ml-2 mb-2 block">Modèle / Marque</label>
-                                        <input type="text" value={data.vehicle_model} onChange={e => setData('vehicle_model', e.target.value)} className="w-full" placeholder="Ex: Yamaha Crypton S" />
+                                        <input type="text" value={data.vehicle_model} onChange={e => setData('vehicle_model', e.target.value)} className="w-full premium-input" placeholder="Ex: Yamaha Crypton S" />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black uppercase text-gray-400 ml-2 mb-2 block">Immatriculation</label>
-                                        <input type="text" value={data.vehicle_plate} onChange={e => setData('vehicle_plate', e.target.value)} className="w-full" placeholder="TG-XXXX-AB" />
+                                        <input type="text" value={data.vehicle_plate} onChange={e => setData('vehicle_plate', e.target.value)} className="w-full premium-input" placeholder="TG-XXXX-AB" />
                                     </div>
                                 </div>
                                 <div className="space-y-6">
                                     <div>
                                         <label className="text-[10px] font-black uppercase text-gray-400 ml-2 mb-2 block">Description courte</label>
-                                        <textarea rows="5" value={data.vehicle_description} onChange={e => setData('vehicle_description', e.target.value)} className="w-full resize-none" placeholder="Décrivez votre véhicule (couleur, état, etc.)"></textarea>
+                                        <textarea rows="5" value={data.vehicle_description} onChange={e => setData('vehicle_description', e.target.value)} className="w-full premium-input resize-none" placeholder="Décrivez votre véhicule (couleur, état, etc.)"></textarea>
                                     </div>
                                 </div>
                             </div>

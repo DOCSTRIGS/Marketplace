@@ -1,9 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import ReviewModal from '@/Components/ReviewModal';
+import { Star } from 'lucide-react';
+import { useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { OrderSkeleton } from '@/Components/Skeletons';
 
 export default function MyOrders({ auth, orders }) {
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setIsLoading(false), 800);
+        return () => clearTimeout(timer);
+    }, []);
+    
     const formattedPrice = (price) => new Intl.NumberFormat('fr-FR').format(price);
 
     const getStatusColor = (status) => {
@@ -24,6 +38,7 @@ export default function MyOrders({ auth, orders }) {
             case 'pending': return 'En attente';
             case 'paid': return 'Payé';
             case 'processing': return 'En cours';
+            case 'accepted': 
             case 'preparing': return 'En préparation';
             case 'shipped': return 'Expédié';
             case 'delivered': return 'Livré';
@@ -44,9 +59,18 @@ export default function MyOrders({ auth, orders }) {
                 </div>
 
                 <div className="space-y-6">
-                    {orders.length > 0 ? (
-                        orders.map((order) => (
-                            <div key={order.id} className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden hover:shadow-md transition-all">
+                    {isLoading ? (
+                        [1, 2, 3].map(i => <OrderSkeleton key={i} />)
+                    ) : orders.length > 0 ? (
+                        <AnimatePresence>
+                            {orders.map((order, idx) => (
+                                <motion.div 
+                                    key={order.id} 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: idx * 0.1 }}
+                                    className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden hover:shadow-md transition-all"
+                                >
                                 {/* Order Header */}
                                 <div className="p-6 border-b border-gray-50 dark:border-gray-800 flex flex-wrap justify-between items-center gap-4 bg-gray-50/50 dark:bg-white/5 transition-colors">
                                     <div className="flex gap-8">
@@ -129,12 +153,28 @@ export default function MyOrders({ auth, orders }) {
                                         </svg>
                                         Suivre la livraison
                                     </Link>
-                                    <button className="border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 px-6 py-2 rounded-lg font-bold text-xs hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
-                                        Détails de la facture
+                                    {order.status === 'delivered' && (
+                                        <button 
+                                            onClick={() => {
+                                                setSelectedOrder(order);
+                                                setIsReviewModalOpen(true);
+                                            }}
+                                            className="bg-white border-2 border-[#8B4513] text-[#8B4513] px-6 py-2 rounded-lg font-bold text-xs hover:bg-[#8B4513] hover:text-white transition-all shadow-sm flex items-center"
+                                        >
+                                            <Star size={14} className="mr-2" />
+                                            Laisser un avis
+                                        </button>
+                                    )}
+                                    <button 
+                                        onClick={() => window.print()}
+                                        className="border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 px-6 py-2 rounded-lg font-bold text-xs hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                                    >
+                                        Imprimer la facture
                                     </button>
                                 </div>
-                            </div>
-                        ))
+                            </motion.div>
+                        ))}
+                        </AnimatePresence>
                     ) : (
                         <div className="text-center py-20 bg-white dark:bg-[#1e1e1e] rounded-3xl border border-dashed border-gray-200 dark:border-gray-800 transition-colors">
                             <div className="w-20 h-20 bg-gray-50 dark:bg-[#252525] rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300 dark:text-gray-700">
@@ -156,6 +196,14 @@ export default function MyOrders({ auth, orders }) {
             </main>
 
             <Footer />
+
+            {selectedOrder && (
+                <ReviewModal 
+                    order={selectedOrder}
+                    isOpen={isReviewModalOpen}
+                    onClose={() => setIsReviewModalOpen(false)}
+                />
+            )}
         </div>
     );
 }
