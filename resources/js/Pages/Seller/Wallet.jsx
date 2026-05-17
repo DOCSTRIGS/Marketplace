@@ -4,7 +4,7 @@ import SellerLayout from '@/Layouts/SellerLayout';
 import { motion } from 'framer-motion';
 import { useToast } from '@/Contexts/ToastContext';
 
-export default function Wallet({ shop, transactions, withdrawals, balance, reports }) {
+export default function Wallet({ shop, transactions, withdrawals, balance, reports, lastSaleDate }) {
     const { addToast } = useToast();
     const { data, setData, post, processing, reset, errors } = useForm({
         amount: '',
@@ -91,7 +91,7 @@ export default function Wallet({ shop, transactions, withdrawals, balance, repor
                             </div>
                             <div>
                                 <p className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1">Dernière vente</p>
-                                <p className="text-sm font-bold">Aujourd'hui</p>
+                                <p className="text-sm font-bold capitalize">{lastSaleDate || 'Aucune vente'}</p>
                             </div>
                         </div>
                     </div>

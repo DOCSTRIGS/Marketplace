@@ -54,11 +54,39 @@ class WithdrawalController extends Controller
         
         $commissions = $totalVolume - $thisMonthEarnings;
 
+        // 3. Dynamic Last Sale Date
+        $lastSaleOrder = \App\Models\Order::where('shop_id', $shop->id)
+            ->where('status', 'delivered')
+            ->latest('delivered_at')
+            ->first();
+        
+        $lastSaleDate = $lastSaleOrder && $lastSaleOrder->delivered_at 
+            ? $lastSaleOrder->delivered_at->diffForHumans() 
+            : ($lastSaleOrder ? $lastSaleOrder->created_at->diffForHumans() : 'Aucune vente');
+
+        // 4. Ensure financial consistency: dynamic balance synchronization
+        $credits = \App\Models\Transaction::where('user_id', Auth::id())
+            ->where('type', 'credit')
+            ->where('status', 'completed')
+            ->sum('amount');
+
+        $debits = \App\Models\Transaction::where('user_id', Auth::id())
+            ->where('type', 'debit')
+            ->where('status', 'completed')
+            ->sum('amount');
+
+        $realBalance = $credits - $debits;
+
+        if ($shop->balance != $realBalance) {
+            $shop->update(['balance' => $realBalance]);
+        }
+
         return inertia('Seller/Wallet', [
             'shop' => $shop,
             'withdrawals' => $withdrawals,
             'transactions' => $transactions,
             'balance' => $shop->balance,
+            'lastSaleDate' => $lastSaleDate,
             'reports' => [
                 'thisMonthEarnings' => $thisMonthEarnings,
                 'lastMonthEarnings' => $lastMonthEarnings,
