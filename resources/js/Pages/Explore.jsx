@@ -41,6 +41,7 @@ export default function Explore({ products, categories, filters }) {
     };
 
     const activeSubCategoryName = () => {
+        if (searchTerm) return `Recherche : "${searchTerm}"`;
         if (!activeSubCategoryId) return "Tous les produits";
         for (const cat of categories) {
             const found = cat.children.find(child => child.id == activeSubCategoryId);
@@ -58,9 +59,25 @@ export default function Explore({ products, categories, filters }) {
     const [maxPrice, setMaxPrice] = useState(filters.max_price || '');
     const [selectedRating, setSelectedRating] = useState(filters.rating || null);
 
+    // Progressive Rendering (Pagination) for Instant Load Speed
+    const [visibleCount, setVisibleCount] = useState(12);
+
+    // Reset pagination when filters, categories, or sorting options change
+    useEffect(() => {
+        setVisibleCount(12);
+    }, [activeSubCategoryId, searchTerm, minPrice, maxPrice, selectedRating, activeSort]);
+
     const applyFilters = (newFilters = {}) => {
+        const isSearching = newFilters.hasOwnProperty('search') ? newFilters.search : searchTerm;
+        
+        // If searching globally, clear category filter automatically for best UX
+        if (isSearching) {
+            activeSubCategoryId && setActiveSubCategoryId(null);
+            activeMainCategory && setActiveMainCategory(null);
+        }
+
         const currentFilters = {
-            category_id: activeSubCategoryId,
+            category_id: isSearching ? null : activeSubCategoryId,
             search: searchTerm,
             min_price: minPrice,
             max_price: maxPrice,
@@ -80,7 +97,17 @@ export default function Explore({ products, categories, filters }) {
         });
     };
 
-    // Debounced search could be better, but for now simple Enter or blur
+    // Live Search Debounce: Triggers search automatically 350ms after the user stops typing
+    useEffect(() => {
+        const delayDebounce = setTimeout(() => {
+            if (searchTerm !== (filters.search || '')) {
+                applyFilters({ search: searchTerm });
+            }
+        }, 350);
+
+        return () => clearTimeout(delayDebounce);
+    }, [searchTerm]);
+
     const handleSearch = (e) => {
         if (e.key === 'Enter') applyFilters();
     };
@@ -148,10 +175,22 @@ export default function Explore({ products, categories, filters }) {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             onKeyDown={handleSearch}
-                            onBlur={() => applyFilters()}
                             placeholder="Rechercher un produit..."
-                            className="w-full bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-gray-800 rounded-md py-2.5 pl-10 pr-4 text-sm focus:ring-1 focus:ring-[#B03A2E] focus:outline-none focus:border-[#B03A2E] text-gray-700 dark:text-gray-200 shadow-sm"
+                            className="w-full bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-gray-800 rounded-md py-2.5 pl-10 pr-10 text-sm focus:ring-1 focus:ring-[#B03A2E] focus:outline-none focus:border-[#B03A2E] text-gray-700 dark:text-gray-200 shadow-sm transition-all"
                         />
+                        {searchTerm && (
+                            <button
+                                onClick={() => {
+                                    setSearchTerm('');
+                                    applyFilters({ search: '' });
+                                }}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-white"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -346,7 +385,7 @@ export default function Explore({ products, categories, filters }) {
                         {/* Product Grid */}
                         {sortedProducts.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-                                {sortedProducts.map((product, index) => (
+                                {sortedProducts.slice(0, visibleCount).map((product, index) => (
                                     <CategoryProductCard key={product.id} product={product} index={index} />
                                 ))}
                             </div>
@@ -363,9 +402,12 @@ export default function Explore({ products, categories, filters }) {
                         )}
 
                         {/* Load More Button */}
-                        {products.length > 0 && (
+                        {visibleCount < sortedProducts.length && (
                             <div className="flex justify-center pb-12">
-                                <button className="bg-[#70360f] text-white font-bold text-sm px-10 py-3 rounded-md hover:bg-[#5a2b0c] transition-colors flex items-center shadow-md">
+                                <button 
+                                    onClick={() => setVisibleCount(prev => prev + 12)}
+                                    className="bg-[#70360f] text-white font-bold text-sm px-10 py-3 rounded-md hover:bg-[#5a2b0c] transition-colors flex items-center shadow-md"
+                                >
                                     Voir plus de produits
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2" viewBox="0 0 20 20" fill="currentColor">
                                         <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />

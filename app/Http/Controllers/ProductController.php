@@ -101,9 +101,7 @@ class ProductController extends Controller
         $product->shop_id = $shop->id;
 
         if ($request->hasFile('image')) {
-            $imageName = time().'.'.$request->image->extension();  
-            $request->image->move(public_path('images/products'), $imageName);
-            $product->images = ['/images/products/'.$imageName];
+            $product->images = [$this->uploadAndOptimizeImage($request->file('image'))];
         }
 
         $product->save();
@@ -134,14 +132,92 @@ class ProductController extends Controller
         $product->variants = $validated['variants'] ?? null;
 
         if ($request->hasFile('image')) {
-            $imageName = time().'.'.$request->image->extension();  
-            $request->image->move(public_path('images/products'), $imageName);
-            $product->images = ['/images/products/'.$imageName];
+            $product->images = [$this->uploadAndOptimizeImage($request->file('image'))];
         }
 
         $product->save();
 
         return redirect()->back()->with('success', 'Produit modifié avec succès');
+    }
+
+    private function uploadAndOptimizeImage($file)
+    {
+        $destinationDir = public_path('images/products');
+        if (!is_dir($destinationDir)) {
+            mkdir($destinationDir, 0755, true);
+        }
+
+        $filename = time() . '_' . uniqid() . '.webp';
+        $destinationPath = $destinationDir . '/' . $filename;
+
+        // Try to optimize and convert using native PHP GD library
+        try {
+            $info = getimagesize($file->getRealPath());
+            $mime = $info['mime'] ?? '';
+
+            if ($mime === 'image/jpeg' || $mime === 'image/jpg') {
+                $image = imagecreatefromjpeg($file->getRealPath());
+            } elseif ($mime === 'image/png') {
+                $image = imagecreatefrompng($file->getRealPath());
+                if ($image) {
+                    imagepalettetotruecolor($image);
+                    imagealphablending($image, true);
+                    imagesavealpha($image, true);
+                }
+            } elseif ($mime === 'image/webp') {
+                $image = imagecreatefromwebp($file->getRealPath());
+            } else {
+                // If not supported, just move file normally
+                $imageName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move($destinationDir, $imageName);
+                return '/images/products/' . $imageName;
+            }
+
+            if ($image) {
+                // Resize if too large (Max 800px)
+                $width = imagesx($image);
+                $height = imagesy($image);
+                $maxDim = 800;
+
+                if ($width > $maxDim || $height > $maxDim) {
+                    $ratio = $width / $height;
+                    if ($ratio > 1) {
+                        $newWidth = $maxDim;
+                        $newHeight = round($maxDim / $ratio);
+                    } else {
+                        $newHeight = $maxDim;
+                        $newWidth = round($maxDim * $ratio);
+                    }
+
+                    $resized = imagecreatetruecolor($newWidth, $newHeight);
+                    if ($resized) {
+                        if ($mime === 'image/png') {
+                            imagealphablending($resized, false);
+                            imagesavealpha($resized, true);
+                            $transparent = imagecolorallocatealpha($resized, 255, 255, 255, 127);
+                            imagefilledrectangle($resized, 0, 0, $newWidth, $newHeight, $transparent);
+                        }
+
+                        imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                        imagedestroy($image);
+                        $image = $resized;
+                    }
+                }
+
+                // Save as WebP with 75% quality (excellent compression)
+                imagewebp($image, $destinationPath, 75);
+                imagedestroy($image);
+
+                return '/images/products/' . $filename;
+            }
+        } catch (\Exception $e) {
+            // GD Error or not available: fallback below
+        }
+
+        // Standard fallback if GD fails
+        $imageName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $file->move($destinationDir, $imageName);
+        return '/images/products/' . $imageName;
     }
 
     public function destroy($id)
