@@ -39,39 +39,57 @@ export default function ProductDetail({ product }) {
 
         addItemToCart(product, quantity);
         addToast('Produit ajouté au panier !', 'success');
-    };
-
-    return (
-        <div className="min-h-screen bg-white dark:bg-[#121212] font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    };    return (
+        <div className="min-h-screen bg-[#FDFDFB] dark:bg-[#121212] font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300">
             <Head title={`${product.name} - LoméShop`} />
             <Navbar />
 
             <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-12">
                 {/* Breadcrumbs */}
-                <nav className="flex mb-10 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
-                    <Link href={route('home')} className="hover:text-[#8B4513] transition-colors">Accueil</Link>
+                <nav className="flex mb-10 text-[10px] font-extrabold uppercase tracking-[0.2em] text-gray-400">
+                    <Link href={route('home')} className="hover:text-[#b85817] transition-colors">Accueil</Link>
                     <span className="mx-3">/</span>
-                    <Link href={route('explore')} className="hover:text-[#8B4513] transition-colors">Boutique</Link>
+                    <Link href={route('explore')} className="hover:text-[#b85817] transition-colors">Boutique</Link>
                     <span className="mx-3">/</span>
-                    <span className="text-gray-900 dark:text-white">{product.name}</span>
+                    <span className="text-gray-900 dark:text-white font-black">{product.name}</span>
                 </nav>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 mb-24">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 mb-20">
                     {/* Images - Left Column (7/12) */}
                     <div className="lg:col-span-7 space-y-6">
-                        <div className="w-full aspect-[4/5] sm:aspect-square lg:aspect-[4/5] rounded-lg bg-gray-100 dark:bg-[#1e1e1e] overflow-hidden">
+                        <div className="relative w-full aspect-[4/5] sm:aspect-square lg:aspect-[4/5] rounded-3xl bg-[#FAF9F5] dark:bg-[#1a1a1a] overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm flex items-center justify-center group">
+                            {/* Premium tag */}
+                            <div className="absolute top-4 left-4 z-10 px-3.5 py-1.5 rounded-full bg-white/95 dark:bg-[#181818]/95 backdrop-blur-md border border-gray-100 dark:border-gray-800 text-[9px] font-black uppercase tracking-[0.25em] text-[#b85817] dark:text-[#d36b24] shadow-sm">
+                                LOMÉSHOP PRESTIGE
+                            </div>
+
+                            {/* Navigation Arrows */}
+                            <button 
+                                onClick={() => setSelectedImage(prev => prev > 0 ? prev - 1 : images.length - 1)}
+                                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 dark:bg-[#202020]/90 backdrop-blur-sm border border-gray-200 dark:border-gray-850 flex items-center justify-center text-gray-800 dark:text-white hover:bg-white dark:hover:bg-black transition-all shadow-sm z-10 opacity-0 group-hover:opacity-100 duration-300"
+                            >
+                                <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                            </button>
+
                             <img 
                                 src={images[selectedImage]} 
                                 alt={product.name} 
                                 className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
                             />
+
+                            <button 
+                                onClick={() => setSelectedImage(prev => (prev + 1) % images.length)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 dark:bg-[#202020]/90 backdrop-blur-sm border border-gray-200 dark:border-gray-850 flex items-center justify-center text-gray-800 dark:text-white hover:bg-white dark:hover:bg-black transition-all shadow-sm z-10 opacity-0 group-hover:opacity-100 duration-300"
+                            >
+                                <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"></path></svg>
+                            </button>
                         </div>
                         <div className="grid grid-cols-4 gap-4">
                             {images.map((img, idx) => (
                                 <button 
                                     key={idx}
                                     onClick={() => setSelectedImage(idx)}
-                                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImage === idx ? 'border-[#8B4513]' : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'}`}
+                                    className={`aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300 ${selectedImage === idx ? 'border-[#b85817] shadow-md' : 'border-transparent hover:border-gray-300 dark:hover:border-gray-700'}`}
                                 >
                                     <img src={img} alt="" className="w-full h-full object-cover" />
                                 </button>
@@ -80,192 +98,251 @@ export default function ProductDetail({ product }) {
                     </div>
 
                     {/* Product Info - Right Column (5/12) */}
-                    <div className="lg:col-span-5 flex flex-col py-4">
-                        <div className="mb-10">
-                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4">
-                                EDITION LIMITEE • {product.category?.name || 'LOMÉ'}
-                            </h4>
+                    <div className="lg:col-span-5 flex flex-col py-2 justify-between">
+                        <div className="space-y-6">
+                            <div className="inline-flex items-center gap-2">
+                                <span className="text-[9px] font-black uppercase tracking-[0.25em] text-[#b85817] dark:text-[#d36b24] bg-amber-50/50 dark:bg-[#241a10] px-3.5 py-1.5 rounded-full border border-amber-100/50 dark:border-amber-900/30">
+                                    {product.category?.name || 'Prestige'}
+                                </span>
+                                <span className="text-[9px] font-black uppercase tracking-[0.25em] text-emerald-800 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-3.5 py-1.5 rounded-full border border-emerald-100/50 dark:border-emerald-900/30">
+                                    Disponible
+                                </span>
+                            </div>
                             
-                            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white mb-6 leading-[1.1] tracking-tight">{product.name}</h1>
+                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 dark:text-white leading-[1.15] tracking-tight">{product.name}</h1>
                             
-                            <p className="text-gray-600 dark:text-gray-400 leading-relaxed font-medium text-base mb-8">
+                            {/* Stars rating below the title */}
+                            <div className="flex items-center gap-2">
+                                <div className="flex text-amber-550 text-xs">
+                                    ★ ★ ★ ★ ★
+                                </div>
+                                <span className="text-xs text-gray-400 font-extrabold uppercase tracking-wider">({product.reviews?.length || 0} avis)</span>
+                            </div>
+
+                            <p className="text-gray-600 dark:text-gray-400 leading-relaxed font-medium text-sm">
                                 {product.description}
                             </p>
 
-                            <div className="flex items-end gap-4 mb-10">
-                                <p className="text-3xl font-black text-[#8B4513] tracking-tight">
+                            {/* Specifications bullet points list */}
+                            <ul className="space-y-2.5 text-xs text-gray-600 dark:text-gray-400 py-4 border-t border-gray-150 dark:border-gray-800/80">
+                                <li className="flex items-center gap-2.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#b85817] shrink-0"></span>
+                                    <span>Article authentique et certifié de la boutique officielle</span>
+                                </li>
+                                <li className="flex items-center gap-2.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#b85817] shrink-0"></span>
+                                    <span>Localisation et expédition rapide depuis Lomé</span>
+                                </li>
+                                <li className="flex items-center gap-2.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#b85817] shrink-0"></span>
+                                    <span>Paiement sécurisé par T-Money, Flooz et Cartes bancaires</span>
+                                </li>
+                            </ul>
+
+                            {/* Price display */}
+                            <div className="py-6 border-t border-gray-150 dark:border-gray-800/80 space-y-1">
+                                <p className="text-4xl font-extrabold text-[#b85817] dark:text-[#d36b24] tracking-tight">
                                     {new Intl.NumberFormat('fr-FR').format(product.price)} FCFA
                                 </p>
-                                <p className="text-sm font-bold text-gray-400 line-through mb-1">
-                                    {new Intl.NumberFormat('fr-FR').format(product.price * 1.2)} FCFA
+                                <p className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest">
+                                    Frais de livraison calculés à la validation
                                 </p>
                             </div>
                         </div>
 
-                        {/* Variantes */}
-                        {product.variants && product.variants.length > 0 ? (
-                            <div className="mb-10 space-y-6">
-                                <div>
-                                    <h4 className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-[0.1em] mb-3">Format</h4>
-                                    <div className="flex flex-wrap gap-3">
+                        {/* Direct Purchase Option Card */}
+                        <div className="space-y-3 py-4 border-t border-gray-150 dark:border-gray-800/80">
+                            <label className="flex items-center gap-3.5 p-4 border border-amber-800/20 dark:border-amber-500/20 rounded-2xl bg-amber-50/20 dark:bg-amber-950/10 cursor-pointer">
+                                <input type="radio" defaultChecked className="text-[#b85817] focus:ring-[#b85817]" />
+                                <div className="flex-1">
+                                    <p className="text-xs font-bold text-gray-900 dark:text-white">Achat Direct Standard</p>
+                                    <p className="text-[10px] text-gray-400 font-medium">Garantie authentique et local</p>
+                                </div>
+                                <span className="text-xs font-black text-[#b85817] dark:text-[#d36b24]">{new Intl.NumberFormat('fr-FR').format(product.price)} FCFA</span>
+                            </label>
+                        </div>
+
+                        {/* Quantité & Ajouter au panier */}
+                        <div className="space-y-6 pt-4">
+                            {product.variants && product.variants.length > 0 ? (
+                                <div className="space-y-3">
+                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">Sélectionner un Format</h4>
+                                    <div className="flex flex-wrap gap-2.5">
                                         {product.variants.map((v, i) => (
-                                            <button key={i} className="px-6 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-xs font-bold text-gray-900 dark:text-white hover:border-[#8B4513] transition-colors">
+                                            <button key={i} className="px-5 py-2.5 border-2 border-gray-100 dark:border-gray-800 rounded-xl text-xs font-bold text-gray-900 dark:text-white hover:border-[#b85817] transition-all duration-300">
                                                 {v.value}
                                             </button>
                                         ))}
                                     </div>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="mb-10">
-                                <h4 className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-[0.1em] mb-3">Quantité</h4>
-                                <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-md w-[140px] h-12">
-                                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-12 h-full flex items-center justify-center text-gray-500 hover:text-black">-</button>
-                                    <span className="flex-1 text-center font-bold text-sm">{quantity}</span>
-                                    <button onClick={() => setQuantity(quantity + 1)} className="w-12 h-full flex items-center justify-center text-gray-500 hover:text-black">+</button>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="space-y-4">
-                            <button 
-                                onClick={addToCart}
-                                className="w-full bg-[#6B4423] text-white py-4 rounded-md font-bold text-xs uppercase tracking-[0.1em] hover:bg-[#5A381C] transition-colors flex items-center justify-center gap-3"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                                Ajouter au panier
-                            </button>
-                            
-                            <Link 
-                                href={route('chat.show', product.shop_id)}
-                                className="w-full flex items-center justify-center gap-2 py-4 bg-transparent border border-gray-200 dark:border-gray-700 rounded-md text-xs font-bold uppercase tracking-[0.1em] text-gray-900 dark:text-white hover:border-gray-400 transition-colors"
-                            >
-                                Contacter le vendeur
-                            </Link>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-6 mt-10 pt-8 border-t border-gray-100 dark:border-gray-800">
-                            <div>
-                                <div className="flex items-center gap-2 mb-2 text-gray-900 dark:text-white">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-                                    <span className="text-[10px] font-black uppercase tracking-widest">En stock</span>
-                                </div>
-                                <p className="text-[10px] text-gray-500">Expédié sous 24h</p>
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2 mb-2 text-gray-900 dark:text-white">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Paiement sécurisé</span>
-                                </div>
-                                <p className="text-[10px] text-gray-500">Protection acheteur</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Artisan Section (Replaces Tabs) */}
-                <div className="bg-[#FAF9F6] dark:bg-[#1A1A1A] rounded-2xl p-8 lg:p-16 mb-24 relative overflow-hidden">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                        <div className="order-2 lg:order-1 relative z-10">
-                            <h4 className="text-[10px] font-black text-[#8B4513] uppercase tracking-[0.2em] mb-4">L'histoire de la boutique</h4>
-                            <h2 className="text-3xl lg:text-4xl font-black text-gray-900 dark:text-white mb-6 leading-tight">
-                                {product.shop?.name || 'Artisan Local'}
-                            </h2>
-                            <p className="text-gray-600 dark:text-gray-400 font-medium leading-relaxed mb-6">
-                                Installé dans son atelier depuis plusieurs années, cet artisan ne se contente pas de fabriquer, il dialogue avec la matière. Chaque pièce est le fruit d'un travail méticuleux et d'une passion transmise de génération en génération.
-                            </p>
-                            <p className="text-gray-600 dark:text-gray-400 font-medium leading-relaxed italic mb-8 border-l-4 border-[#8B4513] pl-4">
-                                "Notre terre possède une âme. Mon rôle est simplement de la laisser s'exprimer à travers des lignes qui parlent à notre époque."
-                            </p>
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
-                                    <img src={product.shop?.logo || `https://ui-avatars.com/api/?name=${product.shop?.name}&background=8B4513&color=fff`} alt="" className="w-full h-full object-cover" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{product.shop?.name}</p>
-                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">{product.shop?.neighborhood?.name || 'Lomé'}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="order-1 lg:order-2 relative">
-                            <div className="aspect-[4/5] rounded-xl overflow-hidden shadow-2xl">
-                                <img src={product.shop?.logo || images[0]} alt="Artisan" className="w-full h-full object-cover" />
-                            </div>
-                            <div className="absolute -bottom-6 -left-6 bg-[#6B4423] text-white p-6 rounded-lg shadow-xl max-w-[200px]">
-                                <p className="text-2xl font-black mb-1">100%</p>
-                                <p className="text-[9px] uppercase tracking-[0.1em] font-bold leading-tight">Authentique &<br/>Local</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Details & Recommandations */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 mb-24 border-t border-gray-100 dark:border-gray-800 pt-16">
-                    <div className="lg:col-span-4">
-                        <h3 className="text-sm font-black uppercase tracking-[0.1em] text-gray-900 dark:text-white mb-8">Détails Techniques</h3>
-                        <div className="space-y-4 text-sm">
-                            <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
-                                <span className="text-gray-500">Catégorie</span>
-                                <span className="font-bold text-gray-900 dark:text-white">{product.category?.name || '-'}</span>
-                            </div>
-                            <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
-                                <span className="text-gray-500">Stock disponible</span>
-                                <span className="font-bold text-gray-900 dark:text-white">{product.stock} unités</span>
-                            </div>
-                            <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
-                                <span className="text-gray-500">Localisation</span>
-                                <span className="font-bold text-gray-900 dark:text-white">{product.shop?.neighborhood?.name || 'Lomé'}</span>
-                            </div>
-                            <div className="flex justify-between pb-2">
-                                <span className="text-gray-500">Entretien</span>
-                                <span className="font-bold text-gray-900 dark:text-white">Nettoyage à sec uniquement</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="lg:col-span-8">
-                        <h3 className="text-sm font-black uppercase tracking-[0.1em] text-gray-900 dark:text-white mb-8">Avis Clients ({product.reviews?.length || 0})</h3>
-                        <div className="space-y-8">
-                            {/* Formulaire Avis */}
-                            {auth.user ? (
-                                <form onSubmit={submitReview} className="bg-gray-50 dark:bg-[#1e1e1e] p-6 rounded-lg mb-8">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <p className="text-xs font-bold text-gray-500">Votre note:</p>
-                                        <div className="flex gap-1">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <button key={star} type="button" onClick={() => setData('rating', star)} className={`text-xl ${data.rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}>★</button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <textarea 
-                                        value={data.comment} onChange={e => setData('comment', e.target.value)}
-                                        className="w-full rounded-md border-gray-200 dark:border-gray-700 bg-white dark:bg-[#252525] focus:border-[#8B4513] focus:ring-0 text-sm mb-4"
-                                        placeholder="Partagez votre expérience..." rows="3" required
-                                    ></textarea>
-                                    <button type="submit" disabled={processing} className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-2 rounded text-xs font-bold uppercase tracking-wider disabled:opacity-50 hover:bg-gray-800 transition-colors">Envoyer</button>
-                                </form>
                             ) : (
-                                <p className="text-sm text-gray-500 mb-8">Veuillez <Link href="/login" className="text-[#8B4513] underline">vous connecter</Link> pour laisser un avis.</p>
+                                <div className="flex items-center gap-4">
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Quantité</span>
+                                    <div className="flex items-center border border-gray-250 dark:border-gray-700 rounded-xl w-[120px] h-10 bg-white dark:bg-[#1a1a1a]">
+                                        <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-full flex items-center justify-center text-gray-450 hover:text-black font-bold transition-colors">-</button>
+                                        <span className="flex-1 text-center font-extrabold text-xs">{quantity}</span>
+                                        <button onClick={() => setQuantity(quantity + 1)} className="w-10 h-full flex items-center justify-center text-gray-450 hover:text-black font-bold transition-colors">+</button>
+                                    </div>
+                                </div>
                             )}
 
-                            {/* Liste */}
-                            <div className="space-y-6">
-                                {product.reviews?.length > 0 ? (
-                                    product.reviews.map((review) => (
-                                        <div key={review.id} className="pb-6 border-b border-gray-100 dark:border-gray-800 last:border-0">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <div className="flex text-yellow-400 text-xs">
-                                                    {[...Array(5)].map((_, i) => <span key={i} className={i < review.rating ? 'text-yellow-400' : 'text-gray-200'}>★</span>)}
-                                                </div>
-                                                <span className="font-bold text-sm text-gray-900 dark:text-white ml-2">{review.user?.name}</span>
-                                                <span className="text-xs text-gray-400 ml-auto">{new Date(review.created_at).toLocaleDateString('fr-FR')}</span>
-                                            </div>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400">{review.comment}</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <button 
+                                    onClick={addToCart}
+                                    className="w-full bg-[#b85817] hover:bg-[#a24d14] text-white py-4 rounded-xl font-bold text-xs uppercase tracking-[0.15em] transition-all duration-300 flex items-center justify-center gap-3 shadow-lg shadow-[#b85817]/10"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                                    Ajouter au panier
+                                </button>
+                                
+                                <Link 
+                                    href={route('chat.show', product.shop_id)}
+                                    className="w-full flex items-center justify-center gap-2 py-4 bg-transparent border-2 border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600 rounded-xl text-xs font-bold uppercase tracking-[0.15em] text-gray-900 dark:text-white transition-all duration-300"
+                                >
+                                    Contacter le vendeur
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Grid Boutique Officielle, Fiche Technique & Avis */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 border-t border-gray-150 dark:border-gray-800/80 pt-16">
+                    {/* Boutique & Avis Column (8/12) */}
+                    <div className="lg:col-span-8 space-y-16">
+                        {/* Boutique Officielle Spotlight */}
+                        <div className="border border-gray-100 dark:border-gray-800/80 rounded-3xl p-8 bg-gradient-to-br from-gray-50/50 to-white dark:from-[#161616] dark:to-[#121212] shadow-sm relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/3 rounded-full blur-3xl pointer-events-none"></div>
+                            <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center justify-between">
+                                <div className="flex flex-col sm:flex-row gap-6 items-center text-center sm:text-left">
+                                    <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-md border-2 border-white dark:border-gray-800 shrink-0">
+                                        <img 
+                                            src={product.shop?.logo || `https://ui-avatars.com/api/?name=${product.shop?.name}&background=8B4513&color=fff`} 
+                                            alt={product.shop?.name} 
+                                            className="w-full h-full object-cover" 
+                                        />
+                                    </div>
+                                    <div>
+                                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1.5">
+                                            <span className="text-[9px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded bg-amber-100/70 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">
+                                                Boutique Officielle
+                                            </span>
+                                            <span className="text-[9px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded bg-emerald-100/70 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">
+                                                Vérifiée LoméShop
+                                            </span>
                                         </div>
-                                    ))
+                                        <h3 className="text-xl font-black text-gray-900 dark:text-white mb-1.5 tracking-tight">
+                                            {product.shop?.name}
+                                        </h3>
+                                        <p className="text-[#b85817] dark:text-amber-500 font-bold text-xs uppercase tracking-widest mb-3 flex items-center justify-center sm:justify-start gap-1">
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            Quartier {product.shop?.neighborhood?.name || 'Lomé'}
+                                        </p>
+                                        <p className="text-sm text-gray-650 dark:text-gray-400 max-w-xl leading-relaxed">
+                                            {product.shop?.description || 'Boutique certifiée partenaire de la plateforme LoméShop, garantissant la qualité de ses articles et son sérieux.'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row md:flex-col gap-3 w-full md:w-auto shrink-0">
+                                    <Link 
+                                        href={route('chat.show', product.shop_id)}
+                                        className="flex-1 md:flex-none px-6 py-3 bg-transparent border-2 border-gray-250 dark:border-gray-800 hover:border-amber-700 dark:hover:border-amber-500 rounded-xl text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white text-center transition-all duration-300"
+                                    >
+                                        Discuter en ligne
+                                    </Link>
+                                    <Link 
+                                        href={route('explore', { shop_id: product.shop_id })}
+                                        className="flex-1 md:flex-none px-6 py-3 bg-[#b85817] hover:bg-[#a24d14] text-white rounded-xl text-xs font-bold uppercase tracking-wider text-center shadow-lg shadow-[#b85817]/10 transition-all duration-300"
+                                    >
+                                        Visiter la Boutique
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Avis Section */}
+                        <div className="space-y-8">
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white flex items-center gap-2">
+                                <span className="w-1.5 h-3.5 bg-[#b85817] rounded-full"></span>
+                                Avis Clients ({product.reviews?.length || 0})
+                            </h3>
+                            <div className="space-y-8">
+                                {/* Formulaire Avis */}
+                                {auth.user ? (
+                                    <form onSubmit={submitReview} className="bg-gray-50/50 dark:bg-[#161616] p-6 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm mb-8">
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Votre note :</p>
+                                            <div className="flex gap-1">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <button key={star} type="button" onClick={() => setData('rating', star)} className={`text-xl transition-transform hover:scale-110 ${data.rating >= star ? 'text-amber-500' : 'text-gray-300'}`}>★</button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <textarea 
+                                            value={data.comment} onChange={e => setData('comment', e.target.value)}
+                                            className="w-full rounded-xl border-gray-200 dark:border-gray-800 bg-white dark:bg-[#121212] focus:border-amber-700 dark:focus:border-amber-500 focus:ring-0 text-sm mb-4 py-3 px-4 placeholder-gray-400"
+                                            placeholder="Partagez votre expérience avec ce produit..." rows="3" required
+                                        ></textarea>
+                                        <button type="submit" disabled={processing} className="bg-amber-800 hover:bg-amber-900 text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider disabled:opacity-50 transition-all duration-300">Envoyer l'Avis</button>
+                                    </form>
                                 ) : (
-                                    <p className="text-gray-400 text-sm">Aucun avis pour le moment.</p>
+                                    <div className="p-5 border border-gray-150 dark:border-gray-800 rounded-2xl bg-gray-50/20 dark:bg-[#161616]/30 text-center">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Veuillez <Link href="/login" className="text-[#b85817] dark:text-[#d36b24] underline font-semibold">vous connecter</Link> pour laisser un avis.</p>
+                                    </div>
                                 )}
+
+                                {/* Liste des avis */}
+                                <div className="space-y-6">
+                                    {product.reviews?.length > 0 ? (
+                                        product.reviews.map((review) => (
+                                            <div key={review.id} className="pb-6 border-b border-gray-150 dark:border-gray-800/80 last:border-0 flex gap-4">
+                                                <div className="w-10 h-10 rounded-full bg-amber-800/10 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400 font-black text-sm flex items-center justify-center shrink-0 shadow-inner">
+                                                    {review.user?.name ? review.user.name.charAt(0).toUpperCase() : 'U'}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <span className="font-extrabold text-sm text-gray-900 dark:text-white">{review.user?.name}</span>
+                                                        <span className="text-[10px] text-gray-400 font-medium ml-auto">{new Date(review.created_at).toLocaleDateString('fr-FR')}</span>
+                                                    </div>
+                                                    <div className="flex text-amber-550 text-[10px] mb-2">
+                                                        {[...Array(5)].map((_, i) => <span key={i} className={i < review.rating ? 'text-amber-550' : 'text-gray-250 dark:text-gray-800'}>★</span>)}
+                                                    </div>
+                                                    <p className="text-sm text-gray-650 dark:text-gray-450 leading-relaxed font-medium">{review.comment}</p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-xs text-gray-400 dark:text-gray-500 italic">Aucun avis rédigé pour le moment.</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Fiche Technique Column (4/12) */}
+                    <div className="lg:col-span-4">
+                        <div className="bg-gray-50/50 dark:bg-[#161616] p-8 rounded-3xl border border-gray-150 dark:border-gray-800/50 shadow-sm h-fit space-y-6">
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white flex items-center gap-2">
+                                <span className="w-1.5 h-3.5 bg-[#b85817] rounded-full"></span>
+                                Fiche Technique
+                            </h3>
+                            <div className="space-y-4 text-xs">
+                                <div className="flex justify-between border-b border-gray-150 dark:border-gray-800 pb-3">
+                                    <span className="text-gray-400 font-bold uppercase tracking-wider text-[9px]">Catégorie</span>
+                                    <span className="font-extrabold text-gray-950 dark:text-white">{product.category?.name || '-'}</span>
+                                </div>
+                                <div className="flex justify-between border-b border-gray-150 dark:border-gray-800 pb-3">
+                                    <span className="text-gray-400 font-bold uppercase tracking-wider text-[9px]">Stock disponible</span>
+                                    <span className="font-extrabold text-gray-950 dark:text-white">{product.stock} unités</span>
+                                </div>
+                                <div className="flex justify-between pb-1">
+                                    <span className="text-gray-400 font-bold uppercase tracking-wider text-[9px]">Localisation</span>
+                                    <span className="font-extrabold text-gray-950 dark:text-white">{product.shop?.neighborhood?.name || 'Lomé'}</span>
+                                </div>
                             </div>
                         </div>
                     </div>

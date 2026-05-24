@@ -36,13 +36,32 @@ const ShopMarker = ({ shop, isActive, onClick }) => {
             zIndex={isActive ? 1000 : 1}
         >
             <div className="relative flex flex-col items-center cursor-pointer group">
-                <div className={`mb-1 px-2 py-1 rounded-full text-[10px] font-black shadow-lg transition-all ${isActive ? 'bg-[#B03A2E] text-white scale-110' : 'bg-white dark:bg-[#1e1e1e] text-[#B03A2E] group-hover:bg-[#B03A2E] group-hover:text-white'}`}>
-                    {shop.price || 'Voir'}
+                {/* Premium Floating Tooltip displaying the Shop Name on hover / active */}
+                <div className={`absolute -top-9 bg-[#1a1a1a]/95 dark:bg-[#0c0c0c]/95 backdrop-blur-md text-white text-[11px] font-black px-3 py-1.5 rounded-xl shadow-2xl border border-white/10 whitespace-nowrap pointer-events-none transition-all duration-200 transform -translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 z-[2000] flex items-center gap-1.5 ${isActive ? '!opacity-100 !translate-y-0 border-[#B03A2E]/50 !bg-[#B03A2E]' : ''}`}>
+                    {shop.name}
+                    {isActive && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                    )}
                 </div>
-                <div className={`w-9 h-9 rounded-full border-2 border-white dark:border-gray-800 shadow-xl flex items-center justify-center overflow-hidden bg-white dark:bg-[#1e1e1e] transition-all ${isActive ? 'ring-4 ring-[#B03A2E]/30 scale-110' : 'group-hover:scale-105'}`}>
-                    <img src={shop.image || 'https://via.placeholder.com/150'} className="w-full h-full object-cover" alt="" />
+
+                {/* Sleek Teardrop Location Marker Pin */}
+                <div className={`transition-all duration-300 transform ${isActive ? 'scale-125 -translate-y-1' : 'group-hover:scale-110 group-hover:-translate-y-0.5'}`}>
+                    <svg width="18" height="22" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg" className="filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">
+                        <path 
+                            d="M12 0C5.37 0 0 5.37 0 12c0 9 12 18 12 18s12-9 12-18c0-6.63-5.37-12-12-12z" 
+                            fill={isActive ? '#B03A2E' : '#E74C3C'} 
+                            stroke="#FFFFFF"
+                            strokeWidth="2"
+                            className="transition-colors duration-300"
+                        />
+                        <circle cx="12" cy="11" r="4.5" fill="#FFFFFF" />
+                    </svg>
                 </div>
-                {isActive && <div className="absolute -bottom-1 w-2 h-2 bg-[#B03A2E] rounded-full animate-ping"></div>}
+
+                {/* Micro-Animation Glow underneath active pin */}
+                {isActive && (
+                    <div className="absolute -bottom-1 w-2.5 h-1 bg-[#B03A2E]/40 rounded-full blur-xs animate-ping"></div>
+                )}
             </div>
         </AdvancedMarker>
     );
@@ -63,6 +82,25 @@ const MapInner = ({ shops, activeShopId, setActiveShopId, userLocation, setUserL
             }
         }
     }, [map, userLocation, followUser]);
+
+    // Auto-pan and zoom in close to the active/selected shop
+    useEffect(() => {
+        if (!map || !activeShopId || !Array.isArray(shops)) return;
+        
+        const activeShop = shops.find(s => s.id === activeShopId);
+        if (activeShop?.coordinates?.lat && typeof activeShop.coordinates.lat === 'number') {
+            const targetCoords = { lat: activeShop.coordinates.lat, lng: activeShop.coordinates.lng };
+            
+            // Pan to the active shop
+            map.panTo(targetCoords);
+            
+            // Zoom in close to see street level and shop details
+            map.setZoom(17); // Zoom level 17 for premium street-level close-up detail
+            
+            // Turn off user following so the map doesn't snap back to the user
+            setFollowUser(false);
+        }
+    }, [map, activeShopId, shops, setFollowUser]);
 
     useEffect(() => {
         if (!map || !window.google || !Array.isArray(shops) || shops.length === 0) return;
@@ -417,7 +455,12 @@ export default function MapView({ initialShops }) {
                     signal: controller.signal 
                 })
                 .then(res => {
-                    if (Array.isArray(res.data)) setShops(res.data);
+                    if (Array.isArray(res.data)) {
+                        setShops(res.data);
+                        if (res.data.length === 1 && res.data[0]?.id) {
+                            setActiveShopId(res.data[0].id);
+                        }
+                    }
                     setIsSearching(false);
                 })
                 .catch(err => {

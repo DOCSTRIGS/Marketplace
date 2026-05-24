@@ -57,7 +57,6 @@ export default function DriverTracking({ order }) {
     const [lastPos, setLastPos] = useState(null);
     const [deliveryCode, setDeliveryCode] = useState('');
     const [statusText, setStatusText] = useState('Prêt à livrer');
-    const [isSimulating, setIsSimulating] = useState(false);
 
     const shopLocation = useMemo(() => ({
         lat: parseFloat(order.shop.latitude),
@@ -104,9 +103,7 @@ export default function DriverTracking({ order }) {
             // If the driver starts tracking and status was accepted, move to preparing (or keep shipped if already)
             if (order.status === 'accepted') {
                 axios.post(route('driver.update-status', { order: order.id }), {
-                    status: 'shipped' // The user said "after picking up it goes to client", 
-                                     // but usually the driver marks as picked up.
-                                     // I'll let the seller click 'shipped' as per your workflow.
+                    status: 'shipped'
                 });
             }
 

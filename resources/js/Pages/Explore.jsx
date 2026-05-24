@@ -9,23 +9,41 @@ import CategoryProductCard from '@/Components/CategoryProductCard';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-export default function Explore({ products, categories, filters }) {
+export default function Explore({ products, categories, filters, activeShop }) {
+    // Filter categories that actually have products in this shop for a bespoke storefront feel
+    const visibleCategories = React.useMemo(() => {
+        if (!activeShop) return categories;
+        return categories.map(cat => {
+            const filteredChildren = cat.children.filter(sub => 
+                products.some(p => p.category_id === sub.id)
+            );
+            const hasMainProducts = products.some(p => p.category_id === cat.id);
+            if (filteredChildren.length > 0 || hasMainProducts) {
+                return {
+                    ...cat,
+                    children: filteredChildren
+                };
+            }
+            return null;
+        }).filter(Boolean);
+    }, [categories, products, activeShop]);
+
     const [activeMainCategory, setActiveMainCategory] = useState(null);
     const [activeSubCategoryId, setActiveSubCategoryId] = useState(filters.category_id || null);
 
     useEffect(() => {
-        if (categories.length > 0 && !activeMainCategory) {
+        if (visibleCategories.length > 0 && !activeMainCategory) {
             // Find which main category contains the filtered subcategory
             if (activeSubCategoryId) {
-                const parent = categories.find(cat =>
+                const parent = visibleCategories.find(cat =>
                     cat.children.some(child => child.id == activeSubCategoryId)
                 );
                 if (parent) setActiveMainCategory(parent);
             } else {
-                setActiveMainCategory(categories[0]);
+                setActiveMainCategory(visibleCategories[0]);
             }
         }
-    }, [categories, activeSubCategoryId]);
+    }, [visibleCategories, activeSubCategoryId, activeMainCategory]);
 
     const handleMainCategoryClick = (cat) => {
         if (activeMainCategory?.id === cat.id) {
@@ -37,10 +55,15 @@ export default function Explore({ products, categories, filters }) {
 
     const handleSubCategoryClick = (subCatId) => {
         setActiveSubCategoryId(subCatId);
-        router.get(route('explore'), { category_id: subCatId }, { preserveState: true });
+        const params = { category_id: subCatId };
+        if (filters.shop_id) {
+            params.shop_id = filters.shop_id;
+        }
+        router.get(route('explore'), params, { preserveState: true });
     };
 
     const activeSubCategoryName = () => {
+        if (activeShop) return `Boutique : ${activeShop.name}`;
         if (searchTerm) return `Recherche : "${searchTerm}"`;
         if (!activeSubCategoryId) return "Tous les produits";
         for (const cat of categories) {
@@ -82,6 +105,7 @@ export default function Explore({ products, categories, filters }) {
             min_price: minPrice,
             max_price: maxPrice,
             rating: selectedRating,
+            shop_id: filters.shop_id || null,
             ...newFilters
         };
         
@@ -150,18 +174,117 @@ export default function Explore({ products, categories, filters }) {
         return 0; // 'Tous' or default
     });
 
+    // Calculate average rating of shop's products in real time for premium feel
+    const shopReviews = React.useMemo(() => {
+        if (!activeShop) return [];
+        return products.flatMap(p => p.reviews || []);
+    }, [products, activeShop]);
+
+    const averageRating = React.useMemo(() => {
+        if (shopReviews.length === 0) return null;
+        return (shopReviews.reduce((sum, r) => sum + r.rating, 0) / shopReviews.length).toFixed(1);
+    }, [shopReviews]);
+
     return (
         <div className="min-h-screen bg-[#FDF8F4] dark:bg-[#121212] flex flex-col font-sans transition-colors duration-300">
-            <Head title={`${activeSubCategoryName()} - Explorez`} />
+            <Head title={activeShop ? `${activeShop.name} - Boutique Officielle LoméShop` : `${activeSubCategoryName()} - Explorez`} />
             <Navbar />
 
             <main className="flex-grow max-w-[1200px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
 
+                {/* Boutique Partner Banner if filtered */}
+                {activeShop && (
+                    <div className="mb-10 border border-[#b85817]/20 dark:border-gray-800 rounded-3xl p-8 bg-gradient-to-br from-amber-50/60 via-white to-amber-50/20 dark:from-[#1e150f] dark:via-[#121212] dark:to-[#1a120c] shadow-lg relative overflow-hidden transition-all duration-350 transform hover:scale-[1.01]">
+                        {/* Interactive Premium Backdrops */}
+                        <div className="absolute top-0 right-0 w-80 h-80 bg-[#b85817]/5 rounded-full blur-3xl pointer-events-none"></div>
+                        <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-amber-500/3 rounded-full blur-3xl pointer-events-none"></div>
+                        
+                        <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center justify-between">
+                            <div className="flex flex-col sm:flex-row gap-6 items-center text-center sm:text-left">
+                                <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-white dark:bg-gray-850 shadow-md border-2 border-white dark:border-gray-800 shrink-0 flex items-center justify-center">
+                                    <img 
+                                        src={activeShop.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeShop.name)}&background=b85817&color=fff`} 
+                                        alt={activeShop.name} 
+                                        className="w-full h-full object-cover" 
+                                    />
+                                </div>
+                                <div>
+                                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
+                                        <span className="text-[9px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded bg-[#b85817]/10 text-[#b85817] dark:text-amber-400">
+                                            Boutique Officielle
+                                        </span>
+                                        <span className="text-[9px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded bg-emerald-100/70 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">
+                                            Vérifiée LoméShop
+                                        </span>
+                                        {activeShop.delivery_available && (
+                                            <span className="text-[9px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded bg-amber-500/10 text-amber-650 dark:text-amber-400">
+                                                Livraison {parseFloat(activeShop.delivery_fee) === 0 ? 'Gratuite' : `${parseFloat(activeShop.delivery_fee)} F`}
+                                            </span>
+                                        )}
+                                    </div>
+                                    
+                                    <h1 className="text-3.5xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">
+                                        {activeShop.name}
+                                    </h1>
+
+                                    {activeShop.slogan && (
+                                        <p className="text-xs italic text-gray-500 dark:text-gray-400 mb-2 font-medium">
+                                            "{activeShop.slogan}"
+                                        </p>
+                                    )}
+
+                                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-3 text-xs">
+                                        <p className="text-[#b85817] dark:text-[#d36b24] font-extrabold uppercase tracking-wider flex items-center gap-1">
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            Quartier {activeShop.neighborhood?.name || 'Lomé'}
+                                        </p>
+
+                                        {averageRating && (
+                                            <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded text-amber-700 dark:text-amber-400 font-bold text-[11px]">
+                                                <svg className="w-3 h-3 fill-current" viewBox="0 0 20 20">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                </svg>
+                                                {averageRating} ({shopReviews.length} avis)
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 max-w-xl leading-relaxed">
+                                        {activeShop.description || 'Découvrez tous les produits exclusifs de cette boutique certifiée partenaire.'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row md:flex-col gap-3 w-full md:w-auto shrink-0">
+                                <Link 
+                                    href={route('chat.show', activeShop.id)}
+                                    className="flex-grow md:flex-grow-0 px-6 py-3 bg-transparent border-2 border-gray-250 dark:border-gray-800 hover:border-[#b85817] hover:text-[#b85817] rounded-xl text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white text-center transition-all duration-300"
+                                >
+                                    Discuter en ligne
+                                </Link>
+                                <button 
+                                    onClick={clearAllFilters}
+                                    className="flex-grow md:flex-grow-0 px-6 py-3 bg-[#b85817] hover:bg-[#9a4710] text-white rounded-xl text-xs font-bold uppercase tracking-wider text-center transition-all duration-300 shadow-md hover:shadow-[#b85817]/25 animate-fade-in"
+                                >
+                                    Catalogue Général
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Header Section */}
                 <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-5xl font-extrabold text-[#B03A2E] mb-2 tracking-tight transition-colors">{activeSubCategoryName()}</h1>
-                        <p className="text-[#555555] dark:text-gray-400 transition-colors">Découvrez les meilleurs produits de Lomé sélectionnés pour vous.</p>
+                        <h1 className="text-5xl font-extrabold text-[#B03A2E] mb-2 tracking-tight transition-colors">
+                            {activeShop ? 'Nos Articles Exclusifs' : activeSubCategoryName()}
+                        </h1>
+                        <p className="text-[#555555] dark:text-gray-400 transition-colors">
+                            {activeShop ? `Parcourez la vitrine exclusive de ${activeShop.name}.` : 'Découvrez les meilleurs produits de Lomé sélectionnés pour vous.'}
+                        </p>
                     </div>
                     {/* Search Bar */}
                     <div className="relative w-full md:w-80">
@@ -175,7 +298,7 @@ export default function Explore({ products, categories, filters }) {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             onKeyDown={handleSearch}
-                            placeholder="Rechercher un produit..."
+                            placeholder={activeShop ? `Rechercher chez ${activeShop.name}...` : "Rechercher un produit..."}
                             className="w-full bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-gray-800 rounded-md py-2.5 pl-10 pr-10 text-sm focus:ring-1 focus:ring-[#B03A2E] focus:outline-none focus:border-[#B03A2E] text-gray-700 dark:text-gray-200 shadow-sm transition-all"
                         />
                         {searchTerm && (
@@ -211,7 +334,7 @@ export default function Explore({ products, categories, filters }) {
                                 )}
                             </h2>
                             <div className="space-y-2">
-                                {categories.map((mainCat) => {
+                                {visibleCategories.map((mainCat) => {
                                     const isActive = activeMainCategory?.id === mainCat.id;
                                     return (
                                         <div key={mainCat.id} className="border-b border-gray-50 last:border-0 pb-2 last:pb-0">
@@ -309,29 +432,40 @@ export default function Explore({ products, categories, filters }) {
                             </div>
                             
                             <div className="relative w-full h-52 bg-gray-50 dark:bg-[#252525] rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-inner group/map transition-colors">
-                                {userLocation ? (
-                                    <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
-                                        <Map
-                                            defaultCenter={userLocation}
-                                            defaultZoom={14}
-                                            gestureHandling={'none'}
-                                            disableDefaultUI={true}
-                                            mapId="bf50a87343b44b8b"
-                                        >
-                                            <AdvancedMarker position={userLocation}>
-                                                <div className="relative flex items-center justify-center">
-                                                    <div className="absolute w-8 h-8 bg-[#B03A2E]/20 rounded-full animate-ping"></div>
-                                                    <div className="w-4 h-4 bg-[#B03A2E] border-2 border-white rounded-full shadow-lg z-10"></div>
-                                                </div>
-                                            </AdvancedMarker>
-                                        </Map>
-                                    </APIProvider>
-                                ) : (
-                                    <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-[#252525] text-gray-400 transition-colors">
-                                        <div className="w-5 h-5 border-2 border-gray-200 dark:border-gray-700 border-t-[#B03A2E] rounded-full animate-spin mb-2"></div>
-                                        <span className="text-[9px] font-bold uppercase tracking-widest opacity-50">Localisation...</span>
-                                    </div>
-                                )}
+                                {(() => {
+                                    const mapCenter = activeShop && activeShop.latitude && activeShop.longitude
+                                        ? { lat: parseFloat(activeShop.latitude), lng: parseFloat(activeShop.longitude) }
+                                        : userLocation;
+
+                                    if (!mapCenter) {
+                                        return (
+                                            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-[#252525] text-gray-400 transition-colors">
+                                                <div className="w-5 h-5 border-2 border-gray-200 dark:border-gray-700 border-t-[#B03A2E] rounded-full animate-spin mb-2"></div>
+                                                <span className="text-[9px] font-bold uppercase tracking-widest opacity-50">Localisation...</span>
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
+                                        <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+                                            <Map
+                                                defaultCenter={mapCenter}
+                                                center={mapCenter}
+                                                defaultZoom={14}
+                                                gestureHandling={'none'}
+                                                disableDefaultUI={true}
+                                                mapId="bf50a87343b44b8b"
+                                            >
+                                                <AdvancedMarker position={mapCenter}>
+                                                    <div className="relative flex items-center justify-center">
+                                                        <div className="absolute w-8 h-8 bg-[#B03A2E]/20 rounded-full animate-ping"></div>
+                                                        <div className="w-4 h-4 bg-[#B03A2E] border-2 border-white rounded-full shadow-lg z-10"></div>
+                                                    </div>
+                                                </AdvancedMarker>
+                                            </Map>
+                                        </APIProvider>
+                                    );
+                                })()}
 
                                 {/* Premium Overlay */}
                                 <Link

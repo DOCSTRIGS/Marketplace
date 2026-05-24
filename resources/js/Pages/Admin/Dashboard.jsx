@@ -4,12 +4,30 @@ import axios from 'axios';
 import DriverDetailsDrawer from '@/Components/Admin/DriverDetailsDrawer';
 import { 
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    BarChart, Bar, Cell, PieChart, Pie, Legend
+    BarChart, Bar, Cell, PieChart, Pie, Legend, Sector
 } from 'recharts';
 import ThemeToggle from '@/Components/ThemeToggle';
 import FleetMap from '@/Components/Admin/FleetMap';
 import AdminNavbar from '@/Components/Admin/AdminNavbar';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Asymmetric Sector Renderer — each slice uses its own outerRadius from data (like reference image)
+const ExplodedSector = (props) => {
+    const { cx, cy, innerRadius, startAngle, endAngle, fill, radius } = props;
+    return (
+        <Sector
+            cx={cx}
+            cy={cy}
+            innerRadius={innerRadius || 0}
+            outerRadius={radius || 80}
+            startAngle={startAngle}
+            endAngle={endAngle}
+            fill={fill}
+            stroke="#fff"
+            strokeWidth={3}
+        />
+    );
+};
 
 // ─── Confirm Modal (minimale, sans icones) ───────────────────────────────────
 function ConfirmModal({ isOpen, onClose, onConfirm, message }) {
@@ -192,7 +210,33 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
     // Auto-detect tab from URL
     const queryParams = new URLSearchParams(window.location.search);
     const initialTab = queryParams.get('tab') || 'overview';
-    
+    // Calculate neighborhood distribution dynamically for horizontal BarChart and Exploded Pie Chart
+    const allShops = [...approvedShops, ...pendingShops, ...rejectedShops];
+    const totalShops = allShops.length || 1;
+    const neighborhoodCounts = {};
+    allShops.forEach(shop => {
+        const name = shop.neighborhood?.name || 'Lomé';
+        neighborhoodCounts[name] = (neighborhoodCounts[name] || 0) + 1;
+    });
+    const neighborhoodData = Object.entries(neighborhoodCounts)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5);
+
+    // Asymmetric radii — largest quartier gets biggest radius, creating the fan/star effect
+    const colorsList = ['#0f4c81', '#1a7a5e', '#80b918', '#f39c12', '#d90429', '#2b2d42'];
+    const radiiList = [100, 88, 76, 66, 56, 48];
+
+    const pieNeighborhoodData = neighborhoodData.map((item, index) => {
+        const pct = ((item.value / totalShops) * 100).toFixed(0);
+        return {
+            name: item.name,
+            value: item.value,
+            percent: pct,
+            color: colorsList[index % colorsList.length],
+            radius: radiiList[index % radiiList.length]
+        };
+    });
     const [activeTab, setActiveTab] = useState(initialTab);
     const { patch: patchAction, processing: actionProcessing } = useForm();
     const newCatForm = useForm({ name: '' });
@@ -434,29 +478,28 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                 {activeTab === 'shops' && (
                     <div className="space-y-8">
                         {/* Summary Section */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors">
-                                <h3 className="font-black text-gray-900 mb-6">Répartition des Boutiques</h3>
-                                <div className="flex flex-col sm:flex-row items-center gap-8">
-                                    <div className="w-48 h-48">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            {/* Exploded Pie Chart Card */}
+                            <div className="lg:col-span-6 bg-white dark:bg-[#1e1e1e] p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm transition-colors flex flex-col justify-between">
+                                <div>
+                                    <h3 className="font-black text-gray-900 dark:text-white text-base tracking-tight uppercase mb-1">Distribution par Quartier</h3>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-6">Visualisation asymétrique des boutiques</p>
+                                </div>
+                                
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-8 my-auto">
+                                    {/* Pie Chart */}
+                                    <div className="w-60 h-60 relative shrink-0">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
                                                 <Pie 
-                                                    data={[
-                                                        { name: 'Approuvées', value: approvedShops.length, color: '#10B981' },
-                                                        { name: 'En attente', value: pendingShops.length, color: '#F59E0B' },
-                                                        { name: 'Rejetées', value: rejectedShops.length, color: '#EF4444' }
-                                                    ].filter(d => d.value > 0)}
+                                                    data={pieNeighborhoodData}
                                                     cx="50%" cy="50%" 
-                                                    innerRadius={60} outerRadius={80} 
-                                                    paddingAngle={5} 
+                                                    innerRadius={0} 
+                                                    paddingAngle={2} 
                                                     dataKey="value"
+                                                    shape={ExplodedSector}
                                                 >
-                                                    {[
-                                                        { name: 'Approuvées', value: approvedShops.length, color: '#10B981' },
-                                                        { name: 'En attente', value: pendingShops.length, color: '#F59E0B' },
-                                                        { name: 'Rejetées', value: rejectedShops.length, color: '#EF4444' }
-                                                    ].filter(d => d.value > 0).map((entry, index) => (
+                                                    {pieNeighborhoodData.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                                     ))}
                                                 </Pie>
@@ -464,20 +507,62 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                             </PieChart>
                                         </ResponsiveContainer>
                                     </div>
-                                    <div className="flex-1 space-y-4 w-full">
-                                        <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/10 rounded-xl">
-                                            <span className="font-bold text-green-700 dark:text-green-400">Approuvées</span>
-                                            <span className="font-black text-lg text-green-700 dark:text-green-400">{approvedShops.length}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-900/10 rounded-xl">
-                                            <span className="font-bold text-orange-700 dark:text-orange-400">En attente</span>
-                                            <span className="font-black text-lg text-orange-700 dark:text-orange-400">{pendingShops.length}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/10 rounded-xl">
-                                            <span className="font-bold text-red-700 dark:text-red-400">Rejetées</span>
-                                            <span className="font-black text-lg text-red-700 dark:text-red-400">{rejectedShops.length}</span>
-                                        </div>
+                                    
+                                    {/* Exact callout labels from reference picture */}
+                                    <div className="flex-1 grid grid-cols-2 gap-4 w-full">
+                                        {pieNeighborhoodData.map((entry) => (
+                                            <div key={entry.name} className="flex flex-col">
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">{entry.name}</span>
+                                                <span className="text-xl font-black leading-none my-1" style={{ color: entry.color }}>
+                                                    {entry.percent}%
+                                                </span>
+                                                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest bg-gray-50 dark:bg-white/5 px-2 py-0.5 rounded-md w-fit">
+                                                    {entry.value} boutique{entry.value > 1 ? 's' : ''}
+                                                </span>
+                                            </div>
+                                        ))}
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Statuses Distribution Card */}
+                            <div className="lg:col-span-6 bg-white dark:bg-[#1e1e1e] p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm transition-colors flex flex-col justify-between">
+                                <div>
+                                    <h3 className="font-black text-gray-900 dark:text-white text-base tracking-tight uppercase mb-1">Modération & Statuts</h3>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-6">Validation en temps réel des boutiques</p>
+                                </div>
+
+                                <div className="h-52 w-full my-auto flex items-center">
+                                    <ResponsiveContainer width="100%" height="80%">
+                                        <BarChart 
+                                            data={[
+                                                { name: 'Approuvées', value: approvedShops.length, color: '#0f4c81' },
+                                                { name: 'En attente', value: pendingShops.length, color: '#f39c12' },
+                                                { name: 'Rejetées', value: rejectedShops.length, color: '#d90429' }
+                                            ]} 
+                                            layout="vertical"
+                                            margin={{ top: 0, right: 30, left: 10, bottom: 0 }}
+                                        >
+                                            <XAxis type="number" hide />
+                                            <YAxis 
+                                                dataKey="name" 
+                                                type="category" 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fontSize: 11, fontWeight: 900, fill: '#6b7280' }} 
+                                                width={90}
+                                            />
+                                            <Tooltip 
+                                                cursor={{ fill: 'rgba(0,0,0,0.02)' }}
+                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                            />
+                                            <Bar dataKey="value" radius={[0, 10, 10, 0]} barSize={22}>
+                                                <Cell fill="#0f4c81" />
+                                                <Cell fill="#f39c12" />
+                                                <Cell fill="#d90429" />
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
                                 </div>
                             </div>
                         </div>
@@ -502,13 +587,15 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                             ) : (
                                 <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
                                     {pendingShops.map(shop => (
-                                            <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-sm border border-orange-100 dark:border-orange-900/30 p-6 flex flex-col">
+                                            <div key={shop.id} className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-sm border border-orange-100 dark:border-orange-900/30 p-6 flex flex-col">
                                                 <div className="flex-1">
                                                     <div className="flex justify-between items-start mb-2">
                                                         <h3 className="font-black text-lg text-gray-900 dark:text-white">{shop.name}</h3>
                                                         <span className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg">Nouveau</span>
                                                     </div>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{shop.user?.name} - {shop.neighborhood?.name || 'Lomé'}</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                                                        {shop.user?.name} {shop.user?.email && `(${shop.user.email})`} - {shop.neighborhood?.name || 'Lomé'}
+                                                    </p>
                                                     
                                                     {/* KYC Section */}
                                                     <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 mb-4 border border-gray-100 dark:border-gray-800">
@@ -557,7 +644,9 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                         <div key={shop.id} className="bg-white dark:bg-[#1e1e1e] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 flex items-center justify-between group hover:border-green-200 dark:hover:border-green-800 transition-all shadow-sm">
                                             <div className="flex-1">
                                                 <h3 className="font-black text-lg text-gray-900 dark:text-white">{shop.name}</h3>
-                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Vendeur: {shop.user?.name}</p>
+                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
+                                                    Vendeur: {shop.user?.name} {shop.user?.email && `(${shop.user.email})`}
+                                                </p>
                                             </div>
                                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button onClick={() => handleStatusUpdate(shop.id, 'rejected')} className="text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg hover:bg-orange-100">Suspendre</button>
@@ -581,7 +670,9 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                         <div key={shop.id} className="bg-white dark:bg-[#1e1e1e] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 flex items-center justify-between group hover:border-red-200 dark:hover:border-red-800 transition-all opacity-75 hover:opacity-100 shadow-sm">
                                             <div className="flex-1">
                                                 <h3 className="font-black text-lg text-gray-900 dark:text-white line-through decoration-red-300">{shop.name}</h3>
-                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Vendeur: {shop.user?.name}</p>
+                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
+                                                    Vendeur: {shop.user?.name} {shop.user?.email && `(${shop.user.email})`}
+                                                </p>
                                             </div>
                                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button onClick={() => handleStatusUpdate(shop.id, 'approved')} className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1.5 rounded-lg hover:bg-green-100">Réactiver</button>

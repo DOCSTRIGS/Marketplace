@@ -45,9 +45,10 @@ export default function CartDrawer({ isOpen, onClose }) {
                                 <div key={item.id} className="flex gap-4 group">
                                     <div className="w-24 h-24 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0">
                                         <img 
-                                            src={item.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=200&q=80'} 
+                                            src={item.image || item.images?.[0] || '/images/placeholder-product.png'} 
                                             alt={item.name} 
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                            onError={(e) => { e.target.src = '/images/placeholder-product.png'; }}
                                         />
                                     </div>
                                     <div className="flex-grow flex flex-col">

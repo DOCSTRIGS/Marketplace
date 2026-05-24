@@ -70,6 +70,16 @@ Route::middleware(['auth'])->group(function () {
     });
 
 
+    // Cart Routes (cross-browser persistent cart)
+    Route::prefix('api/cart')->name('cart.')->group(function () {
+        Route::get('/',              [App\Http\Controllers\CartController::class, 'index'])->name('index');
+        Route::post('/',             [App\Http\Controllers\CartController::class, 'store'])->name('store');
+        Route::patch('/{productId}', [App\Http\Controllers\CartController::class, 'update'])->name('update');
+        Route::delete('/{productId}',[App\Http\Controllers\CartController::class, 'destroy'])->name('destroy');
+        Route::delete('/',           [App\Http\Controllers\CartController::class, 'clear'])->name('clear');
+        Route::post('/sync',         [App\Http\Controllers\CartController::class, 'sync'])->name('sync');
+    });
+
     // Client Routes
     Route::get('/my-orders', [App\Http\Controllers\OrderController::class, 'userOrders'])->name('orders.index');
     Route::post('/products/{product}/reviews', [App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store');

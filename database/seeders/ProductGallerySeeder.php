@@ -33,16 +33,32 @@ class ProductGallerySeeder extends Seeder
 
         // Smart Mapping: Category Slug -> Shop Slug
         $categoryToShopMapping = [
-            'mode-et-habillement' => 'elegance-wax-pagnes',
-            'electromenager' => 'electro-elite-togo',
+            // Mode et Habillement (Splitté proprement sans mélange)
+            'pagnes-wax' => 'elegance-wax-pagnes',
+            'vetements-homme' => 'atelier-du-pret-a-porter',
+            'vetements-femme' => 'atelier-du-pret-a-porter',
+            'mode-et-habillement' => 'atelier-du-pret-a-porter', // Repli général pour la Mode
+            'chaussures' => 'lome-chaussures-style',
+            'sacs-accessoires' => 'latelier-de-la-ceinture-cuir',
+            'accessoires' => 'latelier-de-la-ceinture-cuir', // Mappage pour le dossier du CSV
+
+            // High-Tech
             'electronique-et-high-tech' => 'dekon-high-tech-center',
+            
+            // Électroménager
+            'electromenager' => 'electro-elite-togo',
+            
+            // Beauté
             'beaute-et-hygiene' => 'aura-beaute-bio',
+            
+            // Maison
             'maison-et-decoration' => 'latelier-du-meuble-royal',
-            'alimentation-et-boissons' => 'saveurs-terroir-du-togo',
-            'sante-et-bien-etre' => 'aromas-bien-etre',
+            
+            // Sport
             'sports-et-loisirs' => 'lome-sport-vitalite',
+            
+            // Auto
             'automobile-et-accessoires' => 'auto-prestige-togo',
-            'jeux-et-jouets' => 'latelier-des-jouets-educatifs',
         ];
 
         // --- 1. CSV METADATA PARSING ---
@@ -116,19 +132,19 @@ class ProductGallerySeeder extends Seeder
             // Find the appropriate shop for this category
             $targetShop = null;
 
-            // 1. Check mapping using parent category slug
-            if ($category->parent) {
+            // 1. Check mapping using category's own slug (most specific)
+            if (isset($categoryToShopMapping[$category->slug])) {
+                $shopSlug = $categoryToShopMapping[$category->slug];
+                $targetShop = $shops->firstWhere('slug', $shopSlug);
+            }
+
+            // 2. Check mapping using parent category slug if own slug check failed
+            if (!$targetShop && $category->parent) {
                 $parentSlug = $category->parent->slug;
                 if (isset($categoryToShopMapping[$parentSlug])) {
                     $shopSlug = $categoryToShopMapping[$parentSlug];
                     $targetShop = $shops->firstWhere('slug', $shopSlug);
                 }
-            }
-
-            // 2. Check mapping using category's own slug if parent check failed
-            if (!$targetShop && isset($categoryToShopMapping[$category->slug])) {
-                $shopSlug = $categoryToShopMapping[$category->slug];
-                $targetShop = $shops->firstWhere('slug', $shopSlug);
             }
 
             // 3. Fallback to a random shop if no specific mapping found

@@ -19,6 +19,11 @@ class ProductController extends Controller
                 $q->where('status', 'approved');
             });
 
+        // Filter by Shop
+        if ($request->filled('shop_id')) {
+            $query->where('shop_id', $request->shop_id);
+        }
+
         // Filter by Category
         if ($request->has('category_id')) {
             $query->where('category_id', $request->category_id);
@@ -53,10 +58,16 @@ class ProductController extends Controller
         $products = $query->latest()->get();
         $categories = Category::whereNull('parent_id')->with('children')->get();
 
+        $activeShop = null;
+        if ($request->filled('shop_id')) {
+            $activeShop = \App\Models\Shop::with('neighborhood')->find($request->shop_id);
+        }
+
         return Inertia::render('Explore', [
             'products' => $products,
             'categories' => $categories,
-            'filters' => $request->only(['category_id', 'search', 'min_price', 'max_price', 'rating'])
+            'activeShop' => $activeShop,
+            'filters' => $request->only(['category_id', 'search', 'min_price', 'max_price', 'rating', 'shop_id'])
         ]);
     }
 

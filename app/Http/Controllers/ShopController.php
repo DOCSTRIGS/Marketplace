@@ -62,7 +62,15 @@ class ShopController extends Controller
                     'lat' => (float)$shop->latitude,
                     'lng' => (float)$shop->longitude
                 ],
-                'image' => $shop->logo ? asset('storage/' . $shop->logo) : 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&w=400&q=80',
+                'image' => $shop->logo 
+                    ? (str_starts_with($shop->logo, 'http') 
+                        ? $shop->logo 
+                        : (str_starts_with($shop->logo, '/') 
+                            ? asset($shop->logo) 
+                            : (str_starts_with($shop->logo, 'images/') 
+                                ? asset($shop->logo) 
+                                : asset('storage/' . $shop->logo)))) 
+                    : 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&w=400&q=80',
                 'matching_products' => $shop->products,
                 // For the UI, we take the price of the first matching product or a default
                 'price' => $shop->products->first() ? number_format((float)$shop->products->first()->price, 0, ',', ' ') . ' FCFA' : 'Voir catalogue'
