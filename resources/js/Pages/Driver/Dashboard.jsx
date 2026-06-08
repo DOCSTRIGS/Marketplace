@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Head, Link, router } from '@inertiajs/react';
 import { APIProvider, Map, AdvancedMarker, Pin, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
+import ThemeToggle from '@/Components/ThemeToggle';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -147,21 +148,21 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
     }, [activeOrders, router]);
     return (
         <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
-            <div className="min-h-screen bg-white text-[#1a1a1a] antialiased">
+            <div className="min-h-screen bg-white dark:bg-[#121212] text-[#1a1a1a] dark:text-white antialiased transition-colors duration-300">
                 <Head title="LoméShop — Espace Livreur" />
 
-                <header className="h-20 px-12 flex items-center justify-between border-b border-gray-100 sticky top-0 bg-white z-50">
+                <header className="h-20 px-12 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-[#1e1e1e] z-50 transition-colors duration-300">
                     <div className="flex items-center gap-10">
-                        <h1 className="text-2xl font-black text-[#D35400] tracking-tighter">LoméShop</h1>
+                        <h1 className="text-2xl font-black text-[#D35400] dark:text-[#E67E22] tracking-tighter">LoméShop</h1>
                         <nav className="flex items-center gap-8">
                             <div className="flex gap-6 text-[11px] font-black uppercase text-spacing">
                                 <Link href={route('driver.dashboard')} className="text-[#8B4513] border-b-2 border-[#8B4513] pb-1">Missions</Link>
-                                <Link href={route('driver.history')} className="text-gray-400 hover:text-black">Historique</Link>
-                                <Link href={route('driver.profile')} className="text-gray-400 hover:text-black">Mon Profil</Link>
+                                <Link href={route('driver.history')} className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Historique</Link>
+                                <Link href={route('driver.profile')} className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Mon Profil</Link>
                             </div>
-                            <div className="w-[1px] h-6 bg-gray-200 mx-2"></div>
+                            <div className="w-[1px] h-6 bg-gray-200 dark:bg-gray-800 mx-2"></div>
                             <div className="flex items-center gap-3">
-                                <div className={`w-2 h-2 rounded-full ${status === 'available' ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                                <div className={`w-2 h-2 rounded-full ${status === 'available' ? 'bg-green-500 animate-pulse' : 'bg-gray-300 dark:bg-gray-700'}`}></div>
                                 <select 
                                     value={status} 
                                     onChange={(e) => {
@@ -171,10 +172,10 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                                             .then(() => console.log("Status updated to", newStatus))
                                             .catch(err => console.error("Failed to update status", err));
                                     }}
-                                    className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest focus:ring-0 cursor-pointer"
+                                    className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest focus:ring-0 cursor-pointer text-gray-900 dark:text-white"
                                 >
-                                    <option value="available">En ligne / Prêt</option>
-                                    <option value="offline">Hors service</option>
+                                    <option value="available" className="bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-white">En ligne / Prêt</option>
+                                    <option value="offline" className="bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-white">Hors service</option>
                                 </select>
                             </div>
                         </nav>
@@ -191,11 +192,12 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                     )}
 
                     <div className="flex items-center gap-6">
+                        <ThemeToggle />
                         <div className="flex flex-col text-right">
                             <span className="text-[10px] font-black uppercase text-gray-400">Employé ID</span>
-                            <span className="text-[11px] font-bold">#DRV-{auth.user.id.toString().padStart(4, '0')}</span>
+                            <span className="text-[11px] font-bold text-gray-900 dark:text-white">#DRV-{auth.user.id.toString().padStart(4, '0')}</span>
                         </div>
-                        <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden border border-gray-100">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden border border-gray-100 dark:border-gray-800">
                             <img src={auth.user.profile_photo_url} className="w-full h-full object-cover" alt="" />
                         </div>
                     </div>
@@ -203,9 +205,9 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
 
                 <main className="p-0 flex h-[calc(100vh-80px)] overflow-hidden">
                     {/* Left Sidebar: Order Lists */}
-                    <div className="w-[400px] border-r border-gray-100 flex flex-col bg-white z-10 shadow-xl">
-                        <div className="p-6 border-b border-gray-50">
-                            <div className="flex bg-gray-50 p-1 rounded-xl">
+                    <div className="w-[400px] border-r border-gray-100 dark:border-gray-800 flex flex-col bg-white dark:bg-[#1e1e1e] z-10 shadow-xl transition-colors duration-300">
+                        <div className="p-6 border-b border-gray-50 dark:border-gray-800">
+                            <div className="flex bg-gray-50 dark:bg-gray-800 p-1 rounded-xl">
                                 {[
                                     { id: 'active', label: 'En cours', count: activeOrders.length },
                                     { id: 'available', label: 'Libres', count: availableOrders.length },
@@ -214,7 +216,7 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`flex-1 py-3 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white shadow-sm text-[#8B4513]' : 'text-gray-400'}`}
+                                        className={`flex-1 py-3 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white dark:bg-[#121212] shadow-sm text-[#8B4513] dark:text-[#E67E22]' : 'text-gray-400 dark:text-gray-500'}`}
                                     >
                                         {tab.label}
                                         {tab.count > 0 && (
@@ -227,25 +229,25 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#FAF9F8]">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#FAF9F8] dark:bg-[#151515]">
                             {activeTab === 'active' && (
                                 activeOrders.length > 0 ? activeOrders.map(order => (
-                                    <div key={order.id} className="bg-white rounded-3xl border border-gray-100 p-6 space-y-5 shadow-sm hover:shadow-md transition-shadow">
+                                    <div key={order.id} className="bg-white dark:bg-[#1e1e1e] rounded-3xl border border-gray-100 dark:border-gray-800 p-6 space-y-5 shadow-sm hover:shadow-md transition-shadow">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <h4 className="text-xs font-black uppercase tracking-tight">{order.order_number}</h4>
-                                                <p className="text-[9px] text-[#8B4513] font-black uppercase">{order.shop.name}</p>
+                                                <h4 className="text-xs font-black uppercase tracking-tight text-gray-900 dark:text-white">{order.order_number}</h4>
+                                                <p className="text-[9px] text-[#8B4513] dark:text-[#E67E22] font-black uppercase">{order.shop.name}</p>
                                             </div>
-                                            <span className="bg-orange-50 text-orange-600 px-2 py-0.5 rounded text-[7px] font-black uppercase">{order.status}</span>
+                                            <span className="bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded text-[7px] font-black uppercase">{order.status}</span>
                                         </div>
-                                        <div className="space-y-4 border-l-2 border-gray-100 ml-1 pl-4">
+                                        <div className="space-y-4 border-l-2 border-gray-100 dark:border-gray-800 ml-1 pl-4">
                                             <div>
-                                                <p className="text-[7px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Collecte</p>
-                                                <p className="text-[10px] font-bold leading-tight">{order.shop.address || 'Lomé, Togo'}</p>
+                                                <p className="text-[7px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5">Collecte</p>
+                                                <p className="text-[10px] font-bold leading-tight text-gray-900 dark:text-gray-250">{order.shop.address || 'Lomé, Togo'}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[7px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Destination</p>
-                                                <p className="text-[10px] font-bold leading-tight">{order.delivery_address}</p>
+                                                <p className="text-[7px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5">Destination</p>
+                                                <p className="text-[10px] font-bold leading-tight text-gray-900 dark:text-gray-250">{order.delivery_address}</p>
                                             </div>
                                         </div>
                                         <div className="pt-2 space-y-4">
@@ -259,15 +261,15 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                                                 </button>
                                             ) : (
                                                 <div className="space-y-3">
-                                                    <div className="bg-gray-50 p-4 rounded-2xl border-2 border-dashed border-gray-200">
-                                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-2 text-center">Code de livraison (Client)</p>
+                                                    <div className="bg-gray-50 dark:bg-[#121212] p-4 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800">
+                                                        <p className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2 text-center">Code de livraison (Client)</p>
                                                         <input 
                                                             type="text" 
                                                             maxLength="4"
                                                             placeholder="0 0 0 0"
                                                             value={deliveryCodes[order.id] || ''}
                                                             onChange={(e) => setDeliveryCodes({...deliveryCodes, [order.id]: e.target.value})}
-                                                            className="w-full text-center text-xl font-black tracking-[0.5em] bg-transparent border-none focus:ring-0 placeholder-gray-200"
+                                                            className="w-full text-center text-xl font-black tracking-[0.5em] bg-transparent border-none focus:ring-0 placeholder-gray-200 dark:placeholder-gray-700 text-gray-900 dark:text-white"
                                                         />
                                                     </div>
                                                     <button 
@@ -288,17 +290,17 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
 
                             {activeTab === 'available' && (
                                 availableOrders.length > 0 ? availableOrders.map(order => (
-                                    <div key={order.id} className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+                                    <div key={order.id} className="bg-white dark:bg-[#1e1e1e] rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm">
                                         <div className="flex justify-between items-center mb-4">
-                                            <span className="text-[12px] font-black tracking-tighter text-gray-400 uppercase">Nouvelle Mission</span>
+                                            <span className="text-[12px] font-black tracking-tighter text-gray-400 dark:text-gray-500 uppercase">Nouvelle Mission</span>
                                             <span className="text-[7px] font-black bg-[#8B4513]/10 text-[#8B4513] px-2 py-0.5 rounded uppercase">Urgente</span>
                                         </div>
-                                        <p className="text-[9px] font-black uppercase text-gray-400 mb-1">Boutique</p>
-                                        <p className="text-[11px] font-bold mb-4">{order.shop.name}</p>
+                                        <p className="text-[9px] font-black uppercase text-gray-400 dark:text-gray-500 mb-1">Boutique</p>
+                                        <p className="text-[11px] font-bold mb-4 text-gray-900 dark:text-white">{order.shop.name}</p>
                                         <button 
                                             disabled={processing}
                                             onClick={() => handleAcceptOrder(order.id)}
-                                            className="w-full py-3 bg-white border-2 border-[#8B4513] text-[#8B4513] rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-[#8B4513] hover:text-white transition-all"
+                                            className="w-full py-3 bg-white dark:bg-transparent border-2 border-[#8B4513] text-[#8B4513] dark:text-[#E67E22] rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-[#8B4513] hover:text-white dark:hover:text-white transition-all"
                                         >
                                             Prendre la commande
                                         </button>
@@ -310,16 +312,16 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
 
                             {activeTab === 'history' && (
                                 history.length > 0 ? history.map(order => (
-                                    <div key={order.id} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-50">
-                                        <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center text-green-600 font-black text-[10px]">
+                                    <div key={order.id} className="flex items-center gap-3 p-4 bg-white dark:bg-[#1e1e1e] rounded-2xl border border-gray-50 dark:border-gray-800">
+                                        <div className="w-8 h-8 bg-green-50 dark:bg-green-950/30 rounded-lg flex items-center justify-center text-green-600 dark:text-green-400 font-black text-[10px]">
                                             ✓
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-[9px] font-black uppercase tracking-tight">{order.order_number}</p>
-                                            <p className="text-[7px] text-gray-400 font-bold uppercase">{new Date(order.updated_at).toLocaleTimeString()}</p>
+                                            <p className="text-[9px] font-black uppercase tracking-tight text-gray-900 dark:text-white">{order.order_number}</p>
+                                            <p className="text-[7px] text-gray-400 dark:text-gray-500 font-bold uppercase">{new Date(order.updated_at).toLocaleTimeString()}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-[8px] font-black text-gray-400 uppercase">Livré</p>
+                                            <p className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase">Livré</p>
                                         </div>
                                     </div>
                                 )) : (
@@ -332,11 +334,11 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                     {/* Right: Map Section */}
                     <div className="flex-1 relative">
                         <Map
-                            defaultCenter={driverPos}
-                            defaultZoom={14}
-                            mapId="bf51a910020fa257"
-                            disableDefaultUI={false}
-                            className="w-full h-full"
+                             defaultCenter={driverPos}
+                             defaultZoom={14}
+                             mapId="bf51a910020fa257"
+                             disableDefaultUI={false}
+                             className="w-full h-full"
                         >
                             {activeOrders.length > 0 && (
                                 <Directions 
@@ -350,7 +352,7 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                             <AdvancedMarker position={driverPos}>
                                 <div className="relative">
                                     <div className="absolute inset-0 rounded-full animate-ping opacity-20 w-8 h-8 -translate-x-1.5 -translate-y-1.5 bg-green-500"></div>
-                                    <div className="w-6 h-6 rounded-full border-4 border-white shadow-2xl bg-green-600 flex items-center justify-center">
+                                    <div className="w-6 h-6 rounded-full border-4 border-white dark:border-gray-800 shadow-2xl bg-green-600 flex items-center justify-center">
                                         <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                                     </div>
                                 </div>
@@ -359,19 +361,19 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
 
                         {/* Quick Overlay Info if Active Order */}
                         {activeOrders.length > 0 && (
-                            <div className="absolute bottom-8 left-8 right-8 bg-white/90 backdrop-blur-md rounded-[32px] p-6 shadow-2xl border border-white/20 flex items-center justify-between max-w-2xl mx-auto">
+                            <div className="absolute bottom-8 left-8 right-8 bg-white/90 dark:bg-[#1e1e1e]/90 backdrop-blur-md rounded-[32px] p-6 shadow-2xl border border-white/20 dark:border-gray-800 flex items-center justify-between max-w-2xl mx-auto">
                                 <div className="flex items-center gap-5">
                                     <div className="w-12 h-12 bg-[#8B4513] rounded-2xl flex items-center justify-center text-white">
                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"/></svg>
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black uppercase text-[#8B4513]">Mission en cours</p>
-                                        <h3 className="text-sm font-black uppercase tracking-tight">Direction : {activeOrders[0].delivery_address}</h3>
+                                        <p className="text-[10px] font-black uppercase text-[#8B4513] dark:text-[#E67E22]">Mission en cours</p>
+                                        <h3 className="text-sm font-black uppercase tracking-tight text-gray-900 dark:text-white">Direction : {activeOrders[0].delivery_address}</h3>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Temps estimé</p>
-                                    <p className="text-lg font-black tracking-tighter">12 MIN</p>
+                                    <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Temps estimé</p>
+                                    <p className="text-lg font-black tracking-tighter text-gray-900 dark:text-white">12 MIN</p>
                                 </div>
                             </div>
                         )}
@@ -384,7 +386,7 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
 
 function EmptyState({ message }) {
     return (
-        <div className="flex flex-col items-center justify-center h-full py-10 opacity-30">
+        <div className="flex flex-col items-center justify-center h-full py-10 text-gray-400 dark:text-gray-500 opacity-60">
             <p className="text-[9px] font-black uppercase tracking-widest">{message}</p>
         </div>
     );

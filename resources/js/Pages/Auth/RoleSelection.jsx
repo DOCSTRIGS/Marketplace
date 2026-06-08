@@ -78,10 +78,10 @@ export default function RoleSelection() {
                         <div className="flex-1 max-w-xl">
                             <span className="inline-block px-3 py-1 bg-[#FDEAE2] text-[#E67E22] text-[10px] font-black rounded-full uppercase tracking-widest mb-6">Bienvenue</span>
                             <h2 className="text-[64px] font-black text-[#1a1a1a] leading-[1.1] mb-8 tracking-tighter">
-                                Découvrez les <br /> trésors de <br /> <span className="text-[#8B4513]">Lomé</span>
+                                Vos boutiques <br /> préférées à <br /> <span className="text-[#8B4513]">Lomé</span>
                             </h2>
                             <p className="text-gray-500 text-lg leading-relaxed mb-12 max-w-md font-medium">
-                                Accédez aux meilleures boutiques de la capitale depuis votre écran. Une sélection unique de produits locaux livrés chez vous.
+                                Explorez un large choix d'articles : mode, téléphones, ordinateurs, électroménager et produits locaux. Tout le commerce de Lomé à votre portée avec livraison rapide.
                             </p>
                             <div className="flex items-center gap-8">
                                 <button onClick={nextOnboarding} className="px-10 py-5 bg-[#8B4513] text-white font-black rounded-2xl text-lg shadow-xl shadow-[#8B4513]/20 hover:bg-[#70360f] transition-all flex items-center gap-2 group">
@@ -99,10 +99,10 @@ export default function RoleSelection() {
                         </div>
                         <div className="flex-1 relative">
                             <div className="relative w-full aspect-square rounded-[40px] overflow-hidden shadow-2xl">
-                                <img src="https://images.unsplash.com/photo-1590736962386-896894b8e235?w=1200&auto=format&fit=crop" alt="Artisanat" className="w-full h-full object-cover" />
+                                <img src="https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200&auto=format&fit=crop" alt="Boutique" className="w-full h-full object-cover" />
                                 <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur p-6 rounded-2xl shadow-lg border border-gray-100">
-                                    <h4 className="text-[10px] font-black text-[#8B4513] uppercase tracking-[0.2em] mb-2">Artisanat Local</h4>
-                                    <p className="text-[10px] text-gray-500 font-medium">Soutenir les créateurs de notre communauté.</p>
+                                    <h4 className="text-[10px] font-black text-[#8B4513] uppercase tracking-[0.2em] mb-2">Shopping Local</h4>
+                                    <p className="text-[10px] text-gray-500 font-medium">Vos boutiques favorites réunies sur une seule plateforme.</p>
                                 </div>
                             </div>
                         </div>
@@ -110,131 +110,148 @@ export default function RoleSelection() {
                 )}
 
                 {onboardingStep === 1 && (
-                    /* STEP 2: SOUTENEZ L'ARTISANAT (IMAGE 3) */
-                    <div className="flex-grow flex flex-col items-center justify-center py-20 px-10">
-                        <h1 className="text-2xl font-black text-[#8B4513] mb-20 italic">LoméShop</h1>
-                        <div className="flex flex-col md:flex-row items-center gap-16 max-w-6xl w-full">
-                            <div className="flex-1">
-                                <div className="relative w-full aspect-square rounded-[40px] overflow-hidden bg-gray-50 p-6 shadow-xl">
-                                    <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1200&auto=format&fit=crop" alt="Produits Locaux" className="w-full h-full object-cover rounded-[32px]" />
-                                    <div className="absolute bottom-10 left-10">
-                                        <span className="bg-[#8B4513] text-white text-[10px] font-bold px-4 py-2 rounded-lg flex items-center gap-2">
-                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M7 2a2 2 0 00-2 2v1h14V4a2 2 0 00-2-2H7zM5 19a2 2 0 002 2h10a2 2 0 002-2v-5H5v5z"/></svg>
-                                            ARTISANAT 228
-                                        </span>
-                                    </div>
-                                </div>
+                    /* STEP 2: SOUTENEZ LE COMMERCE LOCAL (IMAGE 3) */
+                    <div className="flex-grow flex flex-col md:flex-row items-center justify-center px-10 md:px-20 gap-16 py-20">
+                        <div className="flex-1 max-w-xl">
+                            <span className="inline-block px-3 py-1 bg-[#FDEAE2] text-[#E67E22] text-[10px] font-black rounded-full uppercase tracking-widest mb-6">Étape 02 / 03</span>
+                            <h2 className="text-[64px] font-black text-[#1a1a1a] leading-[1.1] mb-8 tracking-tighter">
+                                Soutenez <br /> le commerce <br /> <span className="text-[#8B4513]">local</span>
+                            </h2>
+                            <p className="text-gray-500 text-lg leading-relaxed mb-12 max-w-md font-medium">
+                                Chaque commande sur LoméShop valorise le savoir-faire local et soutient directement les commerçants et créateurs de Lomé. Ensemble, dynamisons l'économie locale.
+                            </p>
+                            <div className="flex items-center gap-8">
+                                <button onClick={nextOnboarding} className="px-10 py-5 bg-[#8B4513] text-white font-black rounded-2xl text-lg shadow-xl shadow-[#8B4513]/20 hover:bg-[#70360f] transition-all flex items-center gap-2 group">
+                                    Suivant 
+                                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                                </button>
+                                <button onClick={() => setView('selection')} className="text-gray-400 font-bold hover:text-[#8B4513] transition-colors">Passer</button>
                             </div>
-                            <div className="flex-1 max-w-md">
-                                <span className="text-[#8B4513] text-[10px] font-black tracking-widest uppercase mb-6 block">Étape 02 / 03</span>
-                                <h2 className="text-[56px] font-black text-[#1a1a1a] leading-tight mb-8 tracking-tighter">
-                                    Soutenez <br /> l'artisanat <br /> local
-                                </h2>
-                                <p className="text-gray-500 text-lg leading-relaxed mb-12 font-medium">
-                                    Chaque achat contribue directement au développement des créateurs et commerçants de votre quartier. Ensemble, valorisons le savoir-faire Togolais.
-                                </p>
-                                <div className="flex gap-2 mb-12">
-                                    <div className="h-1.5 w-1.5 bg-gray-200 rounded-full"></div>
-                                    <div className="h-1.5 w-8 bg-[#8B4513] rounded-full"></div>
-                                    <div className="h-1.5 w-1.5 bg-gray-200 rounded-full"></div>
-                                </div>
-                                <div className="flex items-center gap-8">
-                                    <button onClick={nextOnboarding} className="px-10 py-5 bg-[#7B3F00] text-white font-black rounded-2xl text-lg shadow-xl hover:bg-[#5a2e00] transition-all flex items-center gap-2 group">
-                                        Suivant 
-                                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                                    </button>
-                                    <button onClick={() => setView('selection')} className="text-gray-400 font-bold hover:text-[#8B4513] transition-colors">Passer</button>
+                            {/* Pagination Dots */}
+                            <div className="flex gap-2 mt-16">
+                                <div className="h-1.5 w-1.5 bg-gray-200 rounded-full"></div>
+                                <div className="h-1.5 w-8 bg-[#8B4513] rounded-full"></div>
+                                <div className="h-1.5 w-1.5 bg-gray-200 rounded-full"></div>
+                            </div>
+                        </div>
+                        <div className="flex-1 relative">
+                            <div className="relative w-full aspect-square rounded-[40px] overflow-hidden shadow-2xl">
+                                <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1200&auto=format&fit=crop" alt="Produits Locaux" className="w-full h-full object-cover" />
+                                <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur p-6 rounded-2xl shadow-lg border border-gray-100">
+                                    <h4 className="text-[10px] font-black text-[#8B4513] uppercase tracking-[0.2em] mb-2">Boutiques 228</h4>
+                                    <p className="text-[10px] text-gray-500 font-medium">Soutenir les créateurs et commerçants de votre quartier.</p>
                                 </div>
                             </div>
                         </div>
-                        <p className="mt-20 text-[10px] text-gray-400 font-bold uppercase tracking-widest">© 2024 LoméShop. Fabriqué avec soin au Togo.</p>
                     </div>
                 )}
 
                 {onboardingStep === 2 && (
-                    /* STEP 3: PAYEZ EN TOUTE SIMPLICITE (IMAGE 4) */
-                    <div className="flex-grow relative flex flex-col items-center justify-center overflow-hidden py-20 px-10">
-                        <button onClick={() => setView('selection')} className="absolute top-12 right-12 text-[#8B4513] font-black text-xs uppercase tracking-widest">Passer</button>
-                        
-                        <div className="flex flex-col md:flex-row items-center gap-20 max-w-7xl w-full">
-                            <div className="flex-1 max-w-xl">
-                                <span className="text-gray-400 text-[10px] font-black tracking-widest uppercase mb-6 block bg-gray-100 w-fit px-3 py-1 rounded-full">Étape 03</span>
-                                <h2 className="text-[64px] font-black text-[#8B4513] leading-[1.1] mb-8 tracking-tighter">
-                                    Payez en toute <br /> simplicité
-                                </h2>
-                                <p className="text-gray-500 text-xl leading-relaxed mb-12 font-medium">
-                                    Réglez vos commandes via Flooz ou T-Money et faites-vous livrer en moins d'une heure.
-                                </p>
-                                <div className="flex gap-2 mb-12">
-                                    <div className="h-1.5 w-1.5 bg-gray-200 rounded-full"></div>
-                                    <div className="h-1.5 w-1.5 bg-gray-200 rounded-full"></div>
-                                    <div className="h-1.5 w-8 bg-[#8B4513] rounded-full"></div>
-                                </div>
+                    /* STEP 3: SECURITE & CONFIDENTIALITE */
+                    <div className="flex-grow flex flex-col md:flex-row items-center justify-center px-10 md:px-20 gap-16 py-20">
+                        <div className="flex-1 max-w-xl">
+                            <span className="inline-block px-3 py-1 bg-[#FDEAE2] text-[#E67E22] text-[10px] font-black rounded-full uppercase tracking-widest mb-6">Étape 03 / 03</span>
+                            <h2 className="text-[64px] font-black text-[#8B4513] leading-[1.1] mb-8 tracking-tighter">
+                                Confidentialité <br /> & Sécurité
+                            </h2>
+                            <p className="text-gray-500 text-lg leading-relaxed mb-6 max-w-md font-medium">
+                                Vos données personnelles et vos transactions sont entièrement protégées. Nous appliquons des protocoles stricts de sécurité pour garantir la confiance et la transparence de notre plateforme.
+                            </p>
+                            <p className="text-gray-400 text-xs leading-relaxed mb-12 max-w-md font-medium">
+                                En continuant, vous confirmez avoir pris connaissance et accepter notre politique de confidentialité ainsi que nos conditions d'utilisation.
+                            </p>
+                            <div className="flex items-center gap-8">
+                                <button onClick={() => setView('selection')} className="px-10 py-5 bg-[#8B4513] text-white font-black rounded-2xl text-lg shadow-xl shadow-[#8B4513]/20 hover:bg-[#70360f] transition-all flex items-center gap-2 group">
+                                    Commencer 
+                                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                                </button>
+                                <button onClick={() => setView('selection')} className="text-gray-400 font-bold hover:text-[#8B4513] transition-colors">Passer</button>
                             </div>
-                            
-                            <div className="flex-1 relative flex justify-center">
-                                {/* Phone Mockup */}
-                                <div className="relative w-[340px] h-[680px] bg-[#f0f0f0] rounded-[50px] border-[12px] border-[#e5e5e5] shadow-2xl overflow-hidden p-6 flex flex-col">
-                                    <div className="w-12 h-12 bg-[#F3E6DE] rounded-2xl flex items-center justify-center mb-8 mx-auto mt-10">
-                                        <svg className="w-6 h-6 text-[#7B3F00]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
-                                    </div>
-                                    
-                                    <div className="space-y-4">
-                                        <div className="bg-white rounded-2xl p-5 flex items-center justify-between border-2 border-orange-100 shadow-sm">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center text-green-600 font-bold text-xs">MOOV</div>
-                                                <div>
-                                                    <p className="text-[11px] font-bold text-gray-800">Flooz</p>
-                                                    <p className="text-[9px] text-gray-400">Paiement Mobile</p>
-                                                </div>
-                                            </div>
-                                            <div className="w-4 h-4 rounded-full border-2 border-orange-500 flex items-center justify-center">
-                                                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="bg-white rounded-2xl p-5 flex items-center justify-between border border-gray-100">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 font-bold text-xs">TOGO</div>
-                                                <div>
-                                                    <p className="text-[11px] font-bold text-gray-800">T-Money</p>
-                                                    <p className="text-[9px] text-gray-400">Paiement Mobile</p>
-                                                </div>
-                                            </div>
-                                            <div className="w-4 h-4 rounded-full border border-gray-200"></div>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-auto mb-10">
-                                        <div className="bg-[#8B4513] text-white p-5 rounded-2xl text-center shadow-lg">
-                                            <p className="text-[9px] font-medium opacity-80 mb-1">Confirmation de livraison</p>
-                                            <p className="text-[11px] font-black">Moins de 60 mins</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {/* Delivery Badge */}
-                                <div className="absolute bottom-20 -right-10 bg-white p-6 rounded-3xl shadow-2xl flex items-center gap-4 border border-gray-50">
-                                    <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center">
-                                        <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-                                    </div>
-                                    <div>
-                                        <p className="text-[11px] font-black text-gray-800">Livraison Express</p>
-                                        <p className="text-[9px] text-gray-400 font-medium">Suivi en temps réel activé</p>
-                                    </div>
-                                </div>
+                            {/* Pagination Dots */}
+                            <div className="flex gap-2 mt-16">
+                                <div className="h-1.5 w-1.5 bg-gray-200 rounded-full"></div>
+                                <div className="h-1.5 w-1.5 bg-gray-200 rounded-full"></div>
+                                <div className="h-1.5 w-8 bg-[#8B4513] rounded-full"></div>
                             </div>
                         </div>
+                        <div className="flex-1 relative flex justify-center w-full">
+                            {/* Security Dashboard Mockup */}
+                            <div className="relative w-full max-w-[380px] aspect-square md:aspect-auto md:h-[500px] bg-[#FDF8F6] rounded-[40px] border-[8px] border-[#8B4513]/10 shadow-2xl p-6 flex flex-col justify-between overflow-hidden">
+                                {/* Shield illustration header */}
+                                <div className="flex flex-col items-center mt-2 text-center">
+                                    <div className="w-16 h-16 bg-green-50 rounded-[20px] flex items-center justify-center mb-4 shadow-inner">
+                                        <svg className="w-8 h-8 text-green-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                        </svg>
+                                    </div>
+                                    <h4 className="text-base font-black text-[#1a1a1a]">Sécurité Activée</h4>
+                                    <p className="text-[10px] text-gray-400 mt-0.5 font-medium">Protection de bout en bout</p>
+                                </div>
 
-                        {/* Final Button */}
-                        <div className="w-full max-w-7xl mt-20 flex justify-between items-center border-t border-gray-100 pt-12">
-                            <div className="flex items-center gap-3">
-                                <span className="text-xl">🇹🇬</span>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">LoméShop — Le cœur du commerce Togolais</p>
+                                {/* Privacy settings simulator */}
+                                <div className="space-y-3 my-4">
+                                    <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-800">Chiffrement SSL</p>
+                                                <p className="text-[8px] text-gray-400">Transactions sécurisées</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-8 h-4.5 bg-green-500 rounded-full p-0.5 flex items-center justify-end">
+                                            <div className="w-3.5 h-3.5 bg-white rounded-full shadow-md"></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-7 h-7 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600">
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944" /></svg>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-800">Respect vie privée</p>
+                                                <p className="text-[8px] text-gray-400">Pas de partage de données</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-8 h-4.5 bg-green-500 rounded-full p-0.5 flex items-center justify-end">
+                                            <div className="w-3.5 h-3.5 bg-white rounded-full shadow-md"></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-7 h-7 bg-[#F3E6DE] rounded-lg flex items-center justify-center text-[#8B4513]">
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-800">Confidentialité</p>
+                                                <p className="text-[8px] text-gray-400">Norme CNDP Togo</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-8 h-4.5 bg-green-500 rounded-full p-0.5 flex items-center justify-end">
+                                            <div className="w-3.5 h-3.5 bg-white rounded-full shadow-md"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Security badge at bottom */}
+                                <div className="bg-[#8B4513] text-white p-3 rounded-xl text-center shadow-lg">
+                                    <p className="text-[9px] font-black uppercase tracking-wider">LoméShop Trust & Safety</p>
+                                </div>
                             </div>
-                            <button onClick={() => setView('selection')} className="px-16 py-6 bg-[#8B4513] text-white font-black rounded-2xl text-2xl shadow-2xl shadow-[#8B4513]/30 hover:scale-105 transition-all">
-                                Commencer
-                            </button>
+
+                            {/* Floating Protection Badge */}
+                            <div className="absolute bottom-6 -right-4 bg-white p-4 rounded-2xl shadow-xl flex items-center gap-3 border border-gray-50">
+                                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center text-green-600">
+                                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" /></svg>
+                                </div>
+                                <div>
+                                    <p className="text-[9px] font-black text-gray-800">Données Chiffrées</p>
+                                    <p className="text-[7px] text-gray-400 font-bold uppercase tracking-wider">SSL Actif</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -300,16 +317,15 @@ export default function RoleSelection() {
                             <p className="text-gray-400 mb-10 text-sm leading-relaxed font-medium">Digitalisez votre commerce <br /> et multipliez vos ventes aujourd'hui.</p>
                             
                             <Link 
-                                href={route('register', { role: 'seller' })}
-                                className="w-full py-5 border-2 border-[#D35400] text-[#D35400] font-black rounded-2xl text-lg hover:bg-[#D35400] hover:text-white transition-all uppercase tracking-widest text-[13px]"
+                                href={route('login', { role: 'seller' })}
+                                className="w-full py-5 bg-[#D35400] text-white font-black rounded-2xl text-lg hover:bg-[#b84600] transition-all uppercase tracking-widest text-[13px] shadow-xl shadow-[#D35400]/20 flex items-center justify-center"
                             >
-                                Ouvrir ma boutique
+                                Gérer ma boutique
                             </Link>
 
                             <div className="mt-10 pt-8 border-t border-gray-50 w-full flex justify-center gap-6 text-[11px] font-black uppercase tracking-widest">
-                                <Link href={route('login', { role: 'seller' })} className="text-[#D35400] hover:underline">Se connecter</Link>
-                                <span className="text-gray-200">|</span>
-                                <Link href={route('register', { role: 'seller' })} className="text-gray-400 hover:text-[#D35400]">Devenir vendeur</Link>
+                                <span className="text-gray-400">Nouveau vendeur ?</span>
+                                <Link href={route('register', { role: 'seller' })} className="text-[#D35400] hover:underline">Créer ma boutique</Link>
                             </div>
                         </div>
                     </div>

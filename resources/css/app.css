@@ -18,9 +18,20 @@
         @apply bg-[#121212] text-gray-100;
     }
 
+    /* Cross-browser input visibility styling */
+    input:not([type="checkbox"]):not([type="radio"]), textarea, select {
+        @apply bg-white text-gray-900 border-gray-300;
+    }
+
+    html.dark input:not([type="checkbox"]):not([type="radio"]), 
+    html.dark textarea, 
+    html.dark select {
+        @apply bg-[#1a1a1a] text-white border-gray-700;
+    }
+
     /* Driver & Premium Form Styles */
     .premium-input {
-        @apply border border-gray-100 rounded-2xl px-5 py-3 text-sm font-semibold transition-all !important;
+        @apply border border-gray-100 dark:border-gray-800 rounded-2xl px-5 py-3 text-sm font-semibold transition-all !important;
     }
     .premium-input:focus {
         @apply border-[#8B4513] ring-0 outline-none !important;

@@ -7,6 +7,17 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 Route::get('/', function () {
+    if (Auth::check()) {
+        $user = Auth::user();
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        } elseif ($user->role === 'seller') {
+            return redirect()->route('seller.dashboard');
+        } elseif ($user->role === 'driver') {
+            return redirect()->route('driver.dashboard');
+        }
+        return redirect()->route('home');
+    }
     return Inertia::render('Auth/RoleSelection');
 })->name('role.selection');
 

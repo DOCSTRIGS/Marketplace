@@ -241,7 +241,7 @@ export default function DriverTracking({ order }) {
 
                 {/* Bottom Control Card */}
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-10">
-                    <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] p-8 border border-gray-100 flex flex-col gap-6">
+                    <div className="bg-white dark:bg-[#1e1e1e] rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.8)] p-8 border border-gray-100 dark:border-gray-800 flex flex-col gap-6 transition-colors duration-300">
                         {!isTracking ? (
                             <button 
                                 onClick={() => setIsTracking(true)}
@@ -252,32 +252,32 @@ export default function DriverTracking({ order }) {
                         ) : (
                             <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
                                 <div className="flex flex-col items-center">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Code Client Obligatoire</label>
+                                    <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Code Client Obligatoire</label>
                                     <input 
                                         type="text" 
                                         value={deliveryCode}
                                         onChange={(e) => setDeliveryCode(e.target.value)}
                                         placeholder="----"
-                                        className="w-full text-center text-4xl font-black tracking-[0.5em] py-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl focus:border-blue-600 focus:ring-0 transition-all"
+                                        className="w-full text-center text-4xl font-black tracking-[0.5em] py-4 bg-gray-50 dark:bg-[#121212] border-2 border-dashed border-gray-200 dark:border-gray-800 focus:border-blue-600 focus:ring-0 text-gray-900 dark:text-white transition-all placeholder-gray-300 dark:placeholder-gray-700"
                                         maxLength={4}
                                     />
                                 </div>
                                 <button 
                                     onClick={handleFinish}
-                                    className="w-full py-6 bg-blue-600 text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-blue-700 transition-all active:scale-95 border-4 border-blue-50"
+                                    className="w-full py-6 bg-blue-600 text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-blue-700 transition-all active:scale-95 border-4 border-blue-50 dark:border-blue-950"
                                 >
                                     Valider la livraison
                                 </button>
                             </div>
                         )}
 
-                        <div className="flex items-center gap-4 pt-2 border-t border-gray-50">
-                            <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <div className="flex items-center gap-4 pt-2 border-t border-gray-50 dark:border-gray-800">
+                            <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
                                 <span className="text-xl">👤</span>
                             </div>
                             <div className="flex-1">
-                                <p className="text-xs font-black text-gray-900 uppercase">{order.user.name}</p>
-                                <p className="text-[10px] text-gray-500 font-bold uppercase">{order.delivery_address}</p>
+                                <p className="text-xs font-black text-gray-900 dark:text-white uppercase">{order.user.name}</p>
+                                <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase">{order.delivery_address}</p>
                             </div>
                             <a href={`tel:${order.user.phone || '#'}`} className="w-10 h-10 bg-green-500 text-white rounded-xl flex items-center justify-center shadow-md">
                                 📞

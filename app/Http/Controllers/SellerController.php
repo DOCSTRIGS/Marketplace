@@ -40,9 +40,14 @@ class SellerController extends Controller
         }
 
         // Stats
+        $totalRevenue = Order::where('shop_id', $shop->id)
+            ->where('status', '!=', 'cancelled')
+            ->sum('seller_amount');
+
         $monthlyRevenue = Order::where('shop_id', $shop->id)
             ->where('status', '!=', 'cancelled')
             ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
             ->sum('seller_amount');
 
         $todayOrdersCount = Order::where('shop_id', $shop->id)
@@ -53,10 +58,36 @@ class SellerController extends Controller
         $outOfStockCount = Product::where('shop_id', $shop->id)->where('stock', 0)->count();
 
         $stats = [
-            ['name' => 'Mes Gains (Net)', 'value' => number_format($monthlyRevenue, 0, ',', ' ') . ' FCFA', 'change' => '+0%', 'trend' => 'neutral'],
-            ['name' => 'Commandes du jour', 'value' => (string) $todayOrdersCount, 'change' => '+0', 'trend' => 'neutral'],
-            ['name' => 'Produits actifs', 'value' => (string) $activeProductsCount, 'change' => '0', 'trend' => 'neutral'],
-            ['name' => 'Produits en rupture', 'value' => (string) $outOfStockCount, 'change' => '0', 'trend' => 'neutral'],
+            [
+                'name' => 'Solde Disponible', 
+                'value' => number_format((float)$shop->balance, 0, ',', ' ') . ' FCFA', 
+                'change' => 'Retirable', 
+                'trend' => 'up'
+            ],
+            [
+                'name' => 'Gains Totaux (Net)', 
+                'value' => number_format($totalRevenue, 0, ',', ' ') . ' FCFA', 
+                'change' => 'Cumulé', 
+                'trend' => 'up'
+            ],
+            [
+                'name' => 'Gains du Mois', 
+                'value' => number_format($monthlyRevenue, 0, ',', ' ') . ' FCFA', 
+                'change' => 'Ce mois', 
+                'trend' => 'neutral'
+            ],
+            [
+                'name' => 'Commandes du jour', 
+                'value' => (string) $todayOrdersCount, 
+                'change' => 'Aujourd\'hui', 
+                'trend' => 'neutral'
+            ],
+            [
+                'name' => 'Produits en boutique', 
+                'value' => (string) $activeProductsCount . ' actifs', 
+                'change' => $outOfStockCount > 0 ? (string)$outOfStockCount . ' en rupture' : 'Stock OK', 
+                'trend' => $outOfStockCount > 0 ? 'down' : 'neutral'
+            ],
         ];
 
         // Recent Orders
@@ -74,17 +105,24 @@ class SellerController extends Controller
                 'date' => $order->created_at->diffForHumans(),
             ]);
 
-        // Chart data (Last 7 days)
+        // Chart data (Last 30 days)
         $chartData = [];
-        for ($i = 6; $i >= 0; $i--) {
+        $months = [
+            1 => 'Janv', 2 => 'Févr', 3 => 'Mars', 4 => 'Avril', 5 => 'Mai', 6 => 'Juin',
+            7 => 'Juil', 8 => 'Août', 9 => 'Sept', 10 => 'Oct', 11 => 'Nov', 12 => 'Déc'
+        ];
+        
+        for ($i = 29; $i >= 0; $i--) {
             $date = now()->subDays($i);
             $revenue = Order::where('shop_id', $shop->id)
                 ->whereDate('created_at', $date)
                 ->where('status', '!=', 'cancelled')
                 ->sum('seller_amount');
 
+            $dateString = $date->format('d') . ' ' . $months[(int)$date->format('n')];
+
             $chartData[] = [
-                'name' => $date->format('D'),
+                'name' => $dateString,
                 'revenus' => (float) $revenue
             ];
         }

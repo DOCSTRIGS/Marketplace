@@ -5,6 +5,28 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
+        <!-- PWA Settings -->
+        <meta name="theme-color" content="#D35400">
+        <link rel="manifest" href="/manifest.json">
+        <link rel="apple-touch-icon" href="/images/icon-192x192.png">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="LoméShop">
+
+        <!-- PWA Service Worker Registration -->
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(function(registration) {
+                            console.log('LoméShop Service Worker registered with scope: ', registration.scope);
+                        }, function(err) {
+                            console.log('LoméShop Service Worker registration failed: ', err);
+                        });
+                });
+            }
+        </script>
+
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
         <!-- Fonts -->
@@ -22,8 +44,8 @@
         @routes
         @viteReactRefresh
         @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
-    <!-- KkiaPay SDK -->
-    <script src="https://cdn.kkiapay.me/k.js"></script>
+        <!-- KkiaPay SDK -->
+        <script src="https://cdn.kkiapay.me/k.js"></script>
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

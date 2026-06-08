@@ -16,10 +16,11 @@ const data = [
 export default function Dashboard({ auth, stats: initialStats, recentOrders: initialOrders, chartData: initialChartData, activeTrackings: initialTrackings }) {
     // Default data if props are missing
     const stats = initialStats || [
-        { name: 'Revenus du mois', value: '0 FCFA', change: '+0%', trend: 'neutral' },
-        { name: 'Commandes du jour', value: '0', change: '+0', trend: 'neutral' },
-        { name: 'Produits actifs', value: '0', change: '0', trend: 'neutral' },
-        { name: 'Produits en rupture', value: '0', change: '0', trend: 'neutral' },
+        { name: 'Solde Disponible', value: '0 FCFA', change: 'Retirable', trend: 'up' },
+        { name: 'Gains Totaux (Net)', value: '0 FCFA', change: 'Cumulé', trend: 'up' },
+        { name: 'Gains du Mois', value: '0 FCFA', change: 'Ce mois', trend: 'neutral' },
+        { name: 'Commandes du jour', value: '0', change: 'Aujourd\'hui', trend: 'neutral' },
+        { name: 'Produits en boutique', value: '0 actifs', change: 'Stock OK', trend: 'neutral' },
     ];
 
     const recentOrders = initialOrders || [];
@@ -44,14 +45,16 @@ export default function Dashboard({ auth, stats: initialStats, recentOrders: ini
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                 {stats.map((stat) => (
                     <div key={stat.name} className="bg-white dark:bg-[#1e1e1e] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 transition-colors">
                         <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{stat.name}</p>
                         <div className="flex items-end justify-between">
                             <h3 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors">{stat.value}</h3>
-                            <span className={`text-sm font-bold flex items-center ${
-                                stat.trend === 'up' ? 'text-green-500' : stat.trend === 'down' ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full transition-colors ${
+                                stat.trend === 'up' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 
+                                stat.trend === 'down' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 
+                                'bg-gray-50 dark:bg-gray-850 text-gray-500 dark:text-gray-400'
                             }`}>
                                 {stat.change}
                             </span>
@@ -66,7 +69,7 @@ export default function Dashboard({ auth, stats: initialStats, recentOrders: ini
                     <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 transition-colors">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white transition-colors">Aperçu des revenus</h3>
-                            <div className="text-xs font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full uppercase transition-colors">7 derniers jours</div>
+                            <div className="text-xs font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full uppercase transition-colors">30 derniers jours</div>
                         </div>
                         <div className="relative w-full">
                             {isMounted && chartData.length > 0 && (
