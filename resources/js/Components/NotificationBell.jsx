@@ -70,14 +70,14 @@ export default function NotificationBell({ user }) {
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 text-gray-400 hover:text-black transition-colors focus:outline-none"
+                className="relative p-2 text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors focus:outline-none"
             >
                 <Bell size={20} strokeWidth={2.5} />
                 {unreadCount > 0 && (
                     <motion.span
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white"
+                        className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white dark:border-[#1a1a1a]"
                     >
                         {unreadCount}
                     </motion.span>
@@ -95,10 +95,10 @@ export default function NotificationBell({ user }) {
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute right-0 mt-2 w-80 bg-white rounded-3xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
+                            className="absolute right-0 mt-2 w-80 bg-white dark:bg-[#1e1e1e] rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 z-50 overflow-hidden"
                         >
-                            <div className="p-5 border-b border-gray-50 flex items-center justify-between">
-                                <h3 className="text-xs font-black uppercase tracking-widest text-gray-400">Notifications</h3>
+                            <div className="p-5 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
+                                <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Notifications</h3>
                                 {unreadCount > 0 && (
                                     <button
                                         onClick={markAllAsRead}
@@ -111,20 +111,20 @@ export default function NotificationBell({ user }) {
 
                             <div className="max-h-[400px] overflow-y-auto">
                                 {notifications.length > 0 ? (
-                                    <div className="divide-y divide-gray-50">
+                                    <div className="divide-y divide-gray-50 dark:divide-gray-800">
                                         {notifications.map((n) => (
                                             <div
                                                 key={n.id}
                                                 onClick={() => !n.read_at && markAsRead(n.id)}
-                                                className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer relative ${!n.read_at ? 'bg-orange-50/30' : ''}`}
+                                                className={`p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer relative ${!n.read_at ? 'bg-orange-50/30 dark:bg-orange-900/10' : ''}`}
                                             >
                                                 {!n.read_at && (
                                                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#8B4513]"></div>
                                                 )}
-                                                <p className={`text-[11px] leading-relaxed ${!n.read_at ? 'font-bold text-gray-900' : 'text-gray-500'}`}>
+                                                <p className={`text-[11px] leading-relaxed ${!n.read_at ? 'font-bold text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                                                     {n.data.message || 'Nouvelle mise à jour'}
                                                 </p>
-                                                <p className="text-[9px] text-gray-400 mt-1 font-medium">
+                                                <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-1 font-medium">
                                                     {new Date(n.created_at).toLocaleDateString()} à {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </p>
                                             </div>
@@ -132,13 +132,13 @@ export default function NotificationBell({ user }) {
                                     </div>
                                 ) : (
                                     <div className="p-10 text-center">
-                                        <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Aucune notification</p>
+                                        <p className="text-[10px] font-black text-gray-300 dark:text-gray-600 uppercase tracking-widest">Aucune notification</p>
                                     </div>
                                 )}
                             </div>
 
-                            <div className="p-4 bg-gray-50 border-t border-gray-100 text-center">
-                                <button className="text-[9px] font-black text-gray-400 uppercase tracking-widest hover:text-black transition-colors">
+                            <div className="p-4 bg-gray-50 dark:bg-white/5 border-t border-gray-100 dark:border-gray-800 text-center">
+                                <button className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest hover:text-black dark:hover:text-white transition-colors">
                                     Voir tout l'historique
                                 </button>
                             </div>

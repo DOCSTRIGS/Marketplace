@@ -2,8 +2,9 @@ import React, { useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import confetti from 'canvas-confetti';
 
-export default function Success({ reference, totalAmount, firstOrderId }) {
+export default function Success({ reference, totalAmount, firstOrderId, pending }) {
     useEffect(() => {
+        if (pending) return;
         // Lancer les confettis au chargement de la page
         const duration = 3 * 1000;
         const end = Date.now() + duration;
@@ -31,6 +32,31 @@ export default function Success({ reference, totalAmount, firstOrderId }) {
         frame();
     }, []);
 
+    if (pending) {
+        return (
+            <div className="min-h-screen bg-[#FDF8F4] dark:bg-[#121212] flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8 font-sans text-center transition-colors">
+                <Head title="Paiement en attente" />
+                <div className="bg-white dark:bg-[#1e1e1e] p-10 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 max-w-md w-full transition-colors">
+                    <div className="w-24 h-24 bg-amber-100 dark:bg-amber-900/30 text-amber-500 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h1 className="text-2xl font-black text-[#222222] dark:text-white mb-2 tracking-tight transition-colors">Paiement non confirmé</h1>
+                    <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed transition-colors">
+                        Votre commande <strong className="text-gray-900 dark:text-white">{reference}</strong> n'a pas encore été payée. Si vous venez d'effectuer un paiement, réessayez dans un instant.
+                    </p>
+                    <Link
+                        href={route('checkout.delivery')}
+                        className="w-full inline-block bg-[#8B4513] text-white py-4 rounded-xl font-bold text-sm hover:bg-[#70360f] transition-all shadow-lg shadow-[#8B4513]/20 uppercase tracking-wider"
+                    >
+                        Retourner au paiement
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-[#FDF8F4] dark:bg-[#121212] flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8 font-sans text-center relative overflow-hidden transition-colors">
             <Head title="Paiement Réussi" />
@@ -44,7 +70,7 @@ export default function Success({ reference, totalAmount, firstOrderId }) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
-                
+
                 <h1 className="text-3xl font-black text-[#222222] dark:text-white mb-2 tracking-tight transition-colors">Paiement Réussi !</h1>
                 <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed transition-colors">
                     Merci pour votre achat. Votre commande <strong className="text-gray-900 dark:text-white">{reference}</strong> a été validée et transmise au(x) vendeur(s).

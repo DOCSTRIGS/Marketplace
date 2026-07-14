@@ -194,9 +194,9 @@ export default function Wallet({ shop, transactions, withdrawals, balance, repor
                             <div>
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Montant à retirer (Min 5000)</label>
                                 <div className="relative">
-                                    <input 
-                                        type="number" 
-                                        className="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl py-4 px-6 text-lg font-black focus:ring-2 focus:ring-[#8B4513] transition-all"
+                                    <input
+                                        type="number"
+                                        className="w-full bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white border-none rounded-2xl py-4 px-6 text-lg font-black focus:ring-2 focus:ring-[#8B4513] transition-all"
                                         placeholder="0"
                                         value={data.amount}
                                         onChange={e => setData('amount', e.target.value)}
@@ -225,9 +225,9 @@ export default function Wallet({ shop, transactions, withdrawals, balance, repor
 
                             <div>
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Numéro de Téléphone (Transfert)</label>
-                                <input 
-                                    type="text" 
-                                    className="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-[#8B4513] transition-all"
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-[#8B4513] transition-all"
                                     placeholder="+228 90 XX XX XX"
                                     value={data.payment_details}
                                     onChange={e => setData('payment_details', e.target.value)}

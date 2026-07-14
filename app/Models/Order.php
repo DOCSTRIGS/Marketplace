@@ -20,6 +20,7 @@ class Order extends Model
         'payment_method', 
         'driver_id', 
         'payment_reference',
+        'kkiapay_transaction_id',
         'delivery_code'
     ];
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
+import AdminNavbar from '@/Components/Admin/AdminNavbar';
 import Footer from '@/Components/Footer';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
@@ -15,6 +16,8 @@ export default function ProfileEdit({ mustVerifyEmail, status }) {
     if (!user) {
         return <div className="p-10 text-center">Chargement ou non autorisé...</div>;
     }
+
+    const isAdmin = user.role === 'admin';
 
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
         name: user.name || '',
@@ -52,7 +55,7 @@ export default function ProfileEdit({ mustVerifyEmail, status }) {
     return (
         <div className="min-h-screen bg-[#FDF8F4] dark:bg-[#121212] transition-colors duration-300">
             <Head title="Mon Profil" />
-            <Navbar />
+            {isAdmin ? <AdminNavbar activeTab="" /> : <Navbar />}
 
             <main className="max-w-4xl mx-auto py-12 px-6">
                 <h2 className="text-3xl font-bold text-[#333333] dark:text-white mb-8">Paramètres du compte</h2>
@@ -173,7 +176,7 @@ export default function ProfileEdit({ mustVerifyEmail, status }) {
                 </div>
             </main>
 
-            <Footer />
+            {!isAdmin && <Footer />}
         </div>
     );
 }

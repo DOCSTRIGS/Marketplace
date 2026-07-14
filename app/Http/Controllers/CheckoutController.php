@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
-use FedaPay\FedaPay;
-use FedaPay\Transaction;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class CheckoutController extends Controller
 {
@@ -81,7 +82,9 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Affiche la page de succès.
+     * Affiche la page de succès. Ne marque plus la commande payée ici :
+     * confirmPayment() est l'unique endroit qui fait cette transition,
+     * après vérification serveur auprès de KkiaPay.
      */
     public function success($reference)
     {
@@ -93,80 +96,114 @@ class CheckoutController extends Controller
             return redirect()->route('home');
         }
 
-        // Marquer comme payé si c'était en attente (Paiement KkiaPay réussi)
-        foreach ($orders as $order) {
-            if ($order->status === 'pending') {
-                $order->update(['status' => 'paid']);
-            }
-        }
-
         return Inertia::render('Payment/Success', [
             'reference' => $reference,
             'totalAmount' => $orders->sum('total_amount'),
-            'firstOrderId' => $orders->first()->id
+            'firstOrderId' => $orders->first()->id,
+            'pending' => $orders->first()->status === 'pending',
         ]);
     }
 
     /**
-     * Initialise une transaction FedaPay et retourne un token.
+     * Confirme un paiement KkiaPay : vérifie côté serveur auprès de l'API
+     * KkiaPay (jamais en se fiant au seul callback client) avant de marquer
+     * la commande comme payée.
      */
-    public function createTransaction(Request $request)
+    public function confirmPayment(Request $request, $reference)
     {
-        $request->validate(['reference' => 'required|string']);
+        $validated = $request->validate([
+            'transaction_id' => 'required|string',
+        ]);
 
-        $secretKey = config('services.fedapay.secret_key');
-        $environment = config('services.fedapay.environment');
+        Log::info('KkiaPay: confirmPayment called', [
+            'reference' => $reference,
+            'transaction_id' => $validated['transaction_id'],
+            'user_id' => Auth::id(),
+        ]);
 
-        FedaPay::setApiKey($secretKey);
-        FedaPay::setEnvironment($environment);
-
-        $orders = Order::where('payment_reference', $request->reference)
+        $orders = Order::where('payment_reference', $reference)
             ->where('user_id', Auth::id())
+            ->with('orderItems')
             ->get();
 
         if ($orders->isEmpty()) {
-            \Log::error('FedaPay: Order not found', ['reference' => $request->reference]);
-            return response()->json(['message' => 'Commande non trouvée'], 404);
+            return response()->json(['message' => 'Commande non trouvée.'], 404);
         }
 
-        $totalAmount = (int) $orders->sum('total_amount');
-        
-        \Log::info('FedaPay: Creating transaction', [
-            'reference' => $request->reference,
-            'amount' => $totalAmount,
-            'env' => $environment
-        ]);
+        // Idempotent : déjà confirmée (ex. double appel réseau).
+        if ($orders->first()->status !== 'pending') {
+            return response()->json(['status' => 'already_confirmed']);
+        }
+
+        // Un même transactionId KkiaPay ne doit pouvoir payer qu'une seule référence.
+        if (Order::where('kkiapay_transaction_id', $validated['transaction_id'])->exists()) {
+            Log::warning('KkiaPay: transaction_id already used', [
+                'transaction_id' => $validated['transaction_id'],
+                'reference' => $reference,
+            ]);
+            return response()->json(['message' => 'Cette transaction a déjà été utilisée.'], 422);
+        }
+
+        $environment = config('services.kkiapay.environment', 'sandbox');
+        $baseUrl = $environment === 'live'
+            ? 'https://api.kkiapay.me'
+            : 'https://api-sandbox.kkiapay.me';
 
         try {
-            $user = Auth::user();
-            $nameParts = explode(' ', $user->name, 2);
-            $firstname = $nameParts[0];
-            $lastname = $nameParts[1] ?? 'Client';
-
-            $transaction = Transaction::create([
-                'description' => 'Achat LoméShop ' . $request->reference,
-                'amount' => (int) $totalAmount,
-                'currency' => ['iso' => 'XOF'],
-                'callback_url' => route('checkout.success', ['reference' => $request->reference]),
-            ]);
-            
-            // On peut toujours ajouter l'email seul si besoin, mais testons sans rien d'abord.
-
-            $token = $transaction->generateToken();
-
-            \Log::info('FedaPay: Token generated', ['token' => $token->token]);
-
-            return response()->json([
-                'id' => $transaction->id,
-                'token' => $token->token,
-                'url' => $token->url
+            $response = Http::withHeaders([
+                'x-api-key' => config('services.kkiapay.public_key'),
+                'Authorization' => config('services.kkiapay.secret_key'),
+            ])->post("{$baseUrl}/api/v1/transactions/status", [
+                'transactionId' => $validated['transaction_id'],
             ]);
         } catch (\Exception $e) {
-            \Log::error('FedaPay: Transaction creation failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json(['message' => 'Erreur FedaPay: ' . $e->getMessage()], 500);
+            Log::error('KkiaPay: verification request failed', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Impossible de vérifier le paiement pour le moment.'], 502);
         }
+
+        if (!$response->successful()) {
+            Log::error('KkiaPay: verification API error', ['body' => $response->body()]);
+            return response()->json(['message' => 'Échec de la vérification du paiement.'], 502);
+        }
+
+        $data = $response->json();
+        $expectedAmount = (int) $orders->sum('total_amount');
+        $paidAmount = (int) ($data['amount'] ?? 0);
+        $isSuccess = strtoupper($data['status'] ?? '') === 'SUCCESS';
+
+        if (!$isSuccess || $paidAmount < $expectedAmount) {
+            Log::warning('KkiaPay: payment not verified', [
+                'reference' => $reference,
+                'response' => $data,
+                'expected_amount' => $expectedAmount,
+            ]);
+            return response()->json(['message' => 'Le paiement n\'a pas pu être confirmé.'], 422);
+        }
+
+        foreach ($orders as $order) {
+            $order->update([
+                'status' => 'paid',
+                'kkiapay_transaction_id' => $validated['transaction_id'],
+            ]);
+
+            foreach ($order->orderItems as $orderItem) {
+                // N'affecte que les lignes où le stock est encore suffisant : évite un
+                // stock négatif si deux clients ont payé le même produit en même temps.
+                $affected = Product::where('id', $orderItem->product_id)
+                    ->where('stock', '>=', $orderItem->quantity)
+                    ->decrement('stock', $orderItem->quantity);
+
+                if ($affected) {
+                    \App\Models\StockMovement::create([
+                        'product_id' => $orderItem->product_id,
+                        'order_id' => $order->id,
+                        'type' => 'sale',
+                        'quantity' => $orderItem->quantity,
+                    ]);
+                }
+            }
+        }
+
+        return response()->json(['status' => 'confirmed']);
     }
 }

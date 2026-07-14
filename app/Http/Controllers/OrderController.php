@@ -39,6 +39,15 @@ class OrderController extends Controller
         $itemsByShop = [];
         foreach ($validated['items'] as $itemData) {
             $product = Product::findOrFail($itemData['id']);
+
+            if ($product->stock < $itemData['quantity']) {
+                $message = "Stock insuffisant pour \"{$product->name}\" (disponible : {$product->stock}).";
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => $message], 422);
+                }
+                return back()->withErrors(['message' => $message]);
+            }
+
             $itemsByShop[$product->shop_id][] = [
                 'product' => $product,
                 'quantity' => $itemData['quantity']
@@ -103,7 +112,8 @@ class OrderController extends Controller
             return response()->json([
                 'reference' => $paymentReference,
                 'total_amount' => array_sum(array_map(fn($o) => $o->total_amount, $createdOrders)),
-                'kkiapay_public_key' => config('services.kkiapay.public_key')
+                'kkiapay_public_key' => config('services.kkiapay.public_key'),
+                'kkiapay_sandbox' => config('services.kkiapay.environment', 'sandbox') !== 'live'
             ]);
         }
 
@@ -167,6 +177,21 @@ class OrderController extends Controller
 
         // Broadcast status update
         event(new \App\Events\OrderUpdated($order));
+
+        // Si une commande déjà payée est annulée, on restitue le stock décrémenté au paiement
+        $postPaymentStatuses = ['paid', 'preparing', 'shipped'];
+        if ($validated['status'] === 'cancelled' && in_array($oldStatus, $postPaymentStatuses)) {
+            foreach ($order->orderItems as $orderItem) {
+                Product::where('id', $orderItem->product_id)->increment('stock', $orderItem->quantity);
+
+                \App\Models\StockMovement::create([
+                    'product_id' => $orderItem->product_id,
+                    'order_id' => $order->id,
+                    'type' => 'cancellation',
+                    'quantity' => $orderItem->quantity,
+                ]);
+            }
+        }
 
         // Si la commande passe à "delivered", on crédite le vendeur
         if ($validated['status'] === 'delivered' && $oldStatus !== 'delivered') {

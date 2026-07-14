@@ -105,11 +105,15 @@ class MarketplaceDemoSeeder extends Seeder
         $myProducts = Product::all();
         
         // Order 1: Delivered
+        $order1Total = 875000;
+        $order1Commission = $order1Total * 0.10;
         $order1 = Order::create([
             'user_id' => $user->id,
             'shop_id' => $shops[0]->id,
             'order_number' => 'CMD-' . strtoupper(Str::random(8)),
-            'total_amount' => 875000,
+            'total_amount' => $order1Total,
+            'commission_amount' => $order1Commission,
+            'seller_amount' => $order1Total - $order1Commission,
             'status' => 'delivered',
             'delivery_address' => 'Quartier Adidogomé, Lomé',
             'payment_method' => 'Cash'
@@ -120,14 +124,21 @@ class MarketplaceDemoSeeder extends Seeder
             'quantity' => 1,
             'price' => $myProducts[0]->price
         ]);
+        // La commande de démo est livrée directement (sans passer par le flux normal
+        // OrderController::updateStatus), donc on crédite manuellement la boutique.
+        $shops[0]->increment('balance', $order1Total - $order1Commission);
 
         // Order 2: In progress
+        $order2Total = 45000;
+        $order2Commission = $order2Total * 0.10;
         $order2 = Order::create([
             'user_id' => $user->id,
             'shop_id' => $shops[1]->id,
             'driver_id' => $driver->id,
             'order_number' => 'CMD-' . strtoupper(Str::random(8)),
-            'total_amount' => 45000,
+            'total_amount' => $order2Total,
+            'commission_amount' => $order2Commission,
+            'seller_amount' => $order2Total - $order2Commission,
             'status' => 'shipped',
             'delivery_address' => 'Quartier Agoè, Lomé',
             'payment_method' => 'T-Money'

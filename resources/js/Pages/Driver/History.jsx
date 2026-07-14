@@ -39,6 +39,7 @@ export default function DriverHistory({ auth, orders }) {
                 </div>
 
                 <div className="bg-white dark:bg-[#1e1e1e] rounded-[40px] border border-gray-50 dark:border-gray-800 shadow-sm overflow-hidden transition-colors duration-300">
+                    <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-gray-50 dark:border-gray-800">
@@ -78,6 +79,7 @@ export default function DriverHistory({ auth, orders }) {
                             )}
                         </tbody>
                     </table>
+                    </div>
                 </div>
 
                 {/* Simple Pagination */}

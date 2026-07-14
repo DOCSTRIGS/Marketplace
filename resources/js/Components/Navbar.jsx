@@ -11,6 +11,7 @@ export default function Navbar() {
     const { auth } = props || {};
     const { cartCount = 0 } = useCart() || {};
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     // Safer check for roles/flows
     const isSellerFlow = auth?.user?.role === 'seller' || url?.startsWith('/seller') || url?.startsWith('/shops/create');
@@ -34,9 +35,25 @@ export default function Navbar() {
         }
     };
 
+    // Liens de navigation principaux, partagés entre la barre desktop et le panneau mobile
+    const navLinks = isSellerFlow ? [
+        { name: 'seller.dashboard', href: getRoute('seller.dashboard', '/seller/dashboard'), label: 'Dashboard' },
+        { name: 'seller.tracking', href: getRoute('seller.tracking', '/seller/tracking'), label: 'Suivre en direct' },
+        { name: 'shops.create', href: getRoute('shops.create', '/shops/create'), label: 'Ma Boutique' },
+    ] : isDriverFlow ? [
+        { name: 'driver.dashboard', href: getRoute('driver.dashboard', '/driver/dashboard'), label: 'Dashboard Livreur' },
+    ] : [
+        { name: 'home', href: getRoute('home', '/'), label: 'Accueil' },
+        { name: 'explore', href: getRoute('explore', '/explore'), label: 'Catégories' },
+        { name: 'map', href: getRoute('map', '/map'), label: 'Map View' },
+        { name: 'tracking', href: getRoute('tracking', '/tracking'), label: 'Tracking' },
+        { name: 'orders.index', href: getRoute('orders.index', '/my-orders'), label: 'Mes Commandes' },
+    ];
+
     return (
         <>
-            <nav className="h-[80px] bg-[#FDF8F4]/80 dark:bg-[#1a1a1a]/80 backdrop-blur-md flex items-center justify-between px-6 md:px-12 sticky top-0 z-50 border-b border-gray-100/50 dark:border-gray-800 transition-colors duration-300">
+            <nav className="bg-[#FDF8F4]/80 dark:bg-[#1a1a1a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100/50 dark:border-gray-800 transition-colors duration-300">
+            <div className="h-[80px] flex items-center justify-between px-6 md:px-12">
             {/* Logo */}
             <div className="flex items-center">
                 <Link href={isSellerFlow ? getRoute('seller.dashboard', '/seller/dashboard') : getRoute('home', '/')} className="flex items-center">
@@ -49,47 +66,37 @@ export default function Navbar() {
 
             {/* Centered Desktop Links */}
             <div className="hidden lg:flex space-x-6 items-center justify-end">
-                {isSellerFlow ? (
-                    <>
-                        <Link href={getRoute('seller.dashboard', '/seller/dashboard')} className={`font-bold text-sm pb-1 ${isCurrent('seller.dashboard') ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] hover:text-[#B03A2E]'}`}>
-                            Dashboard
-                        </Link>
-                        <Link href={getRoute('seller.tracking', '/seller/tracking')} className={`font-bold text-sm pb-1 ${isCurrent('seller.tracking') ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] hover:text-[#B03A2E]'}`}>
-                            Suivre en direct
-                        </Link>
-                        <Link href={getRoute('shops.create', '/shops/create')} className={`font-bold text-sm pb-1 ${isCurrent('shops.create') ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] hover:text-[#B03A2E]'}`}>
-                            Ma Boutique
-                        </Link>
-                    </>
-                ) : isDriverFlow ? (
-                    <>
-                        <Link href={getRoute('driver.dashboard', '/driver/dashboard')} className={`font-bold text-sm pb-1 ${isCurrent('driver.dashboard') ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] hover:text-[#B03A2E]'}`}>
-                            Dashboard Livreur
-                        </Link>
-                    </>
-                ) : (
-                    <>
-                        <Link href={getRoute('home', '/')} className={`font-bold text-sm pb-1 ${isCurrent('home') ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] hover:text-[#B03A2E]'}`}>
-                            Accueil
-                        </Link>
-                        <Link href={getRoute('explore', '/explore')} className={`font-bold text-sm pb-1 ${isCurrent('explore') ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] hover:text-[#B03A2E]'}`}>
-                            Catégories
-                        </Link>
-                        <Link href={getRoute('map', '/map')} className={`font-bold text-sm pb-1 ${isCurrent('map') ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] hover:text-[#B03A2E]'}`}>
-                            Map View
-                        </Link>
-                        <Link href={getRoute('tracking', '/tracking')} className={`font-bold text-sm pb-1 ${isCurrent('tracking') ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] hover:text-[#B03A2E]'}`}>
-                            Tracking
-                        </Link>
-                        <Link href={getRoute('orders.index', '/my-orders')} className={`font-bold text-sm pb-1 ${isCurrent('orders.index') ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] dark:text-gray-400 hover:text-[#B03A2E] dark:hover:text-[#B03A2E]'}`}>
-                            Mes Commandes
-                        </Link>
-                    </>
-                )}
+                {navLinks.map(link => (
+                    <Link
+                        key={link.name}
+                        href={link.href}
+                        className={`font-bold text-sm pb-1 ${isCurrent(link.name) ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] dark:text-gray-400 hover:text-[#B03A2E] dark:hover:text-[#B03A2E]'}`}
+                    >
+                        {link.label}
+                    </Link>
+                ))}
             </div>
 
             {/* Right Icons */}
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-4 md:space-x-6">
+                {/* Menu burger : seule porte d'accès aux liens ci-dessus en dessous de 1024px (lg) */}
+                <button
+                    onClick={() => setMobileMenuOpen(open => !open)}
+                    className="lg:hidden p-2 text-gray-700 dark:text-white/90 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all"
+                    aria-label="Ouvrir le menu"
+                    aria-expanded={mobileMenuOpen}
+                >
+                    {mobileMenuOpen ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    )}
+                </button>
+
                 {/* Messages */}
                 <Link
                     href={getRoute('chat.inbox', '/chat/inbox')}
@@ -173,7 +180,27 @@ export default function Navbar() {
                     </Link>
                 )}
             </div>
+            </div>
 
+            {/* Panneau mobile : mêmes liens que la barre desktop, empilés */}
+            {mobileMenuOpen && (
+                <div className="lg:hidden px-4 pb-4 flex flex-col gap-1 border-t border-gray-100/50 dark:border-gray-800">
+                    {navLinks.map(link => (
+                        <Link
+                            key={link.name}
+                            href={link.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={`px-4 py-3 rounded-lg font-bold text-sm transition-all ${
+                                isCurrent(link.name)
+                                ? 'bg-[#B03A2E]/10 text-[#B03A2E]'
+                                : 'text-[#666666] dark:text-gray-400 hover:text-[#B03A2E] hover:bg-[#B03A2E]/5'
+                            }`}
+                        >
+                            {link.label}
+                        </Link>
+                    ))}
+                </div>
+            )}
         </nav>
         <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>

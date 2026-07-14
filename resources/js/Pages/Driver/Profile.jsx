@@ -162,7 +162,7 @@ export default function DriverProfile({ auth, user }) {
 
                             <div className="pt-10 border-t border-gray-50 dark:border-gray-800">
                                 <h4 className="text-sm font-black uppercase mb-8 tracking-widest text-[#8B4513] dark:text-[#E67E22]">Documents & Images</h4>
-                                <div className="grid grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                                     <div className="space-y-3">
                                         <label className="text-[9px] font-black uppercase text-gray-400 dark:text-gray-500 block text-center">Photo Véhicule</label>
                                         <div className="relative h-40 bg-gray-50 dark:bg-[#121212] rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-850 flex items-center justify-center overflow-hidden">

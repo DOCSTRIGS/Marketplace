@@ -261,4 +261,64 @@ class SellerController extends Controller
             'transactions' => $transactions
         ]);
     }
+
+    const LOW_STOCK_THRESHOLD = 10;
+
+    public function inventory()
+    {
+        $shop = Auth::user()->shop;
+        if (!$shop || $shop->status !== 'approved') {
+            return redirect()->route('seller.dashboard');
+        }
+
+        $products = Product::where('shop_id', $shop->id)
+            ->orderBy('stock', 'asc')
+            ->get();
+
+        $movements = \App\Models\StockMovement::whereIn('product_id', $products->pluck('id'))
+            ->with('product:id,name')
+            ->latest()
+            ->take(20)
+            ->get()
+            ->map(fn($m) => [
+                'id' => $m->id,
+                'product_name' => $m->product->name ?? 'Produit supprimé',
+                'type' => $m->type,
+                'quantity' => $m->quantity,
+                'note' => $m->note,
+                'date' => $m->created_at->diffForHumans(),
+            ]);
+
+        return Inertia::render('Seller/Inventory', [
+            'products' => $products,
+            'movements' => $movements,
+            'lowStockThreshold' => self::LOW_STOCK_THRESHOLD,
+        ]);
+    }
+
+    public function restock(Request $request, $id)
+    {
+        $shop = Auth::user()->shop;
+        $product = Product::findOrFail($id);
+
+        if (!$shop || $product->shop_id !== $shop->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'quantity' => 'required|integer|min:1',
+            'note' => 'nullable|string|max:255',
+        ]);
+
+        $product->increment('stock', $validated['quantity']);
+
+        \App\Models\StockMovement::create([
+            'product_id' => $product->id,
+            'type' => 'restock',
+            'quantity' => $validated['quantity'],
+            'note' => $validated['note'] ?? null,
+        ]);
+
+        return back()->with('success', "Stock de \"{$product->name}\" mis à jour.");
+    }
 }

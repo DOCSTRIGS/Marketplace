@@ -4,14 +4,21 @@ import ThemeToggle from '@/Components/ThemeToggle';
 import { motion } from 'framer-motion';
 
 export default function SellerLayout({ children }) {
-    const { auth, url, unreadMessagesCount, pendingOrdersCount } = usePage().props;
+    const { auth, url, unreadMessagesCount, pendingOrdersCount, lowStockCount } = usePage().props;
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const navigation = [
         { name: "Vue d'ensemble", href: route('seller.dashboard'), route: 'seller.dashboard', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
         { name: 'Suivre en direct', href: route('seller.tracking'), route: 'seller.tracking', icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7' },
         { name: 'Mes Produits', href: route('seller.products'), route: 'seller.products', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-        { 
+        {
+            name: 'Inventaire',
+            href: route('seller.inventory'),
+            route: 'seller.inventory',
+            icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z',
+            count: lowStockCount
+        },
+        {
             name: 'Commandes', 
             href: route('seller.orders'), 
             route: 'seller.orders', 

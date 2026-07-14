@@ -128,10 +128,20 @@ class User extends Authenticatable
     public function pendingOrdersCount()
     {
         if ($this->role === 'seller' && $this->shop) {
-            // Count all orders awaiting seller action: 
+            // Count all orders awaiting seller action:
             // pending (unpaid but created), paid (confirmed), processing/preparing (in progress)
             return Order::where('shop_id', $this->shop->id)
                 ->whereIn('status', ['pending', 'paid', 'processing', 'preparing'])
+                ->count();
+        }
+        return 0;
+    }
+
+    public function lowStockCount()
+    {
+        if ($this->role === 'seller' && $this->shop) {
+            return \App\Models\Product::where('shop_id', $this->shop->id)
+                ->where('stock', '<', 10)
                 ->count();
         }
         return 0;

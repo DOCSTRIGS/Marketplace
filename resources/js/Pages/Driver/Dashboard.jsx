@@ -203,9 +203,9 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                     </div>
                 </header>
 
-                <main className="p-0 flex h-[calc(100vh-80px)] overflow-hidden">
+                <main className="p-0 flex flex-col lg:flex-row h-[calc(100vh-80px)] overflow-hidden">
                     {/* Left Sidebar: Order Lists */}
-                    <div className="w-[400px] border-r border-gray-100 dark:border-gray-800 flex flex-col bg-white dark:bg-[#1e1e1e] z-10 shadow-xl transition-colors duration-300">
+                    <div className="w-full lg:w-[400px] max-h-[45vh] lg:max-h-none border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-gray-800 flex flex-col bg-white dark:bg-[#1e1e1e] z-10 shadow-xl transition-colors duration-300">
                         <div className="p-6 border-b border-gray-50 dark:border-gray-800">
                             <div className="flex bg-gray-50 dark:bg-gray-800 p-1 rounded-xl">
                                 {[

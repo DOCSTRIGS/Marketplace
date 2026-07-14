@@ -3,6 +3,8 @@ import { Head, Link, useForm, router } from '@inertiajs/react';
 import SellerLayout from '@/Layouts/SellerLayout';
 import EmptyState from '@/Components/EmptyState';
 
+const LOW_STOCK_THRESHOLD = 10;
+
 export default function Products({ products, categories }) {
     const fileInputRef = useRef(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -147,13 +149,13 @@ export default function Products({ products, categories }) {
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
                                     />
                                     <div className={`absolute top-3 left-3 px-2.5 py-1 text-xs font-bold rounded-md shadow-sm border ${
-                                        product.stock > 5 
-                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 border-green-200 dark:border-green-800' 
-                                        : product.stock > 0 
+                                        product.stock >= LOW_STOCK_THRESHOLD
+                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 border-green-200 dark:border-green-800'
+                                        : product.stock > 0
                                             ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 border-orange-200 dark:border-orange-800'
                                             : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 border-red-200 dark:border-red-800'
                                     } transition-colors`}>
-                                        {product.stock > 5 ? 'EN STOCK' : product.stock > 0 ? 'STOCK FAIBLE' : 'RUPTURE'}
+                                        {product.stock >= LOW_STOCK_THRESHOLD ? 'EN STOCK' : product.stock > 0 ? 'STOCK FAIBLE' : 'RUPTURE'}
                                     </div>
                                     <div className="absolute top-3 right-3 flex space-x-2">
                                         <button 
@@ -180,7 +182,9 @@ export default function Products({ products, categories }) {
                                     {/* Stock info */}
                                     <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800 transition-colors">
                                         <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Stock: {product.stock}</span>
-                                        <div className={`h-2 w-2 rounded-full ${product.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                        <div className={`h-2 w-2 rounded-full ${
+                                            product.stock >= LOW_STOCK_THRESHOLD ? 'bg-green-500' : product.stock > 0 ? 'bg-orange-500' : 'bg-red-500'
+                                        }`}></div>
                                     </div>
                                 </div>
                             </div>

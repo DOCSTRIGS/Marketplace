@@ -64,12 +64,22 @@ export default function Delivery({ auth }) {
                 longitude: clientLng
             });
 
-            const { reference, kkiapay_public_key, total_amount } = orderResponse.data;
+            const { reference, kkiapay_public_key, kkiapay_sandbox, total_amount } = orderResponse.data;
 
             // 3. Configurer les écouteurs KkiaPay (évite l'erreur DataCloneError)
-            addKkiapayListener('success', (response) => {
-                clearCart();
-                router.visit(route('checkout.success', { reference: reference }));
+            addKkiapayListener('success', async (response) => {
+                // Le widget KkiaPay ne fait que confirmer côté client : on ne
+                // marque JAMAIS la commande payée sans vérification serveur.
+                try {
+                    await axios.post(route('checkout.confirmPayment', { reference }), {
+                        transaction_id: response.transactionId,
+                    });
+                    clearCart();
+                    router.visit(route('checkout.success', { reference: reference }));
+                } catch (error) {
+                    setIsSubmitting(false);
+                    addToast(error.response?.data?.message || 'Impossible de confirmer le paiement.', 'error');
+                }
             });
 
             addKkiapayListener('failed', (error) => {
@@ -81,7 +91,7 @@ export default function Delivery({ auth }) {
             openKkiapayWidget({
                 amount: total_amount,
                 key: kkiapay_public_key,
-                sandbox: true,
+                sandbox: kkiapay_sandbox,
                 data: reference,
                 position: 'center',
                 name: auth.user.name,

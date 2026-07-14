@@ -158,8 +158,8 @@ export default function Tracking({ order }) {
         return (
             <SellerLayout>
                 <Head title="Suivi en direct - LoméShop" />
-                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
-                    <EmptyState 
+                <div className="bg-white dark:bg-[#1e1e1e] rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 transition-colors">
+                    <EmptyState
                         title="Aucune commande en cours"
                         description="Il n'y a actuellement aucune commande à suivre en direct. Dès qu'un client passe commande, vous pourrez suivre le trajet du livreur ici."
                     />
@@ -187,64 +187,64 @@ export default function Tracking({ order }) {
             
             <div className="mb-8 flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-black text-gray-900">Suivi en direct</h1>
-                    <p className="text-gray-500 font-medium">Commande <span className="text-[#8B4513]">{orderDetails.id}</span> • {orderDetails.product}</p>
+                    <h1 className="text-3xl font-black text-gray-900 dark:text-white">Suivi en direct</h1>
+                    <p className="text-gray-500 dark:text-gray-400 font-medium">Commande <span className="text-[#8B4513]">{orderDetails.id}</span> • {orderDetails.product}</p>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-full border border-green-100">
+                <div className="flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-100 dark:border-green-900/40">
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">En direct</span>
+                    <span className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase tracking-widest">En direct</span>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Info Column */}
                 <div className="space-y-6">
-                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                        <h3 className="font-black text-gray-900 mb-6">Détails de livraison</h3>
+                    <div className="bg-white dark:bg-[#1e1e1e] p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm transition-colors">
+                        <h3 className="font-black text-gray-900 dark:text-white mb-6">Détails de livraison</h3>
                         <div className="space-y-4">
                             <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-500 font-medium">Client</span>
-                                <span className="font-bold text-gray-900">{orderDetails.customer}</span>
+                                <span className="text-gray-500 dark:text-gray-400 font-medium">Client</span>
+                                <span className="font-bold text-gray-900 dark:text-white">{orderDetails.customer}</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-500 font-medium">Statut</span>
+                                <span className="text-gray-500 dark:text-gray-400 font-medium">Statut</span>
                                 <span className="px-3 py-1 bg-[#8B4513] text-white text-[10px] font-black rounded-lg uppercase">{orderDetails.status}</span>
                             </div>
-                            <div className="pt-4 border-t border-gray-100">
+                            <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                                 <div className="flex items-center gap-3">
                                     <div>
-                                        <p className="text-xs font-bold text-gray-900">Komi (Livreur)</p>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Moto TG-1234-A</p>
+                                        <p className="text-xs font-bold text-gray-900 dark:text-white">Komi (Livreur)</p>
+                                        <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest">Moto TG-1234-A</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-                        <h3 className="font-black text-gray-900 mb-8 text-sm uppercase tracking-widest">Progression</h3>
-                        <div className="relative border-l-2 border-gray-100 ml-3 space-y-8">
+                    <div className="bg-white dark:bg-[#1e1e1e] p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm transition-colors">
+                        <h3 className="font-black text-gray-900 dark:text-white mb-8 text-sm uppercase tracking-widest">Progression</h3>
+                        <div className="relative border-l-2 border-gray-100 dark:border-gray-800 ml-3 space-y-8">
                             <div className="relative pl-8">
-                                <div className="absolute -left-[10px] top-0 w-4 h-4 rounded-full bg-green-500 border-4 border-green-100"></div>
-                                <p className="text-sm font-bold text-gray-900">Boutique</p>
-                                <p className="text-[10px] text-gray-400 font-bold">Colis prêt</p>
+                                <div className="absolute -left-[10px] top-0 w-4 h-4 rounded-full bg-green-500 border-4 border-green-100 dark:border-green-900/40"></div>
+                                <p className="text-sm font-bold text-gray-900 dark:text-white">Boutique</p>
+                                <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold">Colis prêt</p>
                             </div>
                             <div className="relative pl-8">
-                                <div className={`absolute -left-[10px] top-0 w-4 h-4 rounded-full border-4 ${orderDetails.status === 'En route' || orderDetails.status === 'Livré' ? 'bg-[#8B4513] border-orange-100' : 'bg-white border-gray-100'}`}></div>
-                                <p className={`text-sm font-bold ${orderDetails.status === 'En route' || orderDetails.status === 'Livré' ? 'text-gray-900' : 'text-gray-300'}`}>En route</p>
-                                <p className="text-[10px] text-gray-400 font-bold">Livreur sur le trajet</p>
+                                <div className={`absolute -left-[10px] top-0 w-4 h-4 rounded-full border-4 ${orderDetails.status === 'En route' || orderDetails.status === 'Livré' ? 'bg-[#8B4513] border-orange-100 dark:border-orange-900/40' : 'bg-white dark:bg-[#1e1e1e] border-gray-100 dark:border-gray-800'}`}></div>
+                                <p className={`text-sm font-bold ${orderDetails.status === 'En route' || orderDetails.status === 'Livré' ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-600'}`}>En route</p>
+                                <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold">Livreur sur le trajet</p>
                             </div>
                             <div className="relative pl-8">
-                                <div className={`absolute -left-[10px] top-0 w-4 h-4 rounded-full border-4 ${orderDetails.status === 'Livré' ? 'bg-green-500 border-green-100' : 'bg-white border-gray-100'}`}></div>
-                                <p className={`text-sm font-bold ${orderDetails.status === 'Livré' ? 'text-gray-900' : 'text-gray-300'}`}>Livré</p>
-                                <p className="text-[10px] text-gray-400 font-bold">Destination finale</p>
+                                <div className={`absolute -left-[10px] top-0 w-4 h-4 rounded-full border-4 ${orderDetails.status === 'Livré' ? 'bg-green-500 border-green-100 dark:border-green-900/40' : 'bg-white dark:bg-[#1e1e1e] border-gray-100 dark:border-gray-800'}`}></div>
+                                <p className={`text-sm font-bold ${orderDetails.status === 'Livré' ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-600'}`}>Livré</p>
+                                <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold">Destination finale</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Map Column */}
-                <div className="lg:col-span-2 h-[600px] bg-white rounded-[40px] overflow-hidden border border-gray-100 shadow-xl relative">
+                <div className="lg:col-span-2 h-[600px] bg-white dark:bg-[#1e1e1e] rounded-[40px] overflow-hidden border border-gray-100 dark:border-gray-800 shadow-xl relative transition-colors">
                     <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
                         <Map
                             defaultCenter={deliveryLocation}

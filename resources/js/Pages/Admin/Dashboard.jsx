@@ -116,7 +116,7 @@ function CategoryRow({ cat, subcategories, onDeleteCategory, onDeleteSubCategory
                     ) : (
                         <div className="flex-1 min-w-0">
                             <p className="font-bold text-gray-900 dark:text-white text-sm">{cat.name}</p>
-                            <p className="text-xs text-gray-400">{subcategories.length} sous-catégorie{subcategories.length !== 1 ? 's' : ''}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">{subcategories.length} sous-catégorie{subcategories.length !== 1 ? 's' : ''}</p>
                         </div>
                     )}
 
@@ -124,19 +124,19 @@ function CategoryRow({ cat, subcategories, onDeleteCategory, onDeleteSubCategory
                         <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                             <button
                                 onClick={() => { setExpanded(!expanded); setEditingName(false); }}
-                                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${expanded ? 'bg-blue-700 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}`}
+                                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${expanded ? 'bg-blue-700 text-white' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50'}`}
                             >
                                 {expanded ? 'Fermer' : 'Sous-catégories'}
                             </button>
                             <button
                                 onClick={() => setEditingName(true)}
-                                className="px-3 py-1.5 bg-gray-50 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-100 transition-colors"
+                                className="px-3 py-1.5 bg-gray-50 dark:bg-white/5 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                             >
                                 Modifier
                             </button>
                             <button
                                 onClick={() => setDeleteTarget({ ...cat, isParent: true })}
-                                className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors"
+                                className="px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
                             >
                                 Supprimer
                             </button>
@@ -145,13 +145,13 @@ function CategoryRow({ cat, subcategories, onDeleteCategory, onDeleteSubCategory
                 </div>
 
                 {expanded && (
-                    <div className="border-t border-gray-100">
+                    <div className="border-t border-gray-100 dark:border-gray-800">
                         {subcategories.length > 0 && (
                             <div className="px-5 pt-3 pb-2 space-y-1">
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Sous-catégories existantes</p>
+                                <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Sous-catégories existantes</p>
                                 {subcategories.map(sub => (
-                                    <div key={sub.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 group/sub">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0"></span>
+                                    <div key={sub.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 group/sub">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0"></span>
 
                                         {editingSub === sub.id ? (
                                             <form onSubmit={(e) => submitEditSub(e, sub.id)} className="flex-1 flex gap-2">
@@ -159,19 +159,19 @@ function CategoryRow({ cat, subcategories, onDeleteCategory, onDeleteSubCategory
                                                     type="text"
                                                     value={editSubForm.data.name}
                                                     onChange={e => editSubForm.setData('name', e.target.value)}
-                                                    className="flex-1 rounded-lg border border-[#8B4513] px-3 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#8B4513]"
+                                                    className="flex-1 rounded-lg border border-[#8B4513] bg-white dark:bg-[#252525] text-gray-900 dark:text-white px-3 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#8B4513]"
                                                     autoFocus
                                                     required
                                                 />
                                                 <button type="submit" disabled={editSubForm.processing} className="px-3 py-1 bg-[#8B4513] text-white text-xs font-bold rounded-lg">OK</button>
-                                                <button type="button" onClick={() => setEditingSub(null)} className="px-2 py-1 text-gray-500 text-xs font-bold rounded-lg border border-gray-200">✕</button>
+                                                <button type="button" onClick={() => setEditingSub(null)} className="px-2 py-1 text-gray-500 dark:text-gray-400 text-xs font-bold rounded-lg border border-gray-200 dark:border-gray-700">✕</button>
                                             </form>
                                         ) : (
                                             <>
-                                                <span className="flex-1 text-sm text-gray-700">{sub.name}</span>
+                                                <span className="flex-1 text-sm text-gray-700 dark:text-gray-300">{sub.name}</span>
                                                 <div className="flex gap-2 opacity-0 group-hover/sub:opacity-100 transition-opacity">
-                                                    <button onClick={() => openEditSub(sub)} className="text-xs font-bold text-gray-400 hover:text-[#8B4513] transition-colors">Modifier</button>
-                                                    <button onClick={() => setDeleteTarget({ ...sub, isParent: false })} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Supprimer</button>
+                                                    <button onClick={() => openEditSub(sub)} className="text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-[#8B4513] transition-colors">Modifier</button>
+                                                    <button onClick={() => setDeleteTarget({ ...sub, isParent: false })} className="text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors">Supprimer</button>
                                                 </div>
                                             </>
                                         )}
@@ -180,14 +180,14 @@ function CategoryRow({ cat, subcategories, onDeleteCategory, onDeleteSubCategory
                             </div>
                         )}
 
-                        <div className="px-5 pt-3 pb-4 border-t border-gray-50">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Ajouter une sous-catégorie</p>
+                        <div className="px-5 pt-3 pb-4 border-t border-gray-50 dark:border-gray-800">
+                            <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Ajouter une sous-catégorie</p>
                             <form onSubmit={submitSub} className="flex gap-2">
                                 <input
                                     type="text"
                                     value={subForm.data.name}
                                     onChange={e => subForm.setData('name', e.target.value)}
-                                    className="flex-1 rounded-xl border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B4513]"
+                                    className="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#252525] text-gray-900 dark:text-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B4513]"
                                     placeholder="Ex : Smartphones"
                                     required
                                 />
@@ -688,6 +688,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
 
                 {activeTab === 'withdrawals' && (
                     <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors">
+                        <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead className="bg-gray-50 dark:bg-[#252525] border-b border-gray-100 dark:border-gray-800">
                                 <tr>
@@ -725,6 +726,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 ))}
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 )}
 

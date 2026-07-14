@@ -50,6 +50,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/products/{id}', [App\Http\Controllers\ProductController::class, 'update'])->name('products.update');
         Route::delete('/products/{id}', [App\Http\Controllers\ProductController::class, 'destroy'])->name('products.destroy');
 
+        Route::get('/inventory', [App\Http\Controllers\SellerController::class, 'inventory'])->name('inventory');
+        Route::post('/inventory/{id}/restock', [App\Http\Controllers\SellerController::class, 'restock'])->name('inventory.restock');
+
         Route::get('/orders', [App\Http\Controllers\SellerController::class, 'orders'])->name('orders');
         Route::patch('/orders/{id}/status', [App\Http\Controllers\OrderController::class, 'updateStatus'])->name('orders.updateStatus');
         Route::delete('/orders/{id}', [App\Http\Controllers\OrderController::class, 'destroy'])->name('orders.destroy');
@@ -107,7 +110,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/checkout/delivery', [App\Http\Controllers\CheckoutController::class, 'delivery'])->name('checkout.delivery');
     Route::get('/checkout/{reference}', [App\Http\Controllers\CheckoutController::class, 'show'])->name('checkout.show');
     Route::post('/checkout/process', [App\Http\Controllers\CheckoutController::class, 'process'])->name('checkout.process');
-    Route::post('/checkout/fedapay', [App\Http\Controllers\CheckoutController::class, 'createTransaction'])->name('checkout.fedapay');
+    Route::post('/checkout/{reference}/confirm-payment', [App\Http\Controllers\CheckoutController::class, 'confirmPayment'])->name('checkout.confirmPayment');
     Route::get('/checkout/{reference}/success', [App\Http\Controllers\CheckoutController::class, 'success'])->name('checkout.success');
 
     Route::get('/tracking', function (Request $request) {

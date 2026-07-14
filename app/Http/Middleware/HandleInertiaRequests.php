@@ -50,6 +50,14 @@ class HandleInertiaRequests extends Middleware
                     return 0;
                 }
             })(),
+            'lowStockCount' => (function() use ($request) {
+                try {
+                    return $request->user() ? $request->user()->lowStockCount() : 0;
+                } catch (\Exception $e) {
+                    \Log::error('Error counting low stock products: ' . $e->getMessage());
+                    return 0;
+                }
+            })(),
             'adminCounts' => [
                 'pendingShops' => \App\Models\Shop::where('status', 'pending')->count(),
                 'pendingWithdrawals' => \App\Models\Withdrawal::where('status', 'pending')->count(),

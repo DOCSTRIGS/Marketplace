@@ -14,32 +14,48 @@ export default function Orders({ orders, auth }) {
     const [processing, setProcessing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
+    const shopId = auth.user.shop?.id;
+
     useEffect(() => {
         // Simulate a brief loading for aesthetic "Prestige" feel
         const timer = setTimeout(() => setIsLoading(false), 800);
-        
-        if (typeof window !== 'undefined' && window.Echo && auth.user.shop) {
-            window.Echo.channel(`shop.${auth.user.shop.id}`)
+
+        if (typeof window !== 'undefined' && window.Echo && shopId) {
+            // Debounce reloads: several real-time events can arrive in a burst
+            // (order assigned + order updated for the same action); collapsing
+            // them into a single reload avoids overlapping requests / Network Errors.
+            let reloadTimeout = null;
+            const scheduleReload = (options) => {
+                clearTimeout(reloadTimeout);
+                reloadTimeout = setTimeout(() => {
+                    router.reload({ ...options, onError: () => {} });
+                }, 300);
+            };
+
+            window.Echo.channel(`shop.${shopId}`)
                 .listen('.order.assigned', (e) => {
                     addToast(`✅ Livreur trouvé pour la commande ${e.order.order_number} !`, 'success');
-                    router.reload({ only: ['orders'] });
+                    scheduleReload({ only: ['orders'] });
                 });
 
             window.Echo.channel('orders')
                 .listen('.order.updated', (e) => {
                     // Only reload if the order belongs to this shop
-                    if (e.order.shop_id === auth.user.shop.id) {
-                        router.reload({ preserveScroll: true });
+                    if (e.order.shop_id === shopId) {
+                        scheduleReload({ preserveScroll: true });
                     }
                 });
-        }
-        return () => {
-            if (window.Echo && auth.user.shop) {
-                window.Echo.leave(`shop.${auth.user.shop.id}`);
+
+            return () => {
+                clearTimeout(timer);
+                clearTimeout(reloadTimeout);
+                window.Echo.leave(`shop.${shopId}`);
                 window.Echo.leave('orders');
-            }
-        };
-    }, [auth.user.shop]);
+            };
+        }
+
+        return () => clearTimeout(timer);
+    }, [shopId]);
 
     const openTracking = (id) => {
         setTrackingOrderId(id);
@@ -90,13 +106,13 @@ export default function Orders({ orders, auth }) {
             
             <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Gestion des Commandes</h2>
-                    <p className="text-gray-600">Suivez et préparez les commandes de vos clients.</p>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Gestion des Commandes</h2>
+                    <p className="text-gray-600 dark:text-gray-400">Suivez et préparez les commandes de vos clients.</p>
                 </div>
                 <div className="relative w-full md:w-72">
                     <input
                         type="text"
-                        className="block w-full px-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#8B4513] focus:border-[#8B4513] sm:text-sm"
+                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg leading-5 bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#8B4513] focus:border-[#8B4513] sm:text-sm transition-colors"
                         placeholder="Rechercher une commande..."
                     />
                 </div>
@@ -108,86 +124,86 @@ export default function Orders({ orders, auth }) {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     {stats.map((stat, idx) => (
-                        <motion.div 
-                            key={stat.name} 
+                        <motion.div
+                            key={stat.name}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.1 }}
-                            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200"
+                            className="bg-white dark:bg-[#1e1e1e] rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-800 transition-colors"
                         >
-                            <p className="text-xs font-bold text-gray-500 mb-1">{stat.name}</p>
-                            <h3 className="text-2xl font-black text-gray-900">{stat.value}</h3>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">{stat.name}</p>
+                            <h3 className="text-2xl font-black text-gray-900 dark:text-white">{stat.value}</h3>
                         </motion.div>
                     ))}
                 </div>
             )}
 
             {/* Orders Table */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+            <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col min-h-[500px] transition-colors">
                 {isLoading ? (
                     <TableSkeleton rows={8} cols={5} />
                 ) : (
                     <div className="overflow-x-auto flex-grow">
-                        <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                        <thead className="bg-gray-50 dark:bg-white/5">
                             <tr>
-                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Client & Commande
                                 </th>
-                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Articles
                                 </th>
-                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Net Vendeur (FCFA)
                                 </th>
-                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Statut
                                 </th>
-                                <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-white dark:bg-[#1e1e1e] divide-y divide-gray-200 dark:divide-gray-800">
                             <AnimatePresence>
                                 {orders.length > 0 ? orders.map((order, idx) => (
-                                    <motion.tr 
-                                        key={order.id} 
+                                    <motion.tr
+                                        key={order.id}
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: idx * 0.05 }}
-                                        className="hover:bg-gray-50 transition-colors"
+                                        className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                                     >
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex flex-col">
-                                            <div className="text-sm font-bold text-gray-900">{order.user?.name || 'Client anonyme'}</div>
-                                            <div className="text-xs text-gray-500">{order.order_number}</div>
+                                            <div className="text-sm font-bold text-gray-900 dark:text-white">{order.user?.name || 'Client anonyme'}</div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">{order.order_number}</div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex -space-x-2">
                                             {order.order_items?.map((item, idx) => (
-                                                <div key={item.id || idx} className="h-8 w-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center overflow-hidden" title={item.product?.name}>
+                                                <div key={item.id || idx} className="h-8 w-8 rounded-full border-2 border-white dark:border-[#1e1e1e] bg-gray-100 dark:bg-[#252525] flex items-center justify-center overflow-hidden" title={item.product?.name}>
                                                     <img src={item.product?.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=40' } className="h-full w-full object-cover" />
                                                 </div>
                                             ))}
                                             {order.order_items?.length > 3 && (
-                                                <div className="h-8 w-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">
+                                                <div className="h-8 w-8 rounded-full border-2 border-white dark:border-[#1e1e1e] bg-gray-200 dark:bg-[#333] flex items-center justify-center text-[10px] font-bold text-gray-600 dark:text-gray-300">
                                                     +{order.order_items.length - 3}
                                                 </div>
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-white">
                                         {new Intl.NumberFormat('fr-FR').format(order.seller_amount)} F
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-3 py-1 inline-flex text-[10px] leading-5 font-black uppercase rounded-full ${
-                                            order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                            (order.status === 'preparing' || order.status === 'processing') ? 'bg-orange-100 text-orange-800' :
-                                            order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
-                                            order.status === 'paid' ? 'bg-indigo-100 text-indigo-800' :
-                                            'bg-gray-100 text-gray-800'
+                                            order.status === 'delivered' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' :
+                                            (order.status === 'preparing' || order.status === 'processing') ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400' :
+                                            order.status === 'shipped' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' :
+                                            order.status === 'paid' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-400' :
+                                            'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300'
                                         }`}>
                                             {getStatusText(order.status)}
                                         </span>
@@ -201,7 +217,7 @@ export default function Orders({ orders, auth }) {
                                                         navigator.clipboard.writeText(link);
                                                         alert("Lien livreur copié ! Envoyez-le par WhatsApp au livreur.");
                                                     }}
-                                                    className="bg-green-50 text-green-600 p-2 rounded-xl hover:bg-green-100 transition-all border border-green-100 flex items-center gap-2"
+                                                    className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 p-2 rounded-xl hover:bg-green-100 dark:hover:bg-green-900/40 transition-all border border-green-100 dark:border-green-900/40 flex items-center gap-2"
                                                     title="Copier le lien pour le livreur"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,7 +273,7 @@ export default function Orders({ orders, auth }) {
                                             )}
                                             <button 
                                                 onClick={() => handleDelete(order.id)}
-                                                className="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all"
+                                                className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-xl transition-all"
                                                 title="Supprimer la commande"
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
