@@ -235,12 +235,44 @@ class OrderController extends Controller
     public function userOrders()
     {
         $orders = Order::where('user_id', Auth::id())
-            ->with(['orderItems.product', 'shop'])
+            ->with(['orderItems.product', 'shop', 'driver'])
             ->latest()
             ->get();
 
         return Inertia::render('MyOrders', [
             'orders' => $orders
         ]);
+    }
+
+    /**
+     * Generate and download the PDF receipt for a paid order.
+     */
+    public function receipt($id)
+    {
+        $order = Order::with(['orderItems.product', 'shop', 'user'])->findOrFail($id);
+
+        if ($order->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        if ($order->status === 'pending') {
+            abort(404, 'Le reçu n\'est disponible qu\'après confirmation du paiement.');
+        }
+
+        $statusLabels = [
+            'paid' => 'Payé',
+            'processing' => 'En cours',
+            'preparing' => 'En préparation',
+            'shipped' => 'Expédié',
+            'delivered' => 'Livré',
+            'cancelled' => 'Annulé',
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('receipts.order', [
+            'order' => $order,
+            'statusLabel' => $statusLabels[$order->status] ?? $order->status,
+        ]);
+
+        return $pdf->download("recu-{$order->order_number}.pdf");
     }
 }

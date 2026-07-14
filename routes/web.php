@@ -27,17 +27,59 @@ Route::get('/home', function () {
             $q->where('status', 'approved');
         })
         ->inRandomOrder()->take(4)->get();
-    
+
+    // Un slide de carrousel par grande catégorie ayant au moins un produit avec image,
+    // pour ne plus se limiter au Wax et montrer la diversité réelle du catalogue.
+    $carouselSlides = \App\Models\Category::whereNull('parent_id')
+        ->inRandomOrder()
+        ->get()
+        ->map(function ($category) {
+            $product = \App\Models\Product::whereHas('category', function ($q) use ($category) {
+                    $q->where('parent_id', $category->id);
+                })
+                ->whereNotNull('images')
+                ->inRandomOrder()
+                ->first();
+
+            if (!$product || empty($product->images)) {
+                return null;
+            }
+
+            return [
+                'category_id' => $category->id,
+                'category_name' => $category->name,
+                'image' => $product->images[0],
+            ];
+        })
+        ->filter()
+        ->take(6)
+        ->values();
+
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
         'products' => $products,
+        'carouselSlides' => $carouselSlides,
     ]);
 })->name('home');
 
 Route::get('/explore', [App\Http\Controllers\ProductController::class, 'index'])->name('explore');
+
+Route::post('/newsletter/subscribe', [App\Http\Controllers\NewsletterController::class, 'store'])->name('newsletter.subscribe');
+
+Route::get('/conditions-utilisation', function () {
+    return Inertia::render('Legal/Terms');
+})->name('legal.terms');
+
+Route::get('/politique-confidentialite', function () {
+    return Inertia::render('Legal/Privacy');
+})->name('legal.privacy');
+
+Route::get('/aide', function () {
+    return Inertia::render('Legal/Help');
+})->name('help');
 
 // Routes Authentifiées
 Route::middleware(['auth'])->group(function () {
@@ -96,8 +138,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Client Routes
     Route::get('/my-orders', [App\Http\Controllers\OrderController::class, 'userOrders'])->name('orders.index');
-    Route::post('/products/{product}/reviews', [App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store');
-    
+    Route::get('/my-orders/{id}/receipt', [App\Http\Controllers\OrderController::class, 'receipt'])->name('orders.receipt');
+
     Route::get('/chat/inbox', [App\Http\Controllers\ChatController::class, 'myConversations'])->name('chat.inbox');
     Route::get('/chat/shop/{shop}', [App\Http\Controllers\ChatController::class, 'getOrCreate'])->name('chat.show');
     Route::post('/chat/{conversation}/message', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
@@ -163,19 +205,23 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Driver Simulation Route
-    Route::post('/api/driver/update-location', [App\Http\Controllers\DriverController::class, 'updateLocation'])->name('driver.update-location');
-    Route::post('/api/driver/sync-positions', [App\Http\Controllers\DriverController::class, 'syncPositions'])->name('driver.sync-positions');
-    Route::post('/api/driver/update-status/{order}', [App\Http\Controllers\DriverController::class, 'updateStatus'])->name('driver.update-status');
-    Route::get('/livreur/dashboard', [App\Http\Controllers\DriverController::class, 'dashboard'])->name('driver.dashboard');
-    Route::get('/livreur/historique', [App\Http\Controllers\DriverController::class, 'history'])->name('driver.history');
-    Route::get('/livreur/profil', [App\Http\Controllers\DriverController::class, 'profile'])->name('driver.profile');
-    Route::post('/livreur/profil', [App\Http\Controllers\DriverController::class, 'updateProfile'])->name('driver.profile.update');
-    Route::get('/livreur/commande/{order}', [App\Http\Controllers\DriverController::class, 'show'])->name('driver.tracking');
+    // Driver Routes — réservées aux comptes ayant le rôle "driver"
+    Route::middleware(['role:driver'])->group(function () {
+        Route::post('/api/driver/update-location', [App\Http\Controllers\DriverController::class, 'updateLocation'])->name('driver.update-location');
+        Route::post('/api/driver/sync-positions', [App\Http\Controllers\DriverController::class, 'syncPositions'])->name('driver.sync-positions');
+        Route::post('/api/driver/update-status/{order}', [App\Http\Controllers\DriverController::class, 'updateStatus'])->name('driver.update-status');
+        Route::get('/livreur/dashboard', [App\Http\Controllers\DriverController::class, 'dashboard'])->name('driver.dashboard');
+        Route::get('/livreur/historique', [App\Http\Controllers\DriverController::class, 'history'])->name('driver.history');
+        Route::get('/livreur/profil', [App\Http\Controllers\DriverController::class, 'profile'])->name('driver.profile');
+        Route::post('/livreur/profil', [App\Http\Controllers\DriverController::class, 'updateProfile'])->name('driver.profile.update');
+        Route::get('/livreur/commande/{order}', [App\Http\Controllers\DriverController::class, 'show'])->name('driver.tracking');
+        Route::post('/livreur/commande/{order}/accept', [App\Http\Controllers\DriverController::class, 'acceptOrder'])->name('driver.orders.accept');
+        Route::post('/livreur/commande/{order}/update-status', [App\Http\Controllers\DriverController::class, 'updateStatus'])->name('driver.orders.update-status');
+        Route::post('/livreur/update-availability', [App\Http\Controllers\DriverController::class, 'updateAvailability'])->name('driver.update-availability');
+    });
+
+    // Partagée entre client, vendeur, admin et livreur (chacun avec ses propres droits, vérifiés dans le contrôleur)
     Route::get('/orders/{order}/tracking', [App\Http\Controllers\OrderTrackingController::class, 'getDriverPosition'])->name('orders.tracking');
-    Route::post('/livreur/commande/{order}/accept', [App\Http\Controllers\DriverController::class, 'acceptOrder'])->name('driver.orders.accept');
-    Route::post('/livreur/commande/{order}/update-status', [App\Http\Controllers\DriverController::class, 'updateStatus'])->name('driver.orders.update-status');
-    Route::post('/livreur/update-availability', [App\Http\Controllers\DriverController::class, 'updateAvailability'])->name('driver.update-availability');
 });
 
 // Public Routes

@@ -67,7 +67,9 @@ class ProductController extends Controller
             'products' => $products,
             'categories' => $categories,
             'activeShop' => $activeShop,
-            'filters' => $request->only(['category_id', 'search', 'min_price', 'max_price', 'rating', 'shop_id'])
+            // Casté en objet : un tableau PHP vide (aucun filtre actif) se sérialiserait
+            // en JSON `[]` au lieu de `{}`, ce qui casse tout accès `filters.xxx` côté front.
+            'filters' => (object) $request->only(['category_id', 'search', 'min_price', 'max_price', 'rating', 'shop_id', 'sort'])
         ]);
     }
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import { useCart } from '@/Contexts/CartContext';
@@ -14,21 +14,13 @@ export default function ProductDetail({ product }) {
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState('description');
 
-    const images = product.images && product.images.length > 0 
-        ? product.images 
+    const images = product.images && product.images.length > 0
+        ? product.images
         : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80'];
 
-    const { data, setData, post, processing, errors, reset } = useForm({
-        rating: 5,
-        comment: '',
-    });
-
-    const submitReview = (e) => {
-        e.preventDefault();
-        post(route('reviews.store', product.id), {
-            onSuccess: () => reset(),
-        });
-    };
+    const avgRating = product.reviews?.length > 0
+        ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length
+        : 0;
 
     const addToCart = () => {
         if (!auth.user) {
@@ -114,8 +106,13 @@ export default function ProductDetail({ product }) {
                             {/* Stars rating below the title */}
                             <div className="flex items-center gap-2">
                                 <div className="flex text-amber-550 text-xs">
-                                    ★ ★ ★ ★ ★
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <span key={star} className={star <= Math.round(avgRating) ? 'text-amber-550' : 'text-gray-250 dark:text-gray-800'}>★</span>
+                                    ))}
                                 </div>
+                                {avgRating > 0 && (
+                                    <span className="text-xs font-black text-gray-900 dark:text-white">{avgRating.toFixed(1)}</span>
+                                )}
                                 <span className="text-xs text-gray-400 font-extrabold uppercase tracking-wider">({product.reviews?.length || 0} avis)</span>
                             </div>
 
@@ -271,24 +268,15 @@ export default function ProductDetail({ product }) {
                                 Avis Clients ({product.reviews?.length || 0})
                             </h3>
                             <div className="space-y-8">
-                                {/* Formulaire Avis */}
+                                {/* Avis : uniquement possible depuis une commande livrée, pour éviter les faux avis */}
                                 {auth.user ? (
-                                    <form onSubmit={submitReview} className="bg-gray-50/50 dark:bg-[#161616] p-6 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm mb-8">
-                                        <div className="flex items-center gap-4 mb-4">
-                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Votre note :</p>
-                                            <div className="flex gap-1">
-                                                {[1, 2, 3, 4, 5].map((star) => (
-                                                    <button key={star} type="button" onClick={() => setData('rating', star)} className={`text-xl transition-transform hover:scale-110 ${data.rating >= star ? 'text-amber-500' : 'text-gray-300'}`}>★</button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <textarea 
-                                            value={data.comment} onChange={e => setData('comment', e.target.value)}
-                                            className="w-full rounded-xl border-gray-200 dark:border-gray-800 bg-white dark:bg-[#121212] focus:border-amber-700 dark:focus:border-amber-500 focus:ring-0 text-sm mb-4 py-3 px-4 placeholder-gray-400"
-                                            placeholder="Partagez votre expérience avec ce produit..." rows="3" required
-                                        ></textarea>
-                                        <button type="submit" disabled={processing} className="bg-amber-800 hover:bg-amber-900 text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider disabled:opacity-50 transition-all duration-300">Envoyer l'Avis</button>
-                                    </form>
+                                    <div className="p-5 border border-gray-150 dark:border-gray-800 rounded-2xl bg-gray-50/20 dark:bg-[#161616]/30 text-center">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            Vous avez acheté ce produit ? Laissez votre avis depuis{' '}
+                                            <Link href={route('orders.index')} className="text-[#b85817] dark:text-[#d36b24] underline font-semibold">Mes Commandes</Link>{' '}
+                                            une fois la livraison confirmée.
+                                        </p>
+                                    </div>
                                 ) : (
                                     <div className="p-5 border border-gray-150 dark:border-gray-800 rounded-2xl bg-gray-50/20 dark:bg-[#161616]/30 text-center">
                                         <p className="text-xs text-gray-500 dark:text-gray-400">Veuillez <Link href="/login" className="text-[#b85817] dark:text-[#d36b24] underline font-semibold">vous connecter</Link> pour laisser un avis.</p>

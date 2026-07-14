@@ -84,14 +84,24 @@ export default function Success({ reference, totalAmount, firstOrderId, pending 
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <Link 
+                    <a
+                        href={route('orders.receipt', firstOrderId)}
+                        className="w-full flex items-center justify-center gap-2 bg-white dark:bg-transparent text-[#8B4513] border-2 border-[#8B4513] py-4 rounded-xl font-bold text-sm hover:bg-[#8B4513]/5 transition-all uppercase tracking-wider"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Télécharger le reçu
+                    </a>
+
+                    <Link
                         href={route('tracking', { order_id: firstOrderId })}
                         className="w-full bg-[#8B4513] text-white py-4 rounded-xl font-bold text-sm hover:bg-[#70360f] transition-all shadow-lg shadow-[#8B4513]/20 uppercase tracking-wider"
                     >
                         Suivre en direct (Carte)
                     </Link>
 
-                    <Link 
+                    <Link
                         href={route('explore')}
                         className="w-full bg-white dark:bg-transparent text-gray-900 dark:text-white border-2 border-gray-200 dark:border-gray-700 py-4 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-all uppercase tracking-wider"
                     >

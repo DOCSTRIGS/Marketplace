@@ -79,6 +79,13 @@ class DriverController extends Controller
 
     public function show(Order $order)
     {
+        // Un livreur ne peut consulter que ses propres livraisons, ou une commande
+        // pas encore attribuée (cas du lien "Lien Livreur" partagé par le vendeur,
+        // que le livreur ouvre avant d'accepter formellement la mission).
+        if ($order->driver_id !== null && $order->driver_id !== auth()->id()) {
+            abort(403, 'Cette commande a déjà été prise en charge par un autre livreur.');
+        }
+
         return Inertia::render('Driver/Tracking', [
             'order' => $order->load(['shop', 'user', 'orderItems.product'])
         ]);

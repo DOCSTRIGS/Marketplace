@@ -73,7 +73,7 @@ export default function Explore({ products, categories, filters, activeShop }) {
         return "Catégorie";
     };
 
-    const [activeSort, setActiveSort] = useState('Tous');
+    const [activeSort, setActiveSort] = useState(typeof filters.sort === 'string' ? filters.sort : 'Tous');
     const [userLocation, setUserLocation] = useState(null);
 
     // Filter states

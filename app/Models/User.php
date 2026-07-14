@@ -94,6 +94,11 @@ class User extends Authenticatable
         return $this->hasMany(Order::class, 'driver_id');
     }
 
+    public function driverReviews()
+    {
+        return $this->hasMany(Review::class, 'driver_id')->where('type', 'driver');
+    }
+
     public function conversations()
     {
         return $this->hasMany(Conversation::class);

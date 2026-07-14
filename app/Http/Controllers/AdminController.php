@@ -39,9 +39,11 @@ class AdminController extends Controller
         $categories = Category::withCount('children')->get();
         $users = User::where('role', '!=', 'driver')->latest()->get();
         $drivers = User::where('role', 'driver')
+            ->withAvg('driverReviews', 'rating')
+            ->withCount('driverReviews')
             ->orderByRaw('updated_at DESC')
             ->get();
-        $reviews = Review::with(['user', 'product.shop'])->latest()->get();
+        $reviews = Review::with(['user', 'product.shop', 'driver'])->latest()->get();
         $withdrawals = Withdrawal::with('shop.user')->latest()->get();
 
         // Real Chart data for the last 7 days + Comparison with previous week

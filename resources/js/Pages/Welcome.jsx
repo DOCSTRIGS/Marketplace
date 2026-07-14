@@ -1,10 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
+import axios from 'axios';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import CategoryProductCard from '@/Components/CategoryProductCard';
+import HomeCarousel from '@/Components/HomeCarousel';
 
-export default function Welcome({ auth, products = [] }) {
+export default function Welcome({ auth, products = [], carouselSlides = [] }) {
+    const [newsletterEmail, setNewsletterEmail] = useState('');
+    const [newsletterState, setNewsletterState] = useState('idle'); // idle | loading | success | error
+    const [newsletterMessage, setNewsletterMessage] = useState('');
+
+    const submitNewsletter = async (e) => {
+        e.preventDefault();
+        setNewsletterState('loading');
+        try {
+            const res = await axios.post(route('newsletter.subscribe'), { email: newsletterEmail });
+            setNewsletterState('success');
+            setNewsletterMessage(res.data.message);
+            setNewsletterEmail('');
+        } catch (error) {
+            setNewsletterState('error');
+            setNewsletterMessage(error.response?.data?.errors?.email?.[0] || 'Une erreur est survenue, réessayez.');
+        }
+    };
+
     const categories = [
         'Tous', 'Chaussures', 'Téléphones', 'Ordinateurs', 'Tablettes', 
         'Réfrigérateurs', 'Climatiseurs', 'Électroménager', 'Habits'
@@ -72,25 +92,8 @@ export default function Welcome({ auth, products = [] }) {
 
                 {/* Featured Banners */}
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-                    {/* Left Banner (Wax) */}
-                    <div className="md:col-span-2 relative rounded-2xl overflow-hidden min-h-[300px] shadow-sm group cursor-pointer flex items-end">
-                        <img 
-                            src="https://images.unsplash.com/photo-1574342289656-e991cb456d9a?auto=format&fit=crop&w=1200&q=80" 
-                            alt="Wax Togolais" 
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-                        <div className="relative p-8 md:p-10 w-full md:w-4/5 text-white">
-                            <p className="text-[#F39C12] text-xs font-bold tracking-widest uppercase mb-3">SÉLECTION SPÉCIALE</p>
-                            <h3 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">Le Meilleur du Wax Togolais</h3>
-                            <p className="text-gray-200 mb-6 text-sm md:text-base leading-relaxed max-w-md">
-                                Explorez notre collection exclusive de tissus authentiques sourcés directement auprès des créateurs de Lomé.
-                            </p>
-                            <button className="bg-[#E67E22] hover:bg-[#D35400] text-white px-6 py-3 rounded-lg font-bold text-sm transition-colors shadow-lg border border-[#E67E22]/50">
-                                Découvrir la collection
-                            </button>
-                        </div>
-                    </div>
+                    {/* Left Banner: rotating carousel across all categories */}
+                    <HomeCarousel slides={carouselSlides} />
 
                     {/* Right Banner (Verified Sellers) */}
                     <div className="bg-[#EFE9E1] dark:bg-[#252525] rounded-2xl p-8 md:p-10 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden">
@@ -149,16 +152,32 @@ export default function Welcome({ auth, products = [] }) {
                             Inscrivez-vous pour recevoir les meilleures offres de vos boutiques préférées à Lomé directement dans votre boite mail.
                         </p>
                         
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <input 
-                                type="email" 
-                                placeholder="votre@email.com" 
-                                className="w-full sm:w-80 px-6 py-4 rounded-lg border-none focus:ring-2 focus:ring-[#E67E22] text-gray-900 bg-white dark:bg-gray-100 placeholder-gray-400 shadow-sm"
-                            />
-                            <button className="bg-[#F08A5D] hover:bg-[#E67E22] text-white px-8 py-4 rounded-lg font-bold transition-colors shadow-sm whitespace-nowrap">
-                                S'abonner
-                            </button>
-                        </div>
+                        {newsletterState === 'success' ? (
+                            <p className="text-white font-bold bg-white/10 rounded-lg px-6 py-4 inline-block">{newsletterMessage}</p>
+                        ) : (
+                            <form onSubmit={submitNewsletter} className="flex flex-col sm:flex-row gap-4 justify-center">
+                                <div className="w-full sm:w-80">
+                                    <input
+                                        type="email"
+                                        required
+                                        value={newsletterEmail}
+                                        onChange={(e) => setNewsletterEmail(e.target.value)}
+                                        placeholder="votre@email.com"
+                                        className="w-full px-6 py-4 rounded-lg border-none focus:ring-2 focus:ring-[#E67E22] text-gray-900 bg-white dark:bg-gray-100 placeholder-gray-400 shadow-sm"
+                                    />
+                                    {newsletterState === 'error' && (
+                                        <p className="text-[#FFD9C2] text-xs font-bold mt-2 text-left">{newsletterMessage}</p>
+                                    )}
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={newsletterState === 'loading'}
+                                    className="bg-[#F08A5D] hover:bg-[#E67E22] text-white px-8 py-4 rounded-lg font-bold transition-colors shadow-sm whitespace-nowrap disabled:opacity-60"
+                                >
+                                    {newsletterState === 'loading' ? 'Envoi...' : "S'abonner"}
+                                </button>
+                            </form>
+                        )}
                     </div>
                 </section>
 

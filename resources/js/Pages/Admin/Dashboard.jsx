@@ -739,8 +739,15 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="font-black text-gray-900 dark:text-white text-sm">{review.user?.name}</span>
                                             <span className="text-yellow-400 text-xs font-bold">★ {review.rating}/5</span>
+                                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${review.type === 'driver' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'bg-[#8B4513]/10 text-[#8B4513]'}`}>
+                                                {review.type === 'driver' ? 'Livreur' : 'Produit'}
+                                            </span>
                                         </div>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Sur: {review.product?.name} ({review.product?.shop?.name})</p>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                            {review.type === 'driver'
+                                                ? `Sur le livreur : ${review.driver?.name ?? 'Livreur supprimé'}`
+                                                : `Sur : ${review.product?.name} (${review.product?.shop?.name})`}
+                                        </p>
                                     </div>
                                     <button 
                                         onClick={() => setReviewToDelete(review)}
@@ -885,6 +892,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                     <tr>
                                         <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Livreur</th>
                                         <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Livraisons</th>
+                                        <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Note</th>
                                         <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Activité</th>
                                         <th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
                                     </tr>
@@ -905,6 +913,16 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                             </td>
                                             <td className="px-8 py-6 text-center">
                                                 <span className="text-lg font-black text-gray-900 dark:text-white">{d.deliveries_completed}</span>
+                                            </td>
+                                            <td className="px-8 py-6 text-center">
+                                                {d.driver_reviews_count > 0 ? (
+                                                    <div className="flex flex-col items-center">
+                                                        <span className="text-sm font-black text-gray-900 dark:text-white">★ {Number(d.driver_reviews_avg_rating).toFixed(1)}</span>
+                                                        <span className="text-[9px] text-gray-400 font-bold">{d.driver_reviews_count} avis</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-[10px] text-gray-300 dark:text-gray-700 italic">Aucun avis</span>
+                                                )}
                                             </td>
                                             <td className="px-8 py-6">
                                                 <div className="flex flex-col gap-1.5">
