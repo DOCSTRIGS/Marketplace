@@ -34,7 +34,7 @@ export default function ProductDetail({ product }) {
     };    return (
         <div className="min-h-screen bg-[#FDFDFB] dark:bg-[#121212] font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300">
             <Head title={`${product.name} - LoméShop`} />
-            <Navbar />
+            <Navbar elegant />
 
             <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-12">
                 {/* Breadcrumbs */}
@@ -300,6 +300,12 @@ export default function ProductDetail({ product }) {
                                                         {[...Array(5)].map((_, i) => <span key={i} className={i < review.rating ? 'text-amber-550' : 'text-gray-250 dark:text-gray-800'}>★</span>)}
                                                     </div>
                                                     <p className="text-sm text-gray-650 dark:text-gray-450 leading-relaxed font-medium">{review.comment}</p>
+                                                    {review.seller_reply && (
+                                                        <div className="mt-3 ml-2 pl-4 border-l-2 border-[#b85817]/30">
+                                                            <p className="text-[10px] font-black uppercase text-[#b85817] dark:text-[#d36b24] mb-1">Réponse du vendeur</p>
+                                                            <p className="text-sm text-gray-600 dark:text-gray-400">{review.seller_reply}</p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))

@@ -55,6 +55,69 @@ Route::get('/home', function () {
         ->take(6)
         ->values();
 
+    // Quelques catégories avec un aperçu de produits, pour remplacer la grille unique
+    // "Produits populaires" par plusieurs rangées ciblées façon Jumia/Amazon.
+    $productsByCategory = \App\Models\Category::whereNull('parent_id')
+        ->inRandomOrder()
+        ->get()
+        ->map(function ($category) {
+            $categoryProducts = \App\Models\Product::whereHas('category', function ($q) use ($category) {
+                    $q->where('parent_id', $category->id);
+                })
+                ->whereHas('shop', fn($q) => $q->where('status', 'approved'))
+                ->with(['shop.neighborhood', 'category', 'reviews'])
+                ->inRandomOrder()
+                ->take(4)
+                ->get();
+
+            if ($categoryProducts->count() < 2) {
+                return null;
+            }
+
+            return [
+                'category_id' => $category->id,
+                'category_name' => $category->name,
+                'products' => $categoryProducts,
+            ];
+        })
+        ->filter()
+        ->take(3)
+        ->values();
+
+    // Vendeurs vérifiés à mettre en avant (avec repli si aucun n'est encore vérifié).
+    $featuredShops = \App\Models\Shop::where('status', 'approved')
+        ->where('is_verified', true)
+        ->withCount('products')
+        ->withCount(['reviews' => fn($q) => $q->where('type', 'product')])
+        ->withAvg(['reviews' => fn($q) => $q->where('type', 'product')], 'rating')
+        ->inRandomOrder()
+        ->take(4)
+        ->get();
+
+    if ($featuredShops->isEmpty()) {
+        $featuredShops = \App\Models\Shop::where('status', 'approved')
+            ->withCount('products')
+            ->withCount(['reviews' => fn($q) => $q->where('type', 'product')])
+            ->withAvg(['reviews' => fn($q) => $q->where('type', 'product')], 'rating')
+            ->inRandomOrder()
+            ->take(4)
+            ->get();
+    }
+
+    // Le logo peut être une image du catalogue seedé (chemin /images/... ou images/...)
+    // ou un vrai fichier uploadé par le vendeur (stocké sur le disque "storage").
+    $featuredShops->each(function ($shop) {
+        $shop->logo_url = $shop->logo
+            ? (str_starts_with($shop->logo, 'http')
+                ? $shop->logo
+                : (str_starts_with($shop->logo, '/')
+                    ? asset($shop->logo)
+                    : (str_starts_with($shop->logo, 'images/')
+                        ? asset($shop->logo)
+                        : asset('storage/' . $shop->logo))))
+            : null;
+    });
+
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
@@ -62,6 +125,8 @@ Route::get('/home', function () {
         'phpVersion' => PHP_VERSION,
         'products' => $products,
         'carouselSlides' => $carouselSlides,
+        'productsByCategory' => $productsByCategory,
+        'featuredShops' => $featuredShops,
     ]);
 })->name('home');
 
@@ -100,6 +165,9 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/orders/{id}', [App\Http\Controllers\OrderController::class, 'destroy'])->name('orders.destroy');
 
         Route::get('/tracking', [App\Http\Controllers\SellerController::class, 'tracking'])->name('tracking');
+
+        Route::get('/reviews', [App\Http\Controllers\SellerController::class, 'reviews'])->name('reviews');
+        Route::post('/reviews/{id}/reply', [App\Http\Controllers\SellerController::class, 'replyReview'])->name('reviews.reply');
 
         Route::get('/wallet', [App\Http\Controllers\WithdrawalController::class, 'sellerIndex'])->name('wallet');
         Route::post('/wallet/withdraw', [App\Http\Controllers\WithdrawalController::class, 'requestWithdrawal'])->name('wallet.withdraw');

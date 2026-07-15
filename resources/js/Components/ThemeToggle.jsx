@@ -5,13 +5,10 @@ export default function ThemeToggle() {
 
     useEffect(() => {
         const theme = localStorage.getItem('theme');
-        if (theme === 'dark') {
-            setIsDark(true);
-            document.documentElement.classList.add('dark');
-        } else {
-            setIsDark(false);
-            document.documentElement.classList.remove('dark');
-        }
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const dark = theme === 'dark' || (!theme && prefersDark);
+        setIsDark(dark);
+        document.documentElement.classList.toggle('dark', dark);
     }, []);
 
     const toggleTheme = () => {

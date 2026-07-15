@@ -13,8 +13,15 @@ export default function Wallet({ shop, transactions, withdrawals, balance, repor
     });
 
     const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+    const [filter, setFilter] = useState('all');
 
     const formatPrice = (price) => new Intl.NumberFormat('fr-FR').format(price) + ' FCFA';
+
+    const filteredTransactions = transactions.filter((t) => {
+        if (filter === 'credit') return t.type === 'credit';
+        if (filter === 'debit') return t.type === 'debit';
+        return true;
+    });
 
     const submit = (e) => {
         e.preventDefault();
@@ -116,15 +123,25 @@ export default function Wallet({ shop, transactions, withdrawals, balance, repor
                 <div className="p-8 border-b border-gray-50 dark:border-white/5 flex items-center justify-between">
                     <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Journal des Transactions</h3>
                     <div className="flex gap-2">
-                        <span className="px-3 py-1 bg-gray-50 dark:bg-white/5 text-[9px] font-black uppercase rounded-full">Tout</span>
-                        <span className="px-3 py-1 text-[9px] font-black uppercase text-gray-400">Ventes</span>
-                        <span className="px-3 py-1 text-[9px] font-black uppercase text-gray-400">Retraits</span>
+                        {[
+                            { key: 'all', label: 'Tout' },
+                            { key: 'credit', label: 'Ventes' },
+                            { key: 'debit', label: 'Retraits' },
+                        ].map((tab) => (
+                            <button
+                                key={tab.key}
+                                onClick={() => setFilter(tab.key)}
+                                className={`px-3 py-1 text-[9px] font-black uppercase rounded-full transition-colors ${filter === tab.key ? 'bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <tbody className="divide-y divide-gray-50 dark:divide-white/5">
-                            {transactions.length > 0 ? transactions.map((t, idx) => (
+                            {filteredTransactions.length > 0 ? filteredTransactions.map((t, idx) => (
                                 <motion.tr 
                                     key={t.id}
                                     initial={{ opacity: 0, x: -10 }}
@@ -143,7 +160,11 @@ export default function Wallet({ shop, transactions, withdrawals, balance, repor
                                             </div>
                                             <div>
                                                 <p className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tight">{t.description}</p>
-                                                <p className="text-[10px] text-gray-400 font-bold">{new Date(t.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                                <p className="text-[10px] text-gray-400 font-bold">
+                                                    {new Date(t.created_at).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                                    {' · '}
+                                                    {new Date(t.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                                </p>
                                             </div>
                                         </div>
                                     </td>
@@ -155,13 +176,17 @@ export default function Wallet({ shop, transactions, withdrawals, balance, repor
                                         <p className={`text-sm font-black ${t.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
                                             {t.type === 'credit' ? '+' : '-'} {formatPrice(t.amount)}
                                         </p>
-                                        <p className="text-[9px] font-black uppercase text-gray-400">{t.status}</p>
+                                        <p className={`text-[9px] font-black uppercase ${t.status === 'completed' ? 'text-green-500' : t.status === 'pending' ? 'text-amber-500' : 'text-gray-400'}`}>
+                                            {t.status === 'completed' ? 'Terminé' : t.status === 'pending' ? 'En attente' : 'Annulé'}
+                                        </p>
                                     </td>
                                 </motion.tr>
                             )) : (
                                 <tr>
                                     <td colSpan="3" className="px-8 py-20 text-center">
-                                        <p className="text-sm font-bold text-gray-400 italic">Aucune transaction enregistrée pour le moment.</p>
+                                        <p className="text-sm font-bold text-gray-400 italic">
+                                            {filter === 'credit' ? 'Aucune vente enregistrée pour le moment.' : filter === 'debit' ? 'Aucun retrait enregistré pour le moment.' : 'Aucune transaction enregistrée pour le moment.'}
+                                        </p>
                                     </td>
                                 </tr>
                             )}

@@ -188,7 +188,7 @@ export default function Explore({ products, categories, filters, activeShop }) {
     return (
         <div className="min-h-screen bg-[#FDF8F4] dark:bg-[#121212] flex flex-col font-sans transition-colors duration-300">
             <Head title={activeShop ? `${activeShop.name} - Boutique Officielle LoméShop` : `${activeSubCategoryName()} - Explorez`} />
-            <Navbar />
+            <Navbar elegant />
 
             <main className="flex-grow max-w-[1200px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
 
 export default function Footer() {
-    const { auth } = usePage().props;
+    const { auth, reviewStats } = usePage().props;
     const isSeller = auth?.user?.role === 'seller';
 
     return (
@@ -17,9 +17,16 @@ export default function Footer() {
                                 <span className="text-gray-800 dark:text-white">Shop</span>
                             </h2>
                         </Link>
-                        <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed max-w-xs pr-4 font-medium">
+                        <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed max-w-xs pr-4 font-medium mb-4">
                             La première marketplace de proximité au Togo, connectant les artisans et commerçants locaux aux clients de la capitale.
                         </p>
+                        {reviewStats?.count > 0 && (
+                            <Link href={route('home') + '#avis'} className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:text-[#D35400] dark:hover:text-[#D35400] transition-colors">
+                                <span className="text-amber-500">★</span>
+                                {reviewStats.average}/5
+                                <span className="text-gray-400 dark:text-gray-500 font-medium">({reviewStats.count} avis)</span>
+                            </Link>
+                        )}
                     </div>
 
                     {/* Links: Acheter */}

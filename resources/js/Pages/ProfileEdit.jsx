@@ -55,7 +55,7 @@ export default function ProfileEdit({ mustVerifyEmail, status }) {
     return (
         <div className="min-h-screen bg-[#FDF8F4] dark:bg-[#121212] transition-colors duration-300">
             <Head title="Mon Profil" />
-            {isAdmin ? <AdminNavbar activeTab="" /> : <Navbar />}
+            {isAdmin ? <AdminNavbar activeTab="" /> : <Navbar elegant />}
 
             <main className="max-w-4xl mx-auto py-12 px-6">
                 <h2 className="text-3xl font-bold text-[#333333] dark:text-white mb-8">Paramètres du compte</h2>

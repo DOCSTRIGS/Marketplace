@@ -62,6 +62,18 @@ class HandleInertiaRequests extends Middleware
                 'pendingShops' => \App\Models\Shop::where('status', 'pending')->count(),
                 'pendingWithdrawals' => \App\Models\Withdrawal::where('status', 'pending')->count(),
             ],
+            'reviewStats' => (function() {
+                try {
+                    $productReviews = \App\Models\Review::where('type', 'product');
+                    $count = (clone $productReviews)->count();
+                    return [
+                        'average' => round($count > 0 ? $productReviews->avg('rating') : 0, 1),
+                        'count' => $count,
+                    ];
+                } catch (\Exception $e) {
+                    return ['average' => 0, 'count' => 0];
+                }
+            })(),
             'flash' => [
                 'message' => fn () => $request->session()->get('message'),
                 'error' => fn () => $request->session()->get('error'),

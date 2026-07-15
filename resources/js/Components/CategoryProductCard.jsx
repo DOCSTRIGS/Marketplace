@@ -35,11 +35,11 @@ export default function CategoryProductCard({ product, index = 0 }) {
             style={{ animationDelay: `${index * 60}ms`, animationFillMode: 'both', opacity: 0 }}
         >
             {/* Image Container */}
-            <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100 dark:bg-[#252525]">
+            <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100 dark:bg-[#252525] dark:shadow-[inset_0_0_36px_12px_rgba(0,0,0,0.45)]">
                 <img
                     src={product.images && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80'}
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 dark:brightness-[0.92]"
                 />
 
                 {/* Quick Add Overlay */}

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Review;
 use App\Models\Shop;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -57,6 +58,11 @@ class SellerController extends Controller
         $activeProductsCount = Product::where('shop_id', $shop->id)->count();
         $outOfStockCount = Product::where('shop_id', $shop->id)->where('stock', 0)->count();
 
+        $reviewsQuery = Review::where('type', 'product')
+            ->whereHas('product', fn($q) => $q->where('shop_id', $shop->id));
+        $avgRating = round($reviewsQuery->avg('rating') ?? 0, 1);
+        $reviewsCount = $reviewsQuery->count();
+
         $stats = [
             [
                 'name' => 'Solde Disponible', 
@@ -83,10 +89,16 @@ class SellerController extends Controller
                 'trend' => 'neutral'
             ],
             [
-                'name' => 'Produits en boutique', 
-                'value' => (string) $activeProductsCount . ' actifs', 
-                'change' => $outOfStockCount > 0 ? (string)$outOfStockCount . ' en rupture' : 'Stock OK', 
+                'name' => 'Produits en boutique',
+                'value' => (string) $activeProductsCount . ' actifs',
+                'change' => $outOfStockCount > 0 ? (string)$outOfStockCount . ' en rupture' : 'Stock OK',
                 'trend' => $outOfStockCount > 0 ? 'down' : 'neutral'
+            ],
+            [
+                'name' => 'Note moyenne',
+                'value' => $reviewsCount > 0 ? $avgRating . ' / 5' : 'Aucun avis',
+                'change' => $reviewsCount . ' avis',
+                'trend' => 'neutral'
             ],
         ];
 
@@ -228,6 +240,50 @@ class SellerController extends Controller
         return Inertia::render('Seller/Orders', [
             'orders' => $orders
         ]);
+    }
+
+    public function reviews()
+    {
+        $shop = Auth::user()->shop;
+        if (!$shop || $shop->status !== 'approved') {
+            return redirect()->route('seller.dashboard');
+        }
+
+        $reviews = Review::where('type', 'product')
+            ->whereHas('product', fn($q) => $q->where('shop_id', $shop->id))
+            ->with(['user:id,name', 'product:id,name,images'])
+            ->latest()
+            ->paginate(10);
+
+        $ratingStats = Review::where('type', 'product')
+            ->whereHas('product', fn($q) => $q->where('shop_id', $shop->id));
+
+        return Inertia::render('Seller/Reviews', [
+            'reviews' => $reviews,
+            'avgRating' => round($ratingStats->avg('rating') ?? 0, 1),
+            'reviewsCount' => (clone $ratingStats)->count(),
+        ]);
+    }
+
+    public function replyReview(Request $request, $id)
+    {
+        $shop = Auth::user()->shop;
+        $review = Review::with('product')->findOrFail($id);
+
+        if (!$shop || !$review->product || $review->product->shop_id !== $shop->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'reply' => 'required|string|max:1000',
+        ]);
+
+        $review->update([
+            'seller_reply' => $validated['reply'],
+            'seller_replied_at' => now(),
+        ]);
+
+        return back()->with('success', 'Votre réponse a été publiée.');
     }
 
     public function tracking()

@@ -50,7 +50,7 @@ export default function MyOrders({ auth, orders }) {
     return (
         <div className="min-h-screen bg-[#FDF8F4] dark:bg-[#121212] flex flex-col font-sans transition-colors duration-300">
             <Head title="Mes Commandes" />
-            <Navbar />
+            <Navbar elegant />
 
             <main className="flex-grow max-w-[1000px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-12">
                 <div className="mb-10">

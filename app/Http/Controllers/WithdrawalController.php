@@ -70,9 +70,11 @@ class WithdrawalController extends Controller
             ->where('status', 'completed')
             ->sum('amount');
 
+        // Pending withdrawals already lock the funds (deducted at request time),
+        // so they must count as debits too, otherwise this sync would refund them.
         $debits = \App\Models\Transaction::where('user_id', Auth::id())
             ->where('type', 'debit')
-            ->where('status', 'completed')
+            ->whereIn('status', ['completed', 'pending'])
             ->sum('amount');
 
         $realBalance = $credits - $debits;

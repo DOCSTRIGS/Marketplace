@@ -6,7 +6,7 @@ import Dropdown from './Dropdown';
 import ThemeToggle from './ThemeToggle';
 import NotificationBell from './NotificationBell';
 
-export default function Navbar() {
+export default function Navbar({ elegant = false }) {
     const { url, props } = usePage();
     const { auth } = props || {};
     const { cartCount = 0 } = useCart() || {};
@@ -50,17 +50,26 @@ export default function Navbar() {
         { name: 'orders.index', href: getRoute('orders.index', '/my-orders'), label: 'Mes Commandes' },
     ];
 
+    const navBg = 'bg-[#FDF8F4]/80 dark:bg-[#0f0b08]/90 border-gray-100/50 dark:border-white/10';
+    const iconColor = 'text-gray-700 dark:text-white/90 hover:bg-gray-100 dark:hover:bg-white/10';
+
     return (
         <>
-            <nav className="bg-[#FDF8F4]/80 dark:bg-[#1a1a1a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100/50 dark:border-gray-800 transition-colors duration-300">
+            <nav className={`${navBg} backdrop-blur-md sticky top-0 z-50 border-b transition-colors duration-300`}>
             <div className="h-[80px] flex items-center justify-between px-6 md:px-12">
             {/* Logo */}
             <div className="flex items-center">
                 <Link href={isSellerFlow ? getRoute('seller.dashboard', '/seller/dashboard') : getRoute('home', '/')} className="flex items-center">
-                    <h1 className="text-[28px] font-bold tracking-tight">
-                        <span className="text-[#D35400]">Lomé</span>
-                        <span className="text-[#333333] dark:text-white">Shop</span>
-                    </h1>
+                    {elegant ? (
+                        <h1 className="text-[28px] font-serif italic tracking-wide text-gray-900 dark:text-[#F5EDE0]">
+                            Lomé<span className="text-[#D35400] dark:text-[#D4AF7A]">Shop</span>
+                        </h1>
+                    ) : (
+                        <h1 className="text-[28px] font-bold tracking-tight">
+                            <span className="text-[#D35400]">Lomé</span>
+                            <span className="text-[#333333] dark:text-white">Shop</span>
+                        </h1>
+                    )}
                 </Link>
             </div>
 
@@ -70,7 +79,11 @@ export default function Navbar() {
                     <Link
                         key={link.name}
                         href={link.href}
-                        className={`font-bold text-sm pb-1 ${isCurrent(link.name) ? 'text-[#B03A2E] border-b-2 border-[#B03A2E]' : 'text-[#666666] dark:text-gray-400 hover:text-[#B03A2E] dark:hover:text-[#B03A2E]'}`}
+                        className={`font-bold text-sm pb-1 ${
+                            isCurrent(link.name)
+                                ? (elegant ? 'text-[#D35400] dark:text-[#D4AF7A] border-b-2 border-[#D35400] dark:border-[#D4AF7A]' : 'text-[#B03A2E] border-b-2 border-[#B03A2E]')
+                                : (elegant ? 'text-[#666666] dark:text-gray-300 hover:text-[#D35400] dark:hover:text-[#D4AF7A]' : 'text-[#666666] dark:text-gray-400 hover:text-[#B03A2E] dark:hover:text-[#B03A2E]')
+                        }`}
                     >
                         {link.label}
                     </Link>
@@ -82,7 +95,7 @@ export default function Navbar() {
                 {/* Menu burger : seule porte d'accès aux liens ci-dessus en dessous de 1024px (lg) */}
                 <button
                     onClick={() => setMobileMenuOpen(open => !open)}
-                    className="lg:hidden p-2 text-gray-700 dark:text-white/90 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all"
+                    className={`lg:hidden p-2 rounded-full transition-all ${iconColor}`}
                     aria-label="Ouvrir le menu"
                     aria-expanded={mobileMenuOpen}
                 >
@@ -100,7 +113,7 @@ export default function Navbar() {
                 {/* Messages */}
                 <Link
                     href={getRoute('chat.inbox', '/chat/inbox')}
-                    className="relative p-2 text-gray-700 dark:text-white/90 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all group"
+                    className={`relative p-2 rounded-full transition-all group ${iconColor}`}
                     title="Messages"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -116,9 +129,9 @@ export default function Navbar() {
 
                 {/* Cart Icon - Only for non-sellers */}
                 {auth?.user?.role !== 'seller' && (
-                    <button 
+                    <button
                         onClick={() => setIsCartOpen(true)}
-                        className="text-[#B03A2E] hover:text-[#8B4513] transition-colors relative focus:outline-none"
+                        className={`transition-colors relative focus:outline-none ${elegant ? 'text-[#B03A2E] dark:text-[#D4AF7A] hover:text-[#8B4513] dark:hover:text-white' : 'text-[#B03A2E] hover:text-[#8B4513]'}`}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="9" cy="21" r="1"></circle>
@@ -142,8 +155,8 @@ export default function Navbar() {
                 {auth?.user ? (
                     <Dropdown>
                         <Dropdown.Trigger>
-                            <button className="flex items-center text-[#B03A2E] focus:outline-none hover:opacity-80 transition-opacity">
-                                <div className="w-8 h-8 rounded-full bg-[#B03A2E] text-white flex items-center justify-center font-bold text-xs uppercase">
+                            <button className={`flex items-center focus:outline-none hover:opacity-80 transition-opacity ${elegant ? 'text-[#B03A2E] dark:text-[#D4AF7A]' : 'text-[#B03A2E]'}`}>
+                                <div className={`w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs uppercase ${elegant ? 'bg-[#B03A2E] dark:bg-[#D4AF7A] dark:text-[#1a1206]' : 'bg-[#B03A2E]'}`}>
                                     {auth.user.name.charAt(0)}
                                 </div>
                                 <svg className="ml-2 h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -172,7 +185,7 @@ export default function Navbar() {
                         </Dropdown.Content>
                     </Dropdown>
                 ) : (
-                    <Link href={getRoute('role.selection', '/select-role')} className="text-[#B03A2E] hover:text-[#8B4513] transition-colors">
+                    <Link href={getRoute('role.selection', '/select-role')} className={`transition-colors ${elegant ? 'text-[#B03A2E] dark:text-[#D4AF7A] hover:text-[#8B4513] dark:hover:text-white' : 'text-[#B03A2E] hover:text-[#8B4513]'}`}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
@@ -184,7 +197,7 @@ export default function Navbar() {
 
             {/* Panneau mobile : mêmes liens que la barre desktop, empilés */}
             {mobileMenuOpen && (
-                <div className="lg:hidden px-4 pb-4 flex flex-col gap-1 border-t border-gray-100/50 dark:border-gray-800">
+                <div className={`lg:hidden px-4 pb-4 flex flex-col gap-1 border-t ${elegant ? 'border-gray-100/50 dark:border-white/10' : 'border-gray-100/50 dark:border-gray-800'}`}>
                     {navLinks.map(link => (
                         <Link
                             key={link.name}
@@ -192,8 +205,8 @@ export default function Navbar() {
                             onClick={() => setMobileMenuOpen(false)}
                             className={`px-4 py-3 rounded-lg font-bold text-sm transition-all ${
                                 isCurrent(link.name)
-                                ? 'bg-[#B03A2E]/10 text-[#B03A2E]'
-                                : 'text-[#666666] dark:text-gray-400 hover:text-[#B03A2E] hover:bg-[#B03A2E]/5'
+                                ? (elegant ? 'bg-[#B03A2E]/10 text-[#B03A2E] dark:bg-[#D4AF7A]/10 dark:text-[#D4AF7A]' : 'bg-[#B03A2E]/10 text-[#B03A2E]')
+                                : (elegant ? 'text-[#666666] dark:text-gray-300 hover:text-[#B03A2E] dark:hover:text-[#D4AF7A] hover:bg-[#B03A2E]/5 dark:hover:bg-white/5' : 'text-[#666666] dark:text-gray-400 hover:text-[#B03A2E] hover:bg-[#B03A2E]/5')
                             }`}
                         >
                             {link.label}

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Review;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,12 +14,17 @@ class DriverController extends Controller
         (new \App\Services\DeliveryAssignmentService())->resetExpiredPauses();
 
         $driver = auth()->user();
-        
+
+        $driverReviews = Review::where('type', 'driver')->where('driver_id', $driver->id);
+        $reviewsCount = (clone $driverReviews)->count();
+        $avgRating = round($reviewsCount > 0 ? $driverReviews->avg('rating') : 5, 1);
+
         // Stats pour le nouveau design
         $stats = [
             'earnings_today' => 24500,
             'primes_today' => 1200,
-            'rating' => 4.9,
+            'rating' => $avgRating,
+            'reviews_count' => $reviewsCount,
             'acceptance_rate' => 98,
             'punctuality' => 100,
             'challenges' => [
@@ -243,8 +249,16 @@ class DriverController extends Controller
 
     public function profile()
     {
+        $driver = auth()->user();
+
+        $driverReviews = Review::where('type', 'driver')->where('driver_id', $driver->id);
+        $reviewsCount = (clone $driverReviews)->count();
+
         return Inertia::render('Driver/Profile', [
-            'user' => auth()->user()
+            'user' => $driver,
+            'reviews' => (clone $driverReviews)->with('user:id,name')->latest()->take(10)->get(),
+            'avgRating' => round($reviewsCount > 0 ? $driverReviews->avg('rating') : 0, 1),
+            'reviewsCount' => $reviewsCount,
         ]);
     }
 

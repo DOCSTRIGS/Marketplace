@@ -124,7 +124,7 @@ export default function Tracking({ order: initialOrder }) {
     return (
         <div className="h-screen flex flex-col bg-white dark:bg-[#121212] overflow-hidden font-sans transition-colors duration-300">
             <Head title="Suivi Live — LoméShop" />
-            <Navbar />
+            <Navbar elegant />
 
             <div className="flex-1 flex overflow-hidden">
                 {/* LEFT SIDEBAR: CONTENT (YOUR ORIGINAL DESIGN) */}

@@ -515,7 +515,7 @@ export default function MapView({ initialShops }) {
     return (
         <div className="h-screen flex flex-col bg-white dark:bg-[#121212] overflow-hidden transition-colors duration-300">
             <Head title="Carte Marketplace" />
-            <Navbar />
+            <Navbar elegant />
             <div className="flex-1 flex overflow-hidden">
                 <aside className="w-full md:w-[400px] flex flex-col bg-white dark:bg-[#1e1e1e] border-r border-gray-100 dark:border-gray-800 z-10 shadow-lg transition-colors">
                     <div className="p-6 pb-2">

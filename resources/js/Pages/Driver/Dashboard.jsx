@@ -193,6 +193,12 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
 
                     <div className="flex items-center gap-6">
                         <ThemeToggle />
+                        {stats && (
+                            <Link href={route('driver.profile')} className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-full hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors" title={`${stats.reviews_count || 0} avis`}>
+                                <span className="text-amber-500 text-sm">★</span>
+                                <span className="text-[11px] font-black text-amber-700 dark:text-amber-400">{stats.rating}</span>
+                            </Link>
+                        )}
                         <div className="flex flex-col text-right">
                             <span className="text-[10px] font-black uppercase text-gray-400">Employé ID</span>
                             <span className="text-[11px] font-bold text-gray-900 dark:text-white">#DRV-{auth.user.id.toString().padStart(4, '0')}</span>

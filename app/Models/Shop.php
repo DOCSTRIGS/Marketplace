@@ -39,6 +39,11 @@ class Shop extends Model
         return $this->hasMany(Product::class);
     }
 
+    public function reviews()
+    {
+        return $this->hasManyThrough(Review::class, Product::class, 'shop_id', 'product_id');
+    }
+
     public function orders()
     {
         return $this->hasMany(Order::class);

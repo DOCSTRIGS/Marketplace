@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Head, Link, useForm } from '@inertiajs/react';
 import ThemeToggle from '@/Components/ThemeToggle';
 
-export default function DriverProfile({ auth, user }) {
+export default function DriverProfile({ auth, user, reviews = [], avgRating = 0, reviewsCount = 0 }) {
     const [status, setStatus] = useState(auth.user.driver_status || 'available');
     
     const handleStatusChange = (newStatus) => {
@@ -125,6 +125,39 @@ export default function DriverProfile({ auth, user }) {
                                     {errors.password && <p className="text-red-500 text-[10px] mt-1">{errors.password}</p>}
                                 </div>
                             </div>
+                        </div>
+
+                        {/* SECTION AVIS CLIENTS */}
+                        <div className="bg-white dark:bg-[#1e1e1e] rounded-[40px] border border-gray-100 dark:border-gray-800 p-10 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-black uppercase tracking-widest text-[#8B4513] dark:text-[#E67E22]">Mes Avis Clients</h3>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <span className="text-3xl font-black text-gray-900 dark:text-white">{avgRating || '—'}</span>
+                            <div>
+                                <div className="flex text-amber-500 text-xs">
+                                    {[...Array(5)].map((_, i) => (
+                                        <span key={i} className={i < Math.round(avgRating) ? 'text-amber-500' : 'text-gray-250 dark:text-gray-700'}>★</span>
+                                    ))}
+                                </div>
+                                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">{reviewsCount} avis</p>
+                            </div>
+                        </div>
+                        <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
+                            {reviews.length > 0 ? reviews.map((review) => (
+                                <div key={review.id} className="pb-4 border-b border-gray-50 dark:border-gray-800 last:border-0">
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className="text-xs font-bold text-gray-900 dark:text-white">{review.user?.name}</span>
+                                        <span className="text-[10px] text-amber-500">{'★'.repeat(review.rating)}</span>
+                                    </div>
+                                    {review.comment && (
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">{review.comment}</p>
+                                    )}
+                                </div>
+                            )) : (
+                                <p className="text-xs text-gray-400 italic">Aucun avis pour le moment.</p>
+                            )}
+                        </div>
                         </div>
                     </div>
 
