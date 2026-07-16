@@ -7,7 +7,7 @@ export default function GuestLayout({ children, maxWidth = 'sm:max-w-md' }) {
         <div className="flex min-h-screen flex-col items-center bg-gray-50 pt-6 sm:justify-center sm:pt-0 px-4 sm:px-0">
             <div>
                 <Link href="/" prefetch>
-                    <h1 className="text-5xl font-black text-[#8B4513] font-sans tracking-tighter">LoméShop</h1>
+                    <h1 className="text-4xl sm:text-5xl font-black text-[#8B4513] font-sans tracking-tighter">LoméShop</h1>
                 </Link>
             </div>
 

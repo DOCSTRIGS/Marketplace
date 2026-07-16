@@ -111,11 +111,11 @@ export default function Navbar({ elegant = false }) {
                     )}
                 </button>
 
-                {/* Messages */}
+                {/* Messages : caché sur mobile (repris dans le panneau du menu burger) faute de place dans la barre */}
                 <Link
                     href={getRoute('chat.inbox', '/chat/inbox')}
                     prefetch
-                    className={`relative p-2 rounded-full transition-all group ${iconColor}`}
+                    className={`hidden sm:flex relative p-2 rounded-full transition-all group ${iconColor}`}
                     title="Messages"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -150,8 +150,10 @@ export default function Navbar({ elegant = false }) {
                 {/* Notifications Bell */}
                 {auth?.user && <NotificationBell user={auth.user} />}
 
-                {/* Theme Toggle */}
-                <ThemeToggle />
+                {/* Theme Toggle : caché sur mobile (repris dans le panneau du menu burger) faute de place dans la barre */}
+                <div className="hidden sm:block">
+                    <ThemeToggle />
+                </div>
 
                 {/* Profile Dropdown */}
                 {auth?.user ? (
@@ -215,6 +217,23 @@ export default function Navbar({ elegant = false }) {
                             {link.label}
                         </Link>
                     ))}
+                    <Link
+                        href={getRoute('chat.inbox', '/chat/inbox')}
+                        prefetch
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`px-4 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-between ${elegant ? 'text-[#666666] dark:text-gray-300 hover:text-[#B03A2E] dark:hover:text-[#D4AF7A] hover:bg-[#B03A2E]/5 dark:hover:bg-white/5' : 'text-[#666666] dark:text-gray-400 hover:text-[#B03A2E] hover:bg-[#B03A2E]/5'}`}
+                    >
+                        Messages
+                        {usePage().props.unreadMessagesCount > 0 && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#B03A2E] text-[10px] font-black text-white">
+                                {usePage().props.unreadMessagesCount > 9 ? '9+' : usePage().props.unreadMessagesCount}
+                            </span>
+                        )}
+                    </Link>
+                    <div className="flex items-center justify-between px-4 py-3">
+                        <span className={`font-bold text-sm ${elegant ? 'text-[#666666] dark:text-gray-300' : 'text-[#666666] dark:text-gray-400'}`}>Mode sombre</span>
+                        <ThemeToggle />
+                    </div>
                 </div>
             )}
         </nav>

@@ -281,7 +281,7 @@ export default function Explore({ products, categories, filters, activeShop }) {
                 {/* Header Section */}
                 <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-5xl font-extrabold text-[#B03A2E] mb-2 tracking-tight transition-colors">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#B03A2E] mb-2 tracking-tight transition-colors">
                             {activeShop ? 'Nos Articles Exclusifs' : activeSubCategoryName()}
                         </h1>
                         <p className="text-[#555555] dark:text-gray-400 transition-colors">

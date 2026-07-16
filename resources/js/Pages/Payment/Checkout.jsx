@@ -85,8 +85,8 @@ export default function Checkout({ reference, orders, totalAmount, fedapay_publi
 
                     <div className="mb-8 text-center">
                         <p className="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase tracking-widest mb-2 transition-colors">Montant à payer</p>
-                        <div className="text-5xl font-black text-[#222222] dark:text-white tracking-tighter transition-colors">
-                            {formattedAmount} <span className="text-2xl text-gray-400">FCFA</span>
+                        <div className="text-3xl sm:text-4xl md:text-5xl font-black text-[#222222] dark:text-white tracking-tighter transition-colors">
+                            {formattedAmount} <span className="text-xl sm:text-2xl text-gray-400">FCFA</span>
                         </div>
                     </div>
 

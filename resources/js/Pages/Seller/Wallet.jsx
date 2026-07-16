@@ -96,7 +96,7 @@ export default function Wallet({ shop, transactions, balance, reports, lastSaleD
                 >
                     <div className="relative z-10">
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-2">Solde Actuel Disponible</p>
-                        <h3 className="text-5xl font-black mb-8 tracking-tighter">{formatPrice(balance)}</h3>
+                        <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-8 tracking-tighter break-words">{formatPrice(balance)}</h3>
                         <div className="flex gap-12">
                             <div>
                                 <p className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1">Boutique</p>
