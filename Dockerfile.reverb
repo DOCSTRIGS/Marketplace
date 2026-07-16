@@ -1,0 +1,24 @@
+# Lightweight image dedicated to the Reverb WebSocket server (no nginx/php-fpm needed —
+# Reverb has its own built-in server), deployed as a separate Render service.
+FROM php:8.2-cli
+
+RUN apt-get update && apt-get install -y \
+        libpq-dev \
+        libonig-dev \
+        libxml2-dev \
+        libcurl4-openssl-dev \
+        unzip \
+    && docker-php-ext-install pdo pdo_pgsql pgsql mbstring curl dom xml \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+COPY . .
+
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress \
+    && php artisan package:discover --ansi
+
+EXPOSE 10000
+
+CMD php artisan reverb:start --host=0.0.0.0 --port="${PORT:-10000}"

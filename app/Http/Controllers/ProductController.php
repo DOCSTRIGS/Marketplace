@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -32,9 +33,10 @@ class ProductController extends Controller
         // Search by Name or Description
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+            $likeOp = $query->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+            $query->where(function($q) use ($search, $likeOp) {
+                $q->where('name', $likeOp, "%{$search}%")
+                  ->orWhere('description', $likeOp, "%{$search}%");
             });
         }
 
@@ -46,13 +48,19 @@ class ProductController extends Controller
             $query->where('price', '<=', $request->max_price);
         }
 
-        // Filter by Rating (using average)
+        // Filter by Rating (using average): computed in its own grouped query so the
+        // aggregate condition applies cleanly across database engines, then applied
+        // to the main product query via a plain whereIn.
         if ($request->filled('rating')) {
-            $query->whereHas('reviews', function($q) use ($request) {
-                $q->select(\DB::raw('avg(rating)'))
-                  ->groupBy('product_id')
-                  ->havingRaw('avg(rating) >= ?', [$request->rating]);
-            });
+            $qualifyingProductIds = \App\Models\Review::query()
+                ->where('type', 'product')
+                ->whereNotNull('product_id')
+                ->select('product_id')
+                ->groupBy('product_id')
+                ->havingRaw('avg(rating) >= ?', [$request->rating])
+                ->pluck('product_id');
+
+            $query->whereIn('id', $qualifyingProductIds);
         }
 
         $products = $query->latest()->get();
@@ -155,13 +163,8 @@ class ProductController extends Controller
 
     private function uploadAndOptimizeImage($file)
     {
-        $destinationDir = public_path('images/products');
-        if (!is_dir($destinationDir)) {
-            mkdir($destinationDir, 0755, true);
-        }
-
-        $filename = time() . '_' . uniqid() . '.webp';
-        $destinationPath = $destinationDir . '/' . $filename;
+        $disk = Storage::disk('s3');
+        $filename = 'images/products/' . time() . '_' . uniqid() . '.webp';
 
         // Try to optimize and convert using native PHP GD library
         try {
@@ -180,10 +183,10 @@ class ProductController extends Controller
             } elseif ($mime === 'image/webp') {
                 $image = imagecreatefromwebp($file->getRealPath());
             } else {
-                // If not supported, just move file normally
-                $imageName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $file->move($destinationDir, $imageName);
-                return '/images/products/' . $imageName;
+                // If not supported, just upload the file as-is
+                $imageName = 'images/products/' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $disk->put($imageName, file_get_contents($file->getRealPath()));
+                return $disk->url($imageName);
             }
 
             if ($image) {
@@ -217,20 +220,23 @@ class ProductController extends Controller
                     }
                 }
 
-                // Save as WebP with 75% quality (excellent compression)
-                imagewebp($image, $destinationPath, 75);
+                // Encode as WebP with 75% quality (excellent compression) straight into memory
+                ob_start();
+                imagewebp($image, null, 75);
+                $data = ob_get_clean();
                 imagedestroy($image);
 
-                return '/images/products/' . $filename;
+                $disk->put($filename, $data);
+                return $disk->url($filename);
             }
         } catch (\Exception $e) {
             // GD Error or not available: fallback below
         }
 
         // Standard fallback if GD fails
-        $imageName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-        $file->move($destinationDir, $imageName);
-        return '/images/products/' . $imageName;
+        $imageName = 'images/products/' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $disk->put($imageName, file_get_contents($file->getRealPath()));
+        return $disk->url($imageName);
     }
 
     public function destroy($id)

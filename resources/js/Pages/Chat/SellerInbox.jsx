@@ -257,11 +257,11 @@ export default function SellerInbox({ conversations: initialConvs, shop, authUse
                                                 }`}>
                                                     {msg.type === 'image' && msg.image_path && (
                                                         <div className="mb-1 rounded-lg overflow-hidden border border-black/5">
-                                                            <img 
-                                                                src={msg.image_path.startsWith('blob:') ? msg.image_path : `/storage/${msg.image_path}`} 
-                                                                alt="Attachment" 
+                                                            <img
+                                                                src={msg.image_path.startsWith('blob:') ? msg.image_path : msg.image_url}
+                                                                alt="Attachment"
                                                                 className="max-w-full max-h-72 object-cover cursor-pointer hover:opacity-95 transition-opacity"
-                                                                onClick={() => window.open(msg.image_path.startsWith('blob:') ? msg.image_path : `/storage/${msg.image_path}`, '_blank')}
+                                                                onClick={() => window.open(msg.image_path.startsWith('blob:') ? msg.image_path : msg.image_url, '_blank')}
                                                             />
                                                         </div>
                                                     )}

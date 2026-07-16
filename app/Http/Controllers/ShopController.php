@@ -31,19 +31,20 @@ class ShopController extends Controller
     public function mapData(Request $request)
     {
         $search = $request->input('search');
+        $likeOp = Shop::query()->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
 
-        $query = Shop::with(['neighborhood', 'products' => function($q) use ($search) {
+        $query = Shop::with(['neighborhood', 'products' => function($q) use ($search, $likeOp) {
             if ($search) {
-                $q->where('name', 'like', "%{$search}%");
+                $q->where('name', $likeOp, "%{$search}%");
             }
         }]);
 
         if ($search) {
             // Filter shops that have products matching the search OR match the shop name
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhereHas('products', function($pq) use ($search) {
-                      $pq->where('name', 'like', "%{$search}%");
+            $query->where(function($q) use ($search, $likeOp) {
+                $q->where('name', $likeOp, "%{$search}%")
+                  ->orWhereHas('products', function($pq) use ($search, $likeOp) {
+                      $pq->where('name', $likeOp, "%{$search}%");
                   });
             });
         }
@@ -151,11 +152,11 @@ class ShopController extends Controller
         if (!$shop) return back()->with('error', 'Boutique non trouvée.');
 
         if ($request->hasFile('id_card')) {
-            $shop->id_card_path = $request->file('id_card')->store('kyc/id_cards', 'public');
+            $shop->id_card_path = $request->file('id_card')->store('kyc/id_cards', 's3');
         }
 
         if ($request->hasFile('license')) {
-            $shop->license_path = $request->file('license')->store('kyc/licenses', 'public');
+            $shop->license_path = $request->file('license')->store('kyc/licenses', 's3');
         }
 
         $shop->save();

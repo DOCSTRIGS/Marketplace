@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -49,6 +50,8 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected $appends = ['vehicle_image_url', 'license_image_url', 'insurance_image_url'];
+
     /**
      * Get the attributes that should be cast.
      *
@@ -62,6 +65,21 @@ class User extends Authenticatable
             'pause_started_at' => 'datetime',
             'last_online_at' => 'datetime',
         ];
+    }
+
+    public function getVehicleImageUrlAttribute(): ?string
+    {
+        return $this->vehicle_image ? Storage::disk('s3')->url($this->vehicle_image) : null;
+    }
+
+    public function getLicenseImageUrlAttribute(): ?string
+    {
+        return $this->license_image ? Storage::disk('s3')->url($this->license_image) : null;
+    }
+
+    public function getInsuranceImageUrlAttribute(): ?string
+    {
+        return $this->insurance_image ? Storage::disk('s3')->url($this->insurance_image) : null;
     }
 
     public function isDriver()

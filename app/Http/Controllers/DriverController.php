@@ -280,15 +280,15 @@ class DriverController extends Controller
         ]);
 
         if ($request->hasFile('vehicle_image')) {
-            $validated['vehicle_image'] = $request->file('vehicle_image')->store('drivers/vehicles', 'public');
+            $validated['vehicle_image'] = $request->file('vehicle_image')->store('drivers/vehicles', 's3');
         }
-        
+
         if ($request->hasFile('license_image')) {
-            $validated['license_image'] = $request->file('license_image')->store('drivers/documents', 'public');
+            $validated['license_image'] = $request->file('license_image')->store('drivers/documents', 's3');
         }
 
         if ($request->hasFile('insurance_image')) {
-            $validated['insurance_image'] = $request->file('insurance_image')->store('drivers/documents', 'public');
+            $validated['insurance_image'] = $request->file('insurance_image')->store('drivers/documents', 's3');
         }
 
         if (!empty($validated['password'])) {

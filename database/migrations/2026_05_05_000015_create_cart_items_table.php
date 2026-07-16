@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('product_name');
             $table->decimal('product_price', 12, 2);
             $table->string('product_image')->nullable();
-            $table->unsignedBigInteger('shop_id')->nullable();
+            $table->foreignId('shop_id')->nullable()->constrained()->nullOnDelete();
             $table->string('shop_name')->nullable();
             $table->timestamps();
 

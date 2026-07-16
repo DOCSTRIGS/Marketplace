@@ -88,7 +88,7 @@ class ChatController extends Controller
         $type = 'text';
 
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('messages/images', 'public');
+            $imagePath = $request->file('image')->store('messages/images', 's3');
             $type = 'image';
         }
 

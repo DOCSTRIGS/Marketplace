@@ -200,7 +200,7 @@ export default function DriverProfile({ auth, user, reviews = [], avgRating = 0,
                                         <label className="text-[9px] font-black uppercase text-gray-400 dark:text-gray-500 block text-center">Photo Véhicule</label>
                                         <div className="relative h-40 bg-gray-50 dark:bg-[#121212] rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-850 flex items-center justify-center overflow-hidden">
                                             {user.vehicle_image ? (
-                                                <img src={`/storage/${user.vehicle_image}`} className="w-full h-full object-cover opacity-50" />
+                                                <img src={user.vehicle_image_url} className="w-full h-full object-cover opacity-50" />
                                             ) : null}
                                             <input type="file" onChange={e => setData('vehicle_image', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
                                             <span className="text-[8px] font-black uppercase text-gray-300 dark:text-gray-650">Cliquer pour changer</span>
@@ -210,7 +210,7 @@ export default function DriverProfile({ auth, user, reviews = [], avgRating = 0,
                                         <label className="text-[9px] font-black uppercase text-gray-400 dark:text-gray-500 block text-center">Permis (Recto)</label>
                                         <div className="relative h-40 bg-gray-50 dark:bg-[#121212] rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-850 flex items-center justify-center overflow-hidden">
                                             {user.license_image ? (
-                                                <img src={`/storage/${user.license_image}`} className="w-full h-full object-cover opacity-50" />
+                                                <img src={user.license_image_url} className="w-full h-full object-cover opacity-50" />
                                             ) : null}
                                             <input type="file" onChange={e => setData('license_image', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
                                             <span className="text-[8px] font-black uppercase text-gray-300 dark:text-gray-650">Cliquer pour changer</span>
@@ -220,7 +220,7 @@ export default function DriverProfile({ auth, user, reviews = [], avgRating = 0,
                                         <label className="text-[9px] font-black uppercase text-gray-400 dark:text-gray-500 block text-center">Assurance</label>
                                         <div className="relative h-40 bg-gray-50 dark:bg-[#121212] rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-850 flex items-center justify-center overflow-hidden">
                                             {user.insurance_image ? (
-                                                <img src={`/storage/${user.insurance_image}`} className="w-full h-full object-cover opacity-50" />
+                                                <img src={user.insurance_image_url} className="w-full h-full object-cover opacity-50" />
                                             ) : null}
                                             <input type="file" onChange={e => setData('insurance_image', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
                                             <span className="text-[8px] font-black uppercase text-gray-300 dark:text-gray-650">Cliquer pour changer</span>

@@ -15,12 +15,23 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('shop_id')->constrained()->onDelete('cascade');
+            $table->foreignId('driver_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('order_number')->unique();
             $table->decimal('total_amount', 10, 2);
-            $table->enum('status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled'])->default('pending');
+            $table->decimal('commission_amount', 15, 2)->default(0);
+            $table->decimal('seller_amount', 15, 2)->default(0);
+            // Plain string (not a DB enum) so Postgres doesn't choke on the historical
+            // MySQL "MODIFY COLUMN ... ENUM(...)" migration this replaces.
+            $table->string('status')->default('pending');
             $table->text('delivery_address')->nullable();
             $table->string('payment_method')->nullable();
+            $table->string('payment_reference')->nullable();
+            $table->string('kkiapay_transaction_id')->nullable()->unique();
+            $table->timestamp('picked_up_at')->nullable();
+            $table->timestamp('delivered_at')->nullable();
+            $table->string('delivery_code', 8)->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

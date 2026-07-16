@@ -20,9 +20,11 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->decimal('price', 10, 2);
             $table->integer('stock')->default(0);
+            $table->json('variants')->nullable();
             $table->enum('status', ['active', 'inactive', 'out_of_stock'])->default('active');
             $table->json('images')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

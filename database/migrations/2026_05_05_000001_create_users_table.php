@@ -15,9 +15,26 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->string('phone')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role', ['client', 'seller', 'admin'])->default('client');
+            $table->string('role')->default('client');
+
+            // Driver-specific fields
+            $table->string('driver_status')->default('offline'); // offline, available, busy, pause
+            $table->decimal('last_latitude', 10, 8)->nullable();
+            $table->decimal('last_longitude', 11, 8)->nullable();
+            $table->timestamp('pause_started_at')->nullable();
+            $table->integer('deliveries_completed')->default(0);
+            $table->timestamp('last_online_at')->nullable();
+            $table->string('vehicle_type')->nullable(); // moto, voiture, velo
+            $table->string('vehicle_model')->nullable();
+            $table->string('vehicle_plate')->nullable();
+            $table->text('vehicle_description')->nullable();
+            $table->string('vehicle_image')->nullable();
+            $table->string('license_image')->nullable(); // Permis
+            $table->string('insurance_image')->nullable(); // Assurance
+
             $table->rememberToken();
             $table->timestamps();
         });
@@ -43,8 +60,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('users');
     }
 };

@@ -11,11 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->timestamp('picked_up_at')->nullable()->after('driver_id');
-            $table->timestamp('delivered_at')->nullable()->after('picked_up_at');
-        });
-
         Schema::create('driver_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -32,8 +27,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('driver_logs');
-        Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn(['picked_up_at', 'delivered_at']);
-        });
     }
 };

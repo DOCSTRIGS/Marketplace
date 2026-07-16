@@ -41,7 +41,7 @@ class AdminController extends Controller
         $drivers = User::where('role', 'driver')
             ->withAvg('driverReviews', 'rating')
             ->withCount('driverReviews')
-            ->orderByRaw('updated_at DESC')
+            ->orderByDesc('updated_at')
             ->get();
         $reviews = Review::with(['user', 'product.shop', 'driver'])->latest()->get();
         $withdrawals = Withdrawal::with('shop.user')->latest()->get();

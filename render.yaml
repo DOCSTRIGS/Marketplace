@@ -1,0 +1,153 @@
+services:
+  # Main web app (Nginx + PHP-FPM, serves the Inertia/React app)
+  - type: web
+    name: marketplace-app
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /login
+    envVars:
+      - key: APP_NAME
+        value: LomeShop
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: APP_LOCALE
+        value: fr
+      - key: APP_FALLBACK_LOCALE
+        value: en
+
+      - key: LOG_CHANNEL
+        value: stack
+      - key: LOG_LEVEL
+        value: error
+
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_LIFETIME
+        value: "120"
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: FILESYSTEM_DISK
+        value: local
+
+      - key: BROADCAST_CONNECTION
+        value: reverb
+      - key: REVERB_APP_ID
+        sync: false
+      - key: REVERB_APP_KEY
+        sync: false
+      - key: REVERB_APP_SECRET
+        sync: false
+      - key: REVERB_HOST
+        fromService:
+          type: web
+          name: marketplace-reverb
+          property: host
+      - key: REVERB_PORT
+        value: "443"
+      - key: REVERB_SCHEME
+        value: https
+
+      - key: VITE_REVERB_APP_KEY
+        sync: false
+      - key: VITE_REVERB_HOST
+        sync: false
+      - key: VITE_REVERB_PORT
+        value: "443"
+      - key: VITE_REVERB_SCHEME
+        value: https
+      - key: VITE_GOOGLE_MAPS_API_KEY
+        sync: false
+
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_DEFAULT_REGION
+        sync: false
+      - key: AWS_BUCKET
+        sync: false
+      - key: AWS_ENDPOINT
+        sync: false
+      - key: AWS_URL
+        sync: false
+      - key: AWS_USE_PATH_STYLE_ENDPOINT
+        value: "true"
+
+      - key: KKIAPAY_PUBLIC_KEY
+        sync: false
+      - key: KKIAPAY_SECRET_KEY
+        sync: false
+      - key: KKIAPAY_SECRET
+        sync: false
+      - key: KKIAPAY_ENVIRONMENT
+        value: sandbox
+
+      - key: MAIL_MAILER
+        value: log
+
+  # Reverb WebSocket server (real-time GPS tracking, order updates, chat)
+  - type: web
+    name: marketplace-reverb
+    runtime: docker
+    dockerfilePath: ./Dockerfile.reverb
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: APP_NAME
+        value: LomeShop
+      - key: APP_ENV
+        value: production
+      - key: APP_KEY
+        sync: false
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: BROADCAST_CONNECTION
+        value: reverb
+      - key: REVERB_APP_ID
+        sync: false
+      - key: REVERB_APP_KEY
+        sync: false
+      - key: REVERB_APP_SECRET
+        sync: false
+      - key: REVERB_HOST
+        value: "0.0.0.0"
+      - key: REVERB_PORT
+        fromService:
+          type: web
+          name: marketplace-reverb
+          property: port
+      - key: REVERB_SCHEME
+        value: http
