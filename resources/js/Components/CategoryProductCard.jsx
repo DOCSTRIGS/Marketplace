@@ -9,9 +9,8 @@ export default function CategoryProductCard({ product, index = 0 }) {
     const { addToast } = useToast();
     const [adding, setAdding] = useState(false);
 
-    const avgRating = product.reviews?.length > 0
-        ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length
-        : 0;
+    const avgRating = Number(product.reviews_avg_rating) || 0;
+    const reviewsCount = product.reviews_count || 0;
 
     const handleQuickAdd = (e) => {
         e.preventDefault();
@@ -39,6 +38,8 @@ export default function CategoryProductCard({ product, index = 0 }) {
                 <img
                     src={product.images && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80'}
                     alt={product.name}
+                    loading={index < 3 ? 'eager' : 'lazy'}
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 dark:brightness-[0.92]"
                 />
 
@@ -107,7 +108,7 @@ export default function CategoryProductCard({ product, index = 0 }) {
                         ))}
                     </div>
                     <span className="ml-1.5 text-[9px] font-bold text-gray-500 dark:text-gray-400">
-                        ({product.reviews?.length || 0} avis)
+                        ({reviewsCount} avis)
                     </span>
                 </div>
 

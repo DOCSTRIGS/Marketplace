@@ -82,6 +82,12 @@ export default function DriverTracking({ order }) {
         return []; // Keep it simple for now
     }, [order.status]);
 
+    // Throttle network sends: watchPosition can fire multiple times/sec, but the
+    // server only needs a fresh position every few seconds to keep the live map
+    // (DB write + Reverb broadcast) reasonably up to date.
+    const lastSentAtRef = useRef(0);
+    const GPS_MIN_INTERVAL_MS = 5000;
+
     useEffect(() => {
         let watchId = null;
         let wakeLock = null;
@@ -128,7 +134,11 @@ export default function DriverTracking({ order }) {
                     const { latitude, longitude } = position.coords;
                     const newPos = { lat: latitude, lng: longitude };
                     setLastPos(newPos);
-                    
+
+                    const now = Date.now();
+                    if (now - lastSentAtRef.current < GPS_MIN_INTERVAL_MS) return;
+                    lastSentAtRef.current = now;
+
                     const posData = {
                         order_id: order.id,
                         latitude,

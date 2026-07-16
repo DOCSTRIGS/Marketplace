@@ -36,9 +36,13 @@ class OrderController extends Controller
             $user->save();
         }
 
+        $products = Product::whereIn('id', array_column($validated['items'], 'id'))
+            ->get()
+            ->keyBy('id');
+
         $itemsByShop = [];
         foreach ($validated['items'] as $itemData) {
-            $product = Product::findOrFail($itemData['id']);
+            $product = $products[$itemData['id']];
 
             if ($product->stock < $itemData['quantity']) {
                 $message = "Stock insuffisant pour \"{$product->name}\" (disponible : {$product->stock}).";
@@ -237,7 +241,8 @@ class OrderController extends Controller
         $orders = Order::where('user_id', Auth::id())
             ->with(['orderItems.product', 'shop', 'driver'])
             ->latest()
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
         return Inertia::render('MyOrders', [
             'orders' => $orders

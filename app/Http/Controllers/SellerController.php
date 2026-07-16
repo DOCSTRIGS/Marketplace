@@ -40,28 +40,30 @@ class SellerController extends Controller
             ]);
         }
 
-        // Stats
-        $totalRevenue = Order::where('shop_id', $shop->id)
+        // Stats — combined into a handful of aggregate queries instead of one per stat
+        $revenueStats = Order::where('shop_id', $shop->id)
             ->where('status', '!=', 'cancelled')
-            ->sum('seller_amount');
-
-        $monthlyRevenue = Order::where('shop_id', $shop->id)
-            ->where('status', '!=', 'cancelled')
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->sum('seller_amount');
+            ->selectRaw('SUM(seller_amount) as total_revenue, SUM(CASE WHEN created_at >= ? THEN seller_amount ELSE 0 END) as monthly_revenue', [now()->startOfMonth()])
+            ->first();
+        $totalRevenue = (float) $revenueStats->total_revenue;
+        $monthlyRevenue = (float) $revenueStats->monthly_revenue;
 
         $todayOrdersCount = Order::where('shop_id', $shop->id)
             ->whereDate('created_at', now())
             ->count();
 
-        $activeProductsCount = Product::where('shop_id', $shop->id)->count();
-        $outOfStockCount = Product::where('shop_id', $shop->id)->where('stock', 0)->count();
+        $productStats = Product::where('shop_id', $shop->id)
+            ->selectRaw('COUNT(*) as total, SUM(CASE WHEN stock = 0 THEN 1 ELSE 0 END) as out_of_stock')
+            ->first();
+        $activeProductsCount = (int) $productStats->total;
+        $outOfStockCount = (int) $productStats->out_of_stock;
 
-        $reviewsQuery = Review::where('type', 'product')
-            ->whereHas('product', fn($q) => $q->where('shop_id', $shop->id));
-        $avgRating = round($reviewsQuery->avg('rating') ?? 0, 1);
-        $reviewsCount = $reviewsQuery->count();
+        $reviewStats = Review::where('type', 'product')
+            ->whereHas('product', fn($q) => $q->where('shop_id', $shop->id))
+            ->selectRaw('AVG(rating) as avg_rating, COUNT(*) as cnt')
+            ->first();
+        $avgRating = round($reviewStats->avg_rating ?? 0, 1);
+        $reviewsCount = (int) $reviewStats->cnt;
 
         $stats = [
             [
@@ -117,25 +119,28 @@ class SellerController extends Controller
                 'date' => $order->created_at->diffForHumans(),
             ]);
 
-        // Chart data (Last 30 days)
-        $chartData = [];
+        // Chart data (Last 30 days) — one grouped query instead of one query per day
         $months = [
             1 => 'Janv', 2 => 'Févr', 3 => 'Mars', 4 => 'Avril', 5 => 'Mai', 6 => 'Juin',
             7 => 'Juil', 8 => 'Août', 9 => 'Sept', 10 => 'Oct', 11 => 'Nov', 12 => 'Déc'
         ];
-        
+
+        $chartStart = now()->subDays(29)->startOfDay();
+        $revenueByDay = Order::where('shop_id', $shop->id)
+            ->where('status', '!=', 'cancelled')
+            ->where('created_at', '>=', $chartStart)
+            ->selectRaw('DATE(created_at) as day, SUM(seller_amount) as revenue')
+            ->groupBy('day')
+            ->pluck('revenue', 'day');
+
+        $chartData = [];
         for ($i = 29; $i >= 0; $i--) {
             $date = now()->subDays($i);
-            $revenue = Order::where('shop_id', $shop->id)
-                ->whereDate('created_at', $date)
-                ->where('status', '!=', 'cancelled')
-                ->sum('seller_amount');
-
             $dateString = $date->format('d') . ' ' . $months[(int)$date->format('n')];
 
             $chartData[] = [
                 'name' => $dateString,
-                'revenus' => (float) $revenue
+                'revenus' => (float) ($revenueByDay[$date->format('Y-m-d')] ?? 0),
             ];
         }
 
@@ -187,7 +192,7 @@ class SellerController extends Controller
             return redirect()->route('seller.dashboard');
         }
 
-        $products = Product::where('shop_id', $shop->id)->latest()->get();
+        $products = Product::where('shop_id', $shop->id)->with('category.parent')->latest()->get();
         return Inertia::render('Seller/Products', [
             'products' => $products,
             'categories' => \App\Models\Category::whereNotNull('parent_id')->get()
@@ -232,13 +237,29 @@ class SellerController extends Controller
             return redirect()->route('seller.dashboard');
         }
 
-        $orders = Order::with(['orderItems.product', 'user'])
+        $orders = Order::with(['orderItems.product:id,name,images', 'user:id,name'])
             ->where('shop_id', $shop->id)
             ->latest()
-            ->get();
+            ->paginate(20)
+            ->withQueryString();
+
+        // Badge stats reflect the shop's whole order history, not just the current
+        // page, so they're computed separately via SQL aggregates.
+        $orderStats = Order::where('shop_id', $shop->id)
+            ->selectRaw("
+                COUNT(*) as total_orders,
+                COUNT(CASE WHEN status IN ('paid', 'processing', 'preparing', 'accepted') THEN 1 END) as to_prepare_count,
+                SUM(seller_amount) as net_earnings
+            ")
+            ->first();
 
         return Inertia::render('Seller/Orders', [
-            'orders' => $orders
+            'orders' => $orders,
+            'stats' => [
+                'toPrepareCount' => (int) $orderStats->to_prepare_count,
+                'netEarnings' => (float) $orderStats->net_earnings,
+                'totalOrders' => (int) $orderStats->total_orders,
+            ],
         ]);
     }
 

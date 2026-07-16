@@ -81,23 +81,18 @@ class DeliveryAssignmentService
 
     /**
      * Automatically reset drivers who have been on pause for more than 1 hour.
+     * Runs on every driver dashboard load, so this stays a single bulk UPDATE
+     * (no per-driver SELECT + loop) to keep that hot path cheap.
      */
     public function resetExpiredPauses()
     {
-        $expiredTime = now()->subHour();
-        
-        $driversOnPause = User::where('role', 'driver')
+        User::where('role', 'driver')
             ->where('driver_status', 'pause')
-            ->where('pause_started_at', '<=', $expiredTime)
-            ->get();
-
-        foreach ($driversOnPause as $driver) {
-            $driver->update([
+            ->where('pause_started_at', '<=', now()->subHour())
+            ->update([
                 'driver_status' => 'available',
-                'pause_started_at' => null
+                'pause_started_at' => null,
             ]);
-            Log::info("Driver #{$driver->id} pause expired. Status reset to available.");
-        }
     }
 
     /**

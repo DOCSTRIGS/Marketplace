@@ -35,6 +35,8 @@ function RestockRow({ product, threshold }) {
                     <div className="h-10 w-10 rounded-lg bg-gray-100 dark:bg-[#252525] overflow-hidden flex-shrink-0">
                         <img
                             src={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=100'}
+                            loading="lazy"
+                            decoding="async"
                             className="h-full w-full object-cover"
                             alt={product.name}
                         />

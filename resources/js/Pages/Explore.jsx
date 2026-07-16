@@ -174,16 +174,17 @@ export default function Explore({ products, categories, filters, activeShop }) {
         return 0; // 'Tous' or default
     });
 
-    // Calculate average rating of shop's products in real time for premium feel
-    const shopReviews = React.useMemo(() => {
-        if (!activeShop) return [];
-        return products.flatMap(p => p.reviews || []);
-    }, [products, activeShop]);
-
+    // Calculate average rating of shop's products in real time for premium feel.
+    // Products only carry aggregate reviews_count/reviews_avg_rating (not full review
+    // rows), so this weights each product's average by its own review count to get
+    // the true average across all of the shop's individual reviews.
     const averageRating = React.useMemo(() => {
-        if (shopReviews.length === 0) return null;
-        return (shopReviews.reduce((sum, r) => sum + r.rating, 0) / shopReviews.length).toFixed(1);
-    }, [shopReviews]);
+        if (!activeShop) return null;
+        const totalCount = products.reduce((sum, p) => sum + (p.reviews_count || 0), 0);
+        if (totalCount === 0) return null;
+        const totalRatingSum = products.reduce((sum, p) => sum + (p.reviews_avg_rating || 0) * (p.reviews_count || 0), 0);
+        return (totalRatingSum / totalCount).toFixed(1);
+    }, [products, activeShop]);
 
     return (
         <div className="min-h-screen bg-[#FDF8F4] dark:bg-[#121212] flex flex-col font-sans transition-colors duration-300">

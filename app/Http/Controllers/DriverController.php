@@ -15,9 +15,11 @@ class DriverController extends Controller
 
         $driver = auth()->user();
 
-        $driverReviews = Review::where('type', 'driver')->where('driver_id', $driver->id);
-        $reviewsCount = (clone $driverReviews)->count();
-        $avgRating = round($reviewsCount > 0 ? $driverReviews->avg('rating') : 5, 1);
+        $reviewStats = Review::where('type', 'driver')->where('driver_id', $driver->id)
+            ->selectRaw('COUNT(*) as cnt, AVG(rating) as avg_rating')
+            ->first();
+        $reviewsCount = (int) $reviewStats->cnt;
+        $avgRating = round($reviewsCount > 0 ? $reviewStats->avg_rating : 5, 1);
 
         // Stats pour le nouveau design
         $stats = [
@@ -119,7 +121,8 @@ class DriverController extends Controller
             null, // No specific order needed for global fleet
             $request->latitude,
             $request->longitude,
-            $user->id
+            $user->id,
+            $user->driver_status
         ))->toOthers();
 
         // 3. Broadcast for Client/Seller (Specific Order Channel)
@@ -128,7 +131,8 @@ class DriverController extends Controller
                 $request->order_id,
                 $request->latitude,
                 $request->longitude,
-                $user->id
+                $user->id,
+                $user->driver_status
             ))->toOthers();
         }
 
@@ -159,7 +163,8 @@ class DriverController extends Controller
             $latest['order_id'],
             $latest['latitude'],
             $latest['longitude'],
-            $user->id
+            $user->id,
+            $user->driver_status
         ))->toOthers();
 
         return response()->json(['status' => 'success', 'synced' => count($request->positions)]);
@@ -251,13 +256,16 @@ class DriverController extends Controller
     {
         $driver = auth()->user();
 
-        $driverReviews = Review::where('type', 'driver')->where('driver_id', $driver->id);
-        $reviewsCount = (clone $driverReviews)->count();
+        $reviewStats = Review::where('type', 'driver')->where('driver_id', $driver->id)
+            ->selectRaw('COUNT(*) as cnt, AVG(rating) as avg_rating')
+            ->first();
+        $reviewsCount = (int) $reviewStats->cnt;
 
         return Inertia::render('Driver/Profile', [
             'user' => $driver,
-            'reviews' => (clone $driverReviews)->with('user:id,name')->latest()->take(10)->get(),
-            'avgRating' => round($reviewsCount > 0 ? $driverReviews->avg('rating') : 0, 1),
+            'reviews' => Review::where('type', 'driver')->where('driver_id', $driver->id)
+                ->with('user:id,name')->latest()->take(10)->get(),
+            'avgRating' => round($reviewsCount > 0 ? $reviewStats->avg_rating : 0, 1),
             'reviewsCount' => $reviewsCount,
         ]);
     }
@@ -349,10 +357,11 @@ class DriverController extends Controller
 
         // Broadcast to Admin (Fleet Channel)
         broadcast(new \App\Events\DriverLocationUpdated(
-            null, 
+            null,
             $user->last_latitude,
             $user->last_longitude,
-            $user->id
+            $user->id,
+            $user->driver_status
         ))->toOthers();
 
         return response()->json(['success' => true, 'status' => $validated['status']]);

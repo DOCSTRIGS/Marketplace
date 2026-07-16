@@ -11,6 +11,27 @@ import FleetMap from '@/Components/Admin/FleetMap';
 import AdminNavbar from '@/Components/Admin/AdminNavbar';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Simple prev/next/number controls for a Laravel paginator prop ({ data, links, total, ... }).
+// Uses preserveState so the admin's selected tab (local React state) survives the visit.
+function PaginationControls({ paginator }) {
+    if (!paginator || paginator.last_page <= 1) return null;
+    return (
+        <div className="flex items-center justify-center flex-wrap gap-1 mt-6">
+            {paginator.links.map((link, i) => (
+                <button
+                    key={i}
+                    disabled={!link.url}
+                    onClick={() => link.url && router.get(link.url, {}, { preserveState: true, preserveScroll: true })}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                        link.active ? 'bg-[#8B4513] text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    } ${!link.url ? 'opacity-30 cursor-not-allowed' : ''}`}
+                    dangerouslySetInnerHTML={{ __html: link.label }}
+                />
+            ))}
+        </div>
+    );
+}
+
 // Asymmetric Sector Renderer — each slice uses its own outerRadius from data (like reference image)
 const ExplodedSector = (props) => {
     const { cx, cy, innerRadius, startAngle, endAngle, fill, radius } = props;
@@ -204,30 +225,23 @@ function CategoryRow({ cat, subcategories, onDeleteCategory, onDeleteSubCategory
 }
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
-export default function AdminDashboard({ pendingShops, approvedShops, rejectedShops, stats, categories, users, drivers, reviews, withdrawals, chartData, categoryStats }) {
+export default function AdminDashboard({ pendingShops, approvedShops, rejectedShops, stats, categories, users, drivers, reviews, withdrawals, chartData, categoryStats, neighborhoodStats }) {
     const { auth } = usePage().props;
-    
+
     // Auto-detect tab from URL
     const queryParams = new URLSearchParams(window.location.search);
     const initialTab = queryParams.get('tab') || 'overview';
-    // Calculate neighborhood distribution dynamically for horizontal BarChart and Exploded Pie Chart
-    const allShops = [...approvedShops, ...pendingShops, ...rejectedShops];
-    const totalShops = allShops.length || 1;
-    const neighborhoodCounts = {};
-    allShops.forEach(shop => {
-        const name = shop.neighborhood?.name || 'Lomé';
-        neighborhoodCounts[name] = (neighborhoodCounts[name] || 0) + 1;
-    });
-    const neighborhoodData = Object.entries(neighborhoodCounts)
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 5);
+
+    // Neighborhood distribution (top 5) is computed server-side across ALL shops
+    // regardless of status, since approvedShops/pendingShops/rejectedShops are now
+    // paginated and no longer represent the full table client-side.
+    const totalShops = (stats.total_shops + stats.total_pending_shops + stats.total_rejected_shops) || 1;
 
     // Asymmetric radii — largest quartier gets biggest radius, creating the fan/star effect
     const colorsList = ['#0f4c81', '#1a7a5e', '#80b918', '#f39c12', '#d90429', '#2b2d42'];
     const radiiList = [100, 88, 76, 66, 56, 48];
 
-    const pieNeighborhoodData = neighborhoodData.map((item, index) => {
+    const pieNeighborhoodData = neighborhoodStats.map((item, index) => {
         const pct = ((item.value / totalShops) * 100).toFixed(0);
         return {
             name: item.name,
@@ -374,7 +388,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
     const tabs = [
         { id: 'overview',   label: "Vue d'ensemble" },
         { id: 'shops',      label: `Boutiques${pendingShops.length > 0 ? ` (${pendingShops.length})` : ''}` },
-        { id: 'withdrawals', label: `Retraits${withdrawals.filter(w=>w.status==='pending').length > 0 ? ` (${withdrawals.filter(w=>w.status==='pending').length})` : ''}` },
+        { id: 'withdrawals', label: `Retraits${stats.total_pending_withdrawals > 0 ? ` (${stats.total_pending_withdrawals})` : ''}` },
         { id: 'reviews',    label: "Modération Avis" },
         { id: 'categories', label: "Catégories" },
         { id: 'fleet',      label: "Suivi Flotte" },
@@ -536,10 +550,10 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                     <ResponsiveContainer width="100%" height="80%">
                                         <BarChart 
                                             data={[
-                                                { name: 'Approuvées', value: approvedShops.length, color: '#0f4c81' },
-                                                { name: 'En attente', value: pendingShops.length, color: '#f39c12' },
-                                                { name: 'Rejetées', value: rejectedShops.length, color: '#d90429' }
-                                            ]} 
+                                                { name: 'Approuvées', value: stats.total_shops, color: '#0f4c81' },
+                                                { name: 'En attente', value: stats.total_pending_shops, color: '#f39c12' },
+                                                { name: 'Rejetées', value: stats.total_rejected_shops, color: '#d90429' }
+                                            ]}
                                             layout="vertical"
                                             margin={{ top: 0, right: 30, left: 10, bottom: 0 }}
                                         >
@@ -633,14 +647,14 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                         <div>
                             <div className="flex items-center gap-3 mb-6 mt-12">
                                 <h2 className="text-xl font-black text-gray-900 dark:text-white">Boutiques Approuvées</h2>
-                                <span className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full text-xs font-bold">{approvedShops.length}</span>
+                                <span className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full text-xs font-bold">{approvedShops.total}</span>
                             </div>
-                            
-                            {approvedShops.length === 0 ? (
+
+                            {approvedShops.data.length === 0 ? (
                                 <p className="text-gray-400 italic text-sm">Aucune boutique approuvée pour le moment.</p>
                             ) : (
                                 <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
-                                    {approvedShops.map(shop => (
+                                    {approvedShops.data.map(shop => (
                                         <div key={shop.id} className="bg-white dark:bg-[#1e1e1e] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 flex items-center justify-between group hover:border-green-200 dark:hover:border-green-800 transition-all shadow-sm">
                                             <div className="flex-1">
                                                 <h3 className="font-black text-lg text-gray-900 dark:text-white">{shop.name}</h3>
@@ -656,17 +670,18 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                     ))}
                                 </div>
                             )}
+                            <PaginationControls paginator={approvedShops} />
                         </div>
 
                         {/* Rejected Shops */}
-                        {rejectedShops.length > 0 && (
+                        {rejectedShops.total > 0 && (
                             <div>
                                 <div className="flex items-center gap-3 mb-6 mt-12">
                                     <h2 className="text-xl font-black text-gray-900 dark:text-white">Boutiques Rejetées / Suspendues</h2>
-                                    <span className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-3 py-1 rounded-full text-xs font-bold">{rejectedShops.length}</span>
+                                    <span className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-3 py-1 rounded-full text-xs font-bold">{rejectedShops.total}</span>
                                 </div>
                                 <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
-                                    {rejectedShops.map(shop => (
+                                    {rejectedShops.data.map(shop => (
                                         <div key={shop.id} className="bg-white dark:bg-[#1e1e1e] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 flex items-center justify-between group hover:border-red-200 dark:hover:border-red-800 transition-all opacity-75 hover:opacity-100 shadow-sm">
                                             <div className="flex-1">
                                                 <h3 className="font-black text-lg text-gray-900 dark:text-white line-through decoration-red-300">{shop.name}</h3>
@@ -681,6 +696,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                         </div>
                                     ))}
                                 </div>
+                                <PaginationControls paginator={rejectedShops} />
                             </div>
                         )}
                     </div>
@@ -700,7 +716,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                                {withdrawals.map(w => (
+                                {withdrawals.data.map(w => (
                                     <tr key={w.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="font-bold text-gray-900 dark:text-white text-sm">{w.shop?.name}</div>
@@ -727,12 +743,14 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                             </tbody>
                         </table>
                         </div>
+                        <PaginationControls paginator={withdrawals} />
                     </div>
                 )}
 
                 {activeTab === 'reviews' && (
+                    <>
                     <div className="grid gap-6 md:grid-cols-2">
-                        {reviews.map(review => (
+                        {reviews.data.map(review => (
                             <div key={review.id} className="bg-white dark:bg-[#1e1e1e] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col transition-colors">
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
@@ -762,8 +780,10 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 <p className="text-[10px] text-gray-400 mt-4 text-right">{new Date(review.created_at).toLocaleDateString('fr-FR')}</p>
                             </div>
                         ))}
-                        {reviews.length === 0 && <p className="text-gray-400 italic">Aucun avis à modérer.</p>}
+                        {reviews.data.length === 0 && <p className="text-gray-400 italic">Aucun avis à modérer.</p>}
                     </div>
+                    <PaginationControls paginator={reviews} />
+                    </>
                 )}
 
                 {/* Confirm Delete Review Modal */}
@@ -833,7 +853,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                                    {users.map(u => (
+                                    {users.data.map(u => (
                                         <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                             <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">{u.name}</td>
                                             <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{u.email}</td>
@@ -871,6 +891,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 </tbody>
                             </table>
                         </div>
+                        <PaginationControls paginator={users} />
                     </div>
                 )}
 
@@ -898,7 +919,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                                    {drivers.map(d => (
+                                    {drivers.data.map(d => (
                                         <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
                                             <td className="px-8 py-6">
                                                 <div className="flex items-center gap-4">
@@ -960,6 +981,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 </tbody>
                             </table>
                         </div>
+                        <PaginationControls paginator={drivers} />
                     </div>
                 )}
 

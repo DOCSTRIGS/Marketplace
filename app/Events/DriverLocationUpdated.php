@@ -23,13 +23,13 @@ class DriverLocationUpdated implements ShouldBroadcast
     /**
      * Create a new event instance.
      */
-    public function __construct($orderId, $latitude, $longitude, $driverId)
+    public function __construct($orderId, $latitude, $longitude, $driverId, $status)
     {
         $this->orderId = $orderId;
         $this->latitude = $latitude;
         $this->longitude = $longitude;
         $this->driverId = $driverId;
-        $this->status = \App\Models\User::find($driverId)->driver_status;
+        $this->status = $status;
     }
 
     /**

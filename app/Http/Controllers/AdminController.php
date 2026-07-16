@@ -11,61 +11,113 @@ use App\Models\Category;
 use App\Models\Review;
 use App\Models\Withdrawal;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
     public function dashboard()
     {
+        // Pending shops stay a plain list (action queue an admin must see in full;
+        // it self-clears as items are approved/rejected, so it doesn't grow unbounded).
         $pendingShops = Shop::with('user', 'neighborhood')
             ->where('status', 'pending')
+            ->latest()
             ->get();
-            
+
+        // These lists only grow over time, so they're paginated instead of loading
+        // the entire table on every dashboard visit.
         $approvedShops = Shop::with('user', 'neighborhood')
             ->where('status', 'approved')
-            ->get();
+            ->latest()
+            ->paginate(20, ['*'], 'approved_page')
+            ->withQueryString();
 
         $rejectedShops = Shop::with('user', 'neighborhood')
             ->where('status', 'rejected')
+            ->latest()
+            ->paginate(20, ['*'], 'rejected_page')
+            ->withQueryString();
+
+        $shopStatusCounts = Shop::selectRaw("
+                COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+                COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved,
+                COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected
+            ")->first();
+
+        $pendingWithdrawalsCount = Withdrawal::where('status', 'pending')->count();
+
+        // Top 5 neighborhoods by shop count, computed in SQL across ALL shops
+        // (previously recomputed client-side from the full shop lists, which broke
+        // once those lists became paginated).
+        $neighborhoodStats = DB::table('shops')
+            ->leftJoin('neighborhoods', 'shops.neighborhood_id', '=', 'neighborhoods.id')
+            ->selectRaw("COALESCE(neighborhoods.name, 'Lomé') as name, COUNT(*) as value")
+            ->groupByRaw("COALESCE(neighborhoods.name, 'Lomé')")
+            ->orderByDesc('value')
+            ->take(5)
             ->get();
 
         $stats = [
             'total_users' => User::count(),
-            'total_shops' => Shop::where('status', 'approved')->count(),
+            'total_shops' => (int) $shopStatusCounts->approved,
+            'total_pending_shops' => (int) $shopStatusCounts->pending,
+            'total_rejected_shops' => (int) $shopStatusCounts->rejected,
+            'total_pending_withdrawals' => $pendingWithdrawalsCount,
             'total_orders' => Order::count(),
             'total_revenue' => (float) Order::where('status', '!=', 'cancelled')->sum('total_amount'),
             'total_commissions' => (float) Order::where('status', '!=', 'cancelled')->sum('commission_amount'),
         ];
 
         $categories = Category::withCount('children')->get();
-        $users = User::where('role', '!=', 'driver')->latest()->get();
+        $users = User::where('role', '!=', 'driver')->latest()->paginate(20, ['*'], 'users_page')->withQueryString();
         $drivers = User::where('role', 'driver')
             ->withAvg('driverReviews', 'rating')
             ->withCount('driverReviews')
             ->orderByDesc('updated_at')
-            ->get();
-        $reviews = Review::with(['user', 'product.shop', 'driver'])->latest()->get();
-        $withdrawals = Withdrawal::with('shop.user')->latest()->get();
+            ->paginate(20, ['*'], 'drivers_page')
+            ->withQueryString();
+        $reviews = Review::with(['user', 'product.shop', 'driver'])->latest()->paginate(20, ['*'], 'reviews_page')->withQueryString();
+        $withdrawals = Withdrawal::with('shop.user')->latest()->paginate(20, ['*'], 'withdrawals_page')->withQueryString();
 
         // Real Chart data for the last 7 days + Comparison with previous week
+        // Collapsed from 4 queries x 7 days (28 round trips) into 3 grouped queries.
+        $currentStart = now()->subDays(6)->startOfDay();
+        $currentEnd = now()->endOfDay();
+        $prevStart = now()->subDays(13)->startOfDay();
+        $prevEnd = now()->subDays(7)->endOfDay();
+
+        $currentStats = Order::where('status', '!=', 'cancelled')
+            ->whereBetween('created_at', [$currentStart, $currentEnd])
+            ->selectRaw('DATE(created_at) as day, SUM(total_amount) as revenue, SUM(commission_amount) as commission')
+            ->groupBy('day')
+            ->get()
+            ->keyBy('day');
+
+        $prevRevenueByDay = Order::where('status', '!=', 'cancelled')
+            ->whereBetween('created_at', [$prevStart, $prevEnd])
+            ->selectRaw('DATE(created_at) as day, SUM(total_amount) as revenue')
+            ->groupBy('day')
+            ->pluck('revenue', 'day');
+
+        $ordersCountByDay = Order::whereBetween('created_at', [$currentStart, $currentEnd])
+            ->selectRaw('DATE(created_at) as day, COUNT(*) as cnt')
+            ->groupBy('day')
+            ->pluck('cnt', 'day');
+
         $chartData = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i);
             $prevDate = now()->subDays($i + 7);
-            
-            $dateString = $date->format('d/m');
-            
-            $revenue = Order::whereDate('created_at', $date)->where('status', '!=', 'cancelled')->sum('total_amount');
-            $prevRevenue = Order::whereDate('created_at', $prevDate)->where('status', '!=', 'cancelled')->sum('total_amount');
-                
-            $commission = Order::whereDate('created_at', $date)->where('status', '!=', 'cancelled')->sum('commission_amount');
-            $ordersCount = Order::whereDate('created_at', $date)->count();
+            $dayKey = $date->format('Y-m-d');
+            $prevDayKey = $prevDate->format('Y-m-d');
+            $current = $currentStats[$dayKey] ?? null;
 
             $chartData[] = [
-                'name' => $dateString,
-                'revenue' => (float) $revenue,
-                'prev_revenue' => (float) $prevRevenue,
-                'commission' => (float) $commission,
-                'orders' => $ordersCount,
+                'name' => $date->format('d/m'),
+                'revenue' => (float) ($current->revenue ?? 0),
+                'prev_revenue' => (float) ($prevRevenueByDay[$prevDayKey] ?? 0),
+                'commission' => (float) ($current->commission ?? 0),
+                'orders' => (int) ($ordersCountByDay[$dayKey] ?? 0),
             ];
         }
 
@@ -90,7 +142,8 @@ class AdminController extends Controller
             'reviews'       => $reviews,
             'withdrawals'   => $withdrawals,
             'chartData'     => $chartData,
-            'categoryStats' => $categoryStats
+            'categoryStats' => $categoryStats,
+            'neighborhoodStats' => $neighborhoodStats,
         ]);
     }
 
@@ -249,16 +302,17 @@ class AdminController extends Controller
             ->latest()
             ->paginate(20);
 
-        $totalRevenue = Order::where('status', '!=', 'cancelled')->sum('total_amount');
-        $totalCommissions = Order::where('status', '!=', 'cancelled')->sum('commission_amount');
+        $orderStats = Order::where('status', '!=', 'cancelled')
+            ->selectRaw('SUM(total_amount) as total_revenue, SUM(commission_amount) as total_commissions')
+            ->first();
         $pendingWithdrawals = Withdrawal::where('status', 'pending')->sum('amount');
 
         return Inertia::render('Admin/Finance', [
             'orders' => $orders,
             'stats' => [
-                'total_revenue' => (float)$totalRevenue,
-                'total_commissions' => (float)$totalCommissions,
-                'pending_withdrawals' => (float)$pendingWithdrawals,
+                'total_revenue' => (float) $orderStats->total_revenue,
+                'total_commissions' => (float) $orderStats->total_commissions,
+                'pending_withdrawals' => (float) $pendingWithdrawals,
             ]
         ]);
     }

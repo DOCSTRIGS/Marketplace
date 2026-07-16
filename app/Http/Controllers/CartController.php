@@ -106,8 +106,13 @@ class CartController extends Controller
             'items.*.quantity'   => 'required|integer|min:1',
         ]);
 
+        $products = Product::with('shop')
+            ->whereIn('id', collect($request->items)->pluck('product_id'))
+            ->get()
+            ->keyBy('id');
+
         foreach ($request->items as $row) {
-            $product = Product::with('shop')->find($row['product_id']);
+            $product = $products->get($row['product_id']);
             if (!$product) continue;
 
             $image = is_array($product->images) && count($product->images) > 0 ? $product->images[0] : null;

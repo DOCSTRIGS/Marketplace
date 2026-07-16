@@ -56,6 +56,8 @@ export default function Welcome({ auth, products = [], carouselSlides = [], prod
                             <img
                                 src={(carouselSlides[1] || carouselSlides[0]).image}
                                 alt=""
+                                loading="lazy"
+                                decoding="async"
                                 className="absolute inset-0 w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-black/60"></div>
@@ -130,7 +132,7 @@ export default function Welcome({ auth, products = [], carouselSlides = [], prod
                                     >
                                         <div className="w-16 h-16 rounded-full bg-[#EFE9E1] dark:bg-[#252525] mx-auto mb-4 overflow-hidden flex items-center justify-center text-[#8B4513] dark:text-[#D4AF7A] font-black text-xl">
                                             {shop.logo_url ? (
-                                                <img src={shop.logo_url} alt={shop.name} className="w-full h-full object-cover" />
+                                                <img src={shop.logo_url} alt={shop.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                                             ) : (
                                                 shop.name.charAt(0).toUpperCase()
                                             )}

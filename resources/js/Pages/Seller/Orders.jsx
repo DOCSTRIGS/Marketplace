@@ -6,8 +6,9 @@ import OrderTrackingDrawer from '@/Components/Seller/OrderTrackingDrawer';
 import { useToast } from '@/Contexts/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StatsSkeleton, TableSkeleton } from '@/Components/Skeletons';
+import Pagination from '@/Components/Pagination';
 
-export default function Orders({ orders, auth }) {
+export default function Orders({ orders, stats: orderStats, auth }) {
     const { addToast } = useToast();
     const [trackingOrderId, setTrackingOrderId] = useState(null);
     const [trackingOpen, setTrackingOpen] = useState(false);
@@ -35,7 +36,7 @@ export default function Orders({ orders, auth }) {
             window.Echo.channel(`shop.${shopId}`)
                 .listen('.order.assigned', (e) => {
                     addToast(`✅ Livreur trouvé pour la commande ${e.order.order_number} !`, 'success');
-                    scheduleReload({ only: ['orders'] });
+                    scheduleReload({ only: ['orders', 'stats'] });
                 });
 
             window.Echo.channel('orders')
@@ -81,9 +82,9 @@ export default function Orders({ orders, auth }) {
     };
 
     const stats = [
-        { name: 'À PRÉPARER', value: orders.filter(o => o.status === 'paid' || o.status === 'processing' || o.status === 'preparing' || o.status === 'accepted').length, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-orange-500', bg: 'bg-orange-100' },
-        { name: 'MES GAINS (NET)', value: new Intl.NumberFormat('fr-FR').format(orders.reduce((acc, o) => acc + parseFloat(o.seller_amount), 0)) + ' F', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-green-500', bg: 'bg-green-100' },
-        { name: 'COMMANDES TOTALES', value: orders.length, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-blue-500', bg: 'bg-blue-100' },
+        { name: 'À PRÉPARER', value: orderStats.toPrepareCount, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-orange-500', bg: 'bg-orange-100' },
+        { name: 'MES GAINS (NET)', value: new Intl.NumberFormat('fr-FR').format(orderStats.netEarnings) + ' F', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-green-500', bg: 'bg-green-100' },
+        { name: 'COMMANDES TOTALES', value: orderStats.totalOrders, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-blue-500', bg: 'bg-blue-100' },
     ];
 
     const getStatusText = (status) => {
@@ -166,7 +167,7 @@ export default function Orders({ orders, auth }) {
                         </thead>
                         <tbody className="bg-white dark:bg-[#1e1e1e] divide-y divide-gray-200 dark:divide-gray-800">
                             <AnimatePresence>
-                                {orders.length > 0 ? orders.map((order, idx) => (
+                                {orders.data.length > 0 ? orders.data.map((order, idx) => (
                                     <motion.tr
                                         key={order.id}
                                         initial={{ opacity: 0, x: -10 }}
@@ -184,7 +185,7 @@ export default function Orders({ orders, auth }) {
                                         <div className="flex -space-x-2">
                                             {order.order_items?.map((item, idx) => (
                                                 <div key={item.id || idx} className="h-8 w-8 rounded-full border-2 border-white dark:border-[#1e1e1e] bg-gray-100 dark:bg-[#252525] flex items-center justify-center overflow-hidden" title={item.product?.name}>
-                                                    <img src={item.product?.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=40' } className="h-full w-full object-cover" />
+                                                    <img src={item.product?.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=40' } loading="lazy" decoding="async" className="h-full w-full object-cover" />
                                                 </div>
                                             ))}
                                             {order.order_items?.length > 3 && (
@@ -296,6 +297,7 @@ export default function Orders({ orders, auth }) {
                             </AnimatePresence>
                         </tbody>
                     </table>
+                    <Pagination paginator={orders} />
                 </div>
                 )}
             </div>

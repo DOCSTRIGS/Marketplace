@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Head, Link, router } from '@inertiajs/react';
 import { APIProvider, Map, AdvancedMarker, Pin, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
@@ -79,11 +79,21 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
 
     const [driverPos, setDriverPos] = useState({ lat: 6.1378, lng: 1.2125 });
 
+    // Throttle network sends: the map redraws on every raw GPS reading (can fire
+    // multiple times/sec), but we only need to hit the server (DB write +
+    // websocket broadcast) every few seconds while idle on the dashboard.
+    const lastSentAtRef = useRef(0);
+    const GPS_MIN_INTERVAL_MS = 8000;
+
     // Tracking GPS Real-time avec Résilience Réseau
     useEffect(() => {
         if (!navigator.geolocation) return;
 
-        const sendLocation = (pos) => {
+        const sendLocation = (pos, force = false) => {
+            const now = Date.now();
+            if (!force && now - lastSentAtRef.current < GPS_MIN_INTERVAL_MS) return;
+            lastSentAtRef.current = now;
+
             if (!navigator.onLine) {
                 console.log("Offline: Position sauvegardée localement");
                 localStorage.setItem('pending_gps_update', JSON.stringify(pos));
@@ -127,13 +137,17 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
         if (typeof window !== 'undefined' && window.Echo) {
             window.Echo.channel('orders')
                 .listen('.order.updated', (e) => {
-                    console.log("Order updated, refreshing dashboard...", e);
-                    // Show a toast for the driver if a new mission is available
-                    if (e.order.status === 'preparing' && !e.order.driver_id) {
-                        // Assuming toast is available or just doing a full refresh
-                        console.log("New mission available!");
-                    }
-                    router.reload({ 
+                    // The 'orders' channel is platform-wide (every shop/driver), but a
+                    // full dashboard reload re-runs the whole controller (stats, active
+                    // orders, history...). Only reload when the event is actually
+                    // relevant to this driver: a new unassigned mission becoming
+                    // available, or one of this driver's own orders changing.
+                    const isNewAvailableMission = e.order.status === 'preparing' && !e.order.driver_id;
+                    const isOwnOrder = e.order.driver_id === auth.user.id;
+                    if (!isNewAvailableMission && !isOwnOrder) return;
+
+                    console.log("Relevant order update, refreshing dashboard...", e);
+                    router.reload({
                         preserveScroll: true,
                         onSuccess: () => console.log("Dashboard refreshed successfully")
                     });

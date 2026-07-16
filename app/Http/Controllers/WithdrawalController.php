@@ -12,18 +12,20 @@ class WithdrawalController extends Controller
     /**
      * Seller: List my withdrawals.
      */
-    public function sellerIndex()
+    public function sellerIndex(Request $request)
     {
         $shop = Auth::user()->shop;
         if (!$shop) return redirect()->route('home');
 
-        $withdrawals = Withdrawal::where('shop_id', $shop->id)
-            ->latest()
-            ->get();
+        $transactionsQuery = \App\Models\Transaction::where('user_id', Auth::id())
+            ->with('order')
+            ->latest();
 
-        $transactions = \App\Models\Transaction::where('user_id', Auth::id())
-            ->latest()
-            ->get();
+        if (in_array($request->input('filter'), ['credit', 'debit'], true)) {
+            $transactionsQuery->where('type', $request->input('filter'));
+        }
+
+        $transactions = $transactionsQuery->paginate(20)->withQueryString();
 
         // Calculate monthly reports (Consistency: use Order table for all monthly performance metrics)
         $thisMonth = now()->startOfMonth();
@@ -85,8 +87,8 @@ class WithdrawalController extends Controller
 
         return inertia('Seller/Wallet', [
             'shop' => $shop,
-            'withdrawals' => $withdrawals,
             'transactions' => $transactions,
+            'filter' => $request->input('filter', 'all'),
             'balance' => $shop->balance,
             'lastSaleDate' => $lastSaleDate,
             'reports' => [

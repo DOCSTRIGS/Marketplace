@@ -15,7 +15,9 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with(['category.parent', 'shop', 'reviews'])
+        $query = Product::with(['category.parent', 'shop'])
+            ->withCount('reviews')
+            ->withAvg('reviews', 'rating')
             ->whereHas('shop', function($q) {
                 $q->where('status', 'approved');
             });
@@ -63,7 +65,13 @@ class ProductController extends Controller
             $query->whereIn('id', $qualifyingProductIds);
         }
 
-        $products = $query->latest()->get();
+        // A single shop's storefront catalog is naturally small, so it's returned in
+        // full (the frontend derives its category filter from the complete list).
+        // The general "browse everything" catalog has no such bound, so it's capped
+        // to avoid an ever-growing unbounded query/payload as the marketplace grows.
+        $products = $request->filled('shop_id')
+            ? $query->latest()->get()
+            : $query->latest()->take(200)->get();
         $categories = Category::whereNull('parent_id')->with('children')->get();
 
         $activeShop = null;

@@ -143,10 +143,12 @@ export default function Products({ products, categories }) {
                             <div key={product.id} className="bg-white dark:bg-[#1e1e1e] rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm hover:shadow-md transition-all group">
                                 {/* Image & Badge */}
                                 <div className="relative h-48 bg-gray-100 dark:bg-[#252525] transition-colors">
-                                    <img 
-                                        src={product.images && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80'} 
-                                        alt={product.name} 
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                                    <img
+                                        src={product.images && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80'}
+                                        alt={product.name}
+                                        loading="lazy"
+                                        decoding="async"
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                     />
                                     <div className={`absolute top-3 left-3 px-2.5 py-1 text-xs font-bold rounded-md shadow-sm border ${
                                         product.stock >= LOW_STOCK_THRESHOLD

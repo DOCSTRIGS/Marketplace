@@ -89,7 +89,11 @@ export const CartProvider = ({ children }) => {
         // Perform initial boot fetch
         loadAndSyncCart(false);
 
-        // Listen for Inertia navigation success events (login, logout, page updates)
+        // Listen for Inertia navigation success events (login/logout only —
+        // the cart itself is already kept in sync locally by addToCart/
+        // removeFromCart/updateQuantity/clearCart, each of which calls its own
+        // endpoint. Refetching /api/cart on every single page transition added
+        // one remote-DB round trip to every navigation site-wide for no benefit.
         const unregister = router.on('success', (event) => {
             const page = event.detail.page;
             const newUser = page.props?.auth?.user;
@@ -108,9 +112,6 @@ export const CartProvider = ({ children }) => {
                     setCart([]);
                     clearLocalCart();
                 }
-            } else if (newUserId) {
-                // Already logged in, keep the cart perfectly synchronized in the background on every page transition!
-                loadAndSyncCart(false);
             }
         });
 

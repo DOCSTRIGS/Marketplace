@@ -7,6 +7,7 @@ import { Star } from 'lucide-react';
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OrderSkeleton } from '@/Components/Skeletons';
+import Pagination from '@/Components/Pagination';
 
 export default function MyOrders({ auth, orders }) {
     const [selectedOrder, setSelectedOrder] = useState(null);
@@ -61,9 +62,9 @@ export default function MyOrders({ auth, orders }) {
                 <div className="space-y-6">
                     {isLoading ? (
                         [1, 2, 3].map(i => <OrderSkeleton key={i} />)
-                    ) : orders.length > 0 ? (
+                    ) : orders.data.length > 0 ? (
                         <AnimatePresence>
-                            {orders.map((order, idx) => (
+                            {orders.data.map((order, idx) => (
                                 <motion.div 
                                     key={order.id} 
                                     initial={{ opacity: 0, y: 20 }}
@@ -197,6 +198,7 @@ export default function MyOrders({ auth, orders }) {
                             </Link>
                         </div>
                     )}
+                    <Pagination paginator={orders} />
                 </div>
             </main>
 

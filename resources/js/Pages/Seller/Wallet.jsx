@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import SellerLayout from '@/Layouts/SellerLayout';
+import Pagination from '@/Components/Pagination';
 import { motion } from 'framer-motion';
 import { useToast } from '@/Contexts/ToastContext';
 
-export default function Wallet({ shop, transactions, withdrawals, balance, reports, lastSaleDate }) {
+export default function Wallet({ shop, transactions, balance, reports, lastSaleDate, filter: initialFilter }) {
     const { addToast } = useToast();
     const { data, setData, post, processing, reset, errors } = useForm({
         amount: '',
@@ -13,15 +14,20 @@ export default function Wallet({ shop, transactions, withdrawals, balance, repor
     });
 
     const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
-    const [filter, setFilter] = useState('all');
+    const [filter, setFilter] = useState(initialFilter || 'all');
 
     const formatPrice = (price) => new Intl.NumberFormat('fr-FR').format(price) + ' FCFA';
 
-    const filteredTransactions = transactions.filter((t) => {
-        if (filter === 'credit') return t.type === 'credit';
-        if (filter === 'debit') return t.type === 'debit';
-        return true;
-    });
+    // The transaction type filter is applied server-side (so it's consistent with
+    // pagination), not client-side over an already-fetched full list.
+    const handleFilterChange = (key) => {
+        setFilter(key);
+        router.get(route('seller.wallet'), key === 'all' ? {} : { filter: key }, {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['transactions', 'filter'],
+        });
+    };
 
     const submit = (e) => {
         e.preventDefault();
@@ -130,7 +136,7 @@ export default function Wallet({ shop, transactions, withdrawals, balance, repor
                         ].map((tab) => (
                             <button
                                 key={tab.key}
-                                onClick={() => setFilter(tab.key)}
+                                onClick={() => handleFilterChange(tab.key)}
                                 className={`px-3 py-1 text-[9px] font-black uppercase rounded-full transition-colors ${filter === tab.key ? 'bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
                             >
                                 {tab.label}
@@ -141,7 +147,7 @@ export default function Wallet({ shop, transactions, withdrawals, balance, repor
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <tbody className="divide-y divide-gray-50 dark:divide-white/5">
-                            {filteredTransactions.length > 0 ? filteredTransactions.map((t, idx) => (
+                            {transactions.data.length > 0 ? transactions.data.map((t, idx) => (
                                 <motion.tr 
                                     key={t.id}
                                     initial={{ opacity: 0, x: -10 }}
@@ -192,6 +198,7 @@ export default function Wallet({ shop, transactions, withdrawals, balance, repor
                             )}
                         </tbody>
                     </table>
+                    <Pagination paginator={transactions} />
                 </div>
             </div>
 

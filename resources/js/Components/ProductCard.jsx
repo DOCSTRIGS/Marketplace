@@ -19,9 +19,11 @@ export default function ProductCard({ product }) {
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col h-full">
             {/* Image Container */}
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
-                <img 
-                    src={safeProduct.image} 
+                <img
+                    src={safeProduct.image}
                     alt={safeProduct.name}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 
