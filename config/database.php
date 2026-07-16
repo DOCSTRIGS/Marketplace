@@ -97,6 +97,14 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Reuse the TCP+TLS+auth handshake across requests instead of paying
+            // that round-trip cost again on every single request — the DB is on a
+            // remote host (Supabase), so this handshake is comparatively expensive.
+            // Safe here: PHP-FPM's default pool caps at a handful of workers, well
+            // under Supabase's pooler connection limit.
+            'options' => [
+                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', true),
+            ],
         ],
 
         'sqlsrv' => [
