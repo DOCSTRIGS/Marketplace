@@ -39,9 +39,11 @@ RUN apt-get update && apt-get install -y \
         libcurl4-openssl-dev \
         unzip \
     && docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype \
-    && docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql pgsql gd zip mbstring curl dom xml pcntl \
+    && docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql pgsql gd zip mbstring curl dom xml pcntl opcache \
     && rm -rf /var/lib/apt/lists/* \
     && rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
+
+COPY docker/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
