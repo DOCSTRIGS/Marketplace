@@ -28,20 +28,27 @@ Route::get('/home', function () {
         })
         ->inRandomOrder()->take(4)->get();
 
+    // Grandes catégories, chargées une seule fois et réutilisées pour les deux
+    // sections ci-dessous — évite de refaire une requête "produit" par catégorie
+    // (chaque aller-retour vers la base coûte cher en production).
+    $parentCategories = \App\Models\Category::whereNull('parent_id')->inRandomOrder()->get();
+
     // Un slide de carrousel par grande catégorie ayant au moins un produit avec image,
     // pour ne plus se limiter au Wax et montrer la diversité réelle du catalogue.
-    $carouselSlides = \App\Models\Category::whereNull('parent_id')
+    $carouselCandidates = \App\Models\Product::whereNotNull('images')
+        ->whereHas('category', fn($q) => $q->whereIn('parent_id', $parentCategories->pluck('id')))
+        ->with('category:id,parent_id')
         ->inRandomOrder()
-        ->get()
-        ->map(function ($category) {
-            $product = \App\Models\Product::whereHas('category', function ($q) use ($category) {
-                    $q->where('parent_id', $category->id);
-                })
-                ->whereNotNull('images')
-                ->inRandomOrder()
-                ->first();
+        ->get(['id', 'category_id', 'images']);
 
-            if (!$product || empty($product->images)) {
+    $productByParentCategory = $carouselCandidates->groupBy(fn($product) => $product->category?->parent_id);
+
+    $carouselSlides = $parentCategories
+        ->map(function ($category) use ($productByParentCategory) {
+            $product = $productByParentCategory->get($category->id, collect())
+                ->first(fn($p) => !empty($p->images));
+
+            if (!$product) {
                 return null;
             }
 
@@ -57,18 +64,17 @@ Route::get('/home', function () {
 
     // Quelques catégories avec un aperçu de produits, pour remplacer la grille unique
     // "Produits populaires" par plusieurs rangées ciblées façon Jumia/Amazon.
-    $productsByCategory = \App\Models\Category::whereNull('parent_id')
+    $categoryProductCandidates = \App\Models\Product::whereHas('shop', fn($q) => $q->where('status', 'approved'))
+        ->whereHas('category', fn($q) => $q->whereIn('parent_id', $parentCategories->pluck('id')))
+        ->with(['shop.neighborhood', 'category', 'reviews'])
         ->inRandomOrder()
-        ->get()
-        ->map(function ($category) {
-            $categoryProducts = \App\Models\Product::whereHas('category', function ($q) use ($category) {
-                    $q->where('parent_id', $category->id);
-                })
-                ->whereHas('shop', fn($q) => $q->where('status', 'approved'))
-                ->with(['shop.neighborhood', 'category', 'reviews'])
-                ->inRandomOrder()
-                ->take(4)
-                ->get();
+        ->get();
+
+    $candidatesByParentCategory = $categoryProductCandidates->groupBy(fn($product) => $product->category?->parent_id);
+
+    $productsByCategory = $parentCategories
+        ->map(function ($category) use ($candidatesByParentCategory) {
+            $categoryProducts = $candidatesByParentCategory->get($category->id, collect())->take(4)->values();
 
             if ($categoryProducts->count() < 2) {
                 return null;
