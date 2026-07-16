@@ -5,6 +5,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
+    region: frankfurt
     plan: free
     healthCheckPath: /login
     envVars:
@@ -114,6 +115,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile.reverb
     dockerContext: .
+    region: frankfurt
     plan: free
     envVars:
       - key: APP_NAME

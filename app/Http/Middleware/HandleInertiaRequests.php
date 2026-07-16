@@ -58,10 +58,18 @@ class HandleInertiaRequests extends Middleware
                     return 0;
                 }
             })(),
-            'adminCounts' => [
-                'pendingShops' => \App\Models\Shop::where('status', 'pending')->count(),
-                'pendingWithdrawals' => \App\Models\Withdrawal::where('status', 'pending')->count(),
-            ],
+            // Only admins need these counts, so skip the two queries entirely for
+            // every other visitor (guests, clients, sellers, drivers) — this ran
+            // unconditionally on every single request before.
+            'adminCounts' => (function() use ($request) {
+                if ($request->user()?->role !== 'admin') {
+                    return ['pendingShops' => 0, 'pendingWithdrawals' => 0];
+                }
+                return [
+                    'pendingShops' => \App\Models\Shop::where('status', 'pending')->count(),
+                    'pendingWithdrawals' => \App\Models\Withdrawal::where('status', 'pending')->count(),
+                ];
+            })(),
             'reviewStats' => (function() {
                 try {
                     $productReviews = \App\Models\Review::where('type', 'product');
