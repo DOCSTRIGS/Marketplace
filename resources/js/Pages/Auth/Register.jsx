@@ -139,6 +139,7 @@ export default function Register({ role }) {
 
                 <Link
                     href={route('login')}
+                    prefetch
                     className={`text-xs font-bold text-gray-400 ${brandHoverText} transition-colors`}
                 >
                     Déjà inscrit ? Se connecter

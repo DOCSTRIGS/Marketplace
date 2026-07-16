@@ -243,7 +243,7 @@ export default function DriverTracking({ order }) {
                                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{order.order_number}</p>
                             </div>
                         </div>
-                        <Link href={route('driver.dashboard')} className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
+                        <Link href={route('driver.dashboard')} prefetch className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
                             <span className="text-lg">✕</span>
                         </Link>
                     </div>

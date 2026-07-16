@@ -18,8 +18,9 @@ export default function AdminFinance({ auth, orders, stats }) {
                     animate={{ opacity: 1, x: 0 }}
                     className="mb-8"
                 >
-                    <Link 
-                        href={route('admin.dashboard')} 
+                    <Link
+                        href={route('admin.dashboard')}
+                        prefetch
                         className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1e1e1e] text-[#8B4513] rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all group"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -98,9 +99,10 @@ export default function AdminFinance({ auth, orders, stats }) {
                         {orders.links.map((link, i) => {
                             const Component = link.url ? Link : 'span';
                             return (
-                                <Component 
+                                <Component
                                     key={i}
                                     href={link.url || undefined}
+                                    {...(link.url ? { prefetch: true } : {})}
                                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                                         link.active ? 'bg-[#8B4513] text-white' : 
                                         !link.url ? 'bg-gray-100 text-gray-400 dark:bg-[#1e1e1e] cursor-not-allowed' : 

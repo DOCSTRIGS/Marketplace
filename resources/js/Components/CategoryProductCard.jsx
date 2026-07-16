@@ -122,6 +122,7 @@ export default function CategoryProductCard({ product, index = 0 }) {
                     </p>
                     <Link
                         href={route('product.show', product.id)}
+                        prefetch
                         className="text-xs font-bold text-[#8B4513] border border-[#8B4513]/30 rounded-lg px-3 py-1.5 hover:bg-[#8B4513] hover:text-white transition-all"
                     >
                         Détails →

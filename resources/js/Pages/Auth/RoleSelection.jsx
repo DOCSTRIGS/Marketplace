@@ -287,17 +287,18 @@ export default function RoleSelection() {
                             <h2 className="text-3xl font-black text-[#1a1a1a] mb-4 uppercase tracking-tighter">Je suis Acheteur</h2>
                             <p className="text-gray-400 mb-10 text-sm leading-relaxed font-medium">Parcourez les boutiques de Lomé <br /> et profitez d'une livraison express.</p>
                             
-                            <Link 
+                            <Link
                                 href={route('home')}
+                                prefetch
                                 className="w-full py-5 bg-[#8B4513] text-white font-black rounded-2xl text-lg hover:bg-[#70360f] transition-all shadow-xl shadow-[#8B4513]/20 uppercase tracking-widest text-[13px]"
                             >
                                 Accéder à la boutique
                             </Link>
 
                             <div className="mt-10 pt-8 border-t border-gray-50 w-full flex justify-center gap-6 text-[11px] font-black uppercase tracking-widest">
-                                <Link href={route('login', { role: 'client' })} className="text-[#8B4513] hover:underline">Se connecter</Link>
+                                <Link href={route('login', { role: 'client' })} prefetch className="text-[#8B4513] hover:underline">Se connecter</Link>
                                 <span className="text-gray-200">|</span>
-                                <Link href={route('register', { role: 'client' })} className="text-gray-400 hover:text-[#8B4513]">Créer un compte</Link>
+                                <Link href={route('register', { role: 'client' })} prefetch className="text-gray-400 hover:text-[#8B4513]">Créer un compte</Link>
                             </div>
                         </div>
                     </div>
@@ -316,8 +317,9 @@ export default function RoleSelection() {
                             <h2 className="text-3xl font-black text-[#1a1a1a] mb-4 uppercase tracking-tighter">Je suis Vendeur</h2>
                             <p className="text-gray-400 mb-10 text-sm leading-relaxed font-medium">Digitalisez votre commerce <br /> et multipliez vos ventes aujourd'hui.</p>
                             
-                            <Link 
+                            <Link
                                 href={route('login', { role: 'seller' })}
+                                prefetch
                                 className="w-full py-5 bg-[#D35400] text-white font-black rounded-2xl text-lg hover:bg-[#b84600] transition-all uppercase tracking-widest text-[13px] shadow-xl shadow-[#D35400]/20 flex items-center justify-center"
                             >
                                 Gérer ma boutique
@@ -325,7 +327,7 @@ export default function RoleSelection() {
 
                             <div className="mt-10 pt-8 border-t border-gray-50 w-full flex justify-center gap-6 text-[11px] font-black uppercase tracking-widest">
                                 <span className="text-gray-400">Nouveau vendeur ?</span>
-                                <Link href={route('register', { role: 'seller' })} className="text-[#D35400] hover:underline">Créer ma boutique</Link>
+                                <Link href={route('register', { role: 'seller' })} prefetch className="text-[#D35400] hover:underline">Créer ma boutique</Link>
                             </div>
                         </div>
                     </div>

@@ -131,8 +131,9 @@ export default function MyOrders({ auth, orders }) {
                                                     <h4 className="text-sm font-bold text-[#222222] dark:text-white mb-1">{item.product?.name}</h4>
                                                     <p className="text-xs text-gray-500 dark:text-gray-400">Quantité : {item.quantity} × {formattedPrice(item.price)} FCFA</p>
                                                 </div>
-                                                <Link 
+                                                <Link
                                                     href={route('product.show', item.product_id)}
+                                                    prefetch
                                                     className="text-xs font-bold text-[#8B4513] hover:underline"
                                                 >
                                                     Acheter à nouveau
@@ -144,8 +145,9 @@ export default function MyOrders({ auth, orders }) {
 
                                 {/* Order Footer Actions */}
                                 <div className="p-6 bg-gray-50/30 dark:bg-white/5 border-t border-gray-50 dark:border-gray-800 flex justify-end gap-3 transition-colors">
-                                    <Link 
+                                    <Link
                                         href={route('tracking', { order_id: order.id })}
+                                        prefetch
                                         className="bg-[#8B4513] text-white px-6 py-2 rounded-lg font-bold text-xs hover:bg-[#70360f] transition-all shadow-sm flex items-center"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -190,8 +192,9 @@ export default function MyOrders({ auth, orders }) {
                             </div>
                             <h3 className="text-xl font-bold text-[#222222] dark:text-white mb-2">Vous n'avez pas encore de commande</h3>
                             <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-xs mx-auto">Explorez nos catégories et faites votre premier achat sur LoméShop !</p>
-                            <Link 
+                            <Link
                                 href={route('explore')}
+                                prefetch
                                 className="bg-[#B03A2E] text-white px-10 py-3 rounded-xl font-bold text-sm shadow-xl shadow-[#B03A2E]/20"
                             >
                                 Commencer mes achats

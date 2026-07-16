@@ -39,9 +39,9 @@ export default function ProductDetail({ product }) {
             <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-12">
                 {/* Breadcrumbs */}
                 <nav className="flex mb-10 text-[10px] font-extrabold uppercase tracking-[0.2em] text-gray-400">
-                    <Link href={route('home')} className="hover:text-[#b85817] transition-colors">Accueil</Link>
+                    <Link href={route('home')} prefetch className="hover:text-[#b85817] transition-colors">Accueil</Link>
                     <span className="mx-3">/</span>
-                    <Link href={route('explore')} className="hover:text-[#b85817] transition-colors">Boutique</Link>
+                    <Link href={route('explore')} prefetch className="hover:text-[#b85817] transition-colors">Boutique</Link>
                     <span className="mx-3">/</span>
                     <span className="text-gray-900 dark:text-white font-black">{product.name}</span>
                 </nav>
@@ -192,8 +192,9 @@ export default function ProductDetail({ product }) {
                                     Ajouter au panier
                                 </button>
                                 
-                                <Link 
+                                <Link
                                     href={route('chat.show', product.shop_id)}
+                                    prefetch
                                     className="w-full flex items-center justify-center gap-2 py-4 bg-transparent border-2 border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600 rounded-xl text-xs font-bold uppercase tracking-[0.15em] text-gray-900 dark:text-white transition-all duration-300"
                                 >
                                     Contacter le vendeur
@@ -245,14 +246,16 @@ export default function ProductDetail({ product }) {
                                 </div>
 
                                 <div className="flex flex-col sm:flex-row md:flex-col gap-3 w-full md:w-auto shrink-0">
-                                    <Link 
+                                    <Link
                                         href={route('chat.show', product.shop_id)}
+                                        prefetch
                                         className="flex-1 md:flex-none px-6 py-3 bg-transparent border-2 border-gray-250 dark:border-gray-800 hover:border-amber-700 dark:hover:border-amber-500 rounded-xl text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white text-center transition-all duration-300"
                                     >
                                         Discuter en ligne
                                     </Link>
-                                    <Link 
+                                    <Link
                                         href={route('explore', { shop_id: product.shop_id })}
+                                        prefetch
                                         className="flex-1 md:flex-none px-6 py-3 bg-[#b85817] hover:bg-[#a24d14] text-white rounded-xl text-xs font-bold uppercase tracking-wider text-center shadow-lg shadow-[#b85817]/10 transition-all duration-300"
                                     >
                                         Visiter la Boutique
@@ -273,13 +276,13 @@ export default function ProductDetail({ product }) {
                                     <div className="p-5 border border-gray-150 dark:border-gray-800 rounded-2xl bg-gray-50/20 dark:bg-[#161616]/30 text-center">
                                         <p className="text-xs text-gray-500 dark:text-gray-400">
                                             Vous avez acheté ce produit ? Laissez votre avis depuis{' '}
-                                            <Link href={route('orders.index')} className="text-[#b85817] dark:text-[#d36b24] underline font-semibold">Mes Commandes</Link>{' '}
+                                            <Link href={route('orders.index')} prefetch className="text-[#b85817] dark:text-[#d36b24] underline font-semibold">Mes Commandes</Link>{' '}
                                             une fois la livraison confirmée.
                                         </p>
                                     </div>
                                 ) : (
                                     <div className="p-5 border border-gray-150 dark:border-gray-800 rounded-2xl bg-gray-50/20 dark:bg-[#161616]/30 text-center">
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">Veuillez <Link href="/login" className="text-[#b85817] dark:text-[#d36b24] underline font-semibold">vous connecter</Link> pour laisser un avis.</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Veuillez <Link href="/login" prefetch className="text-[#b85817] dark:text-[#d36b24] underline font-semibold">vous connecter</Link> pour laisser un avis.</p>
                                     </div>
                                 )}
 

@@ -59,7 +59,7 @@ export default function Navbar({ elegant = false }) {
             <div className="h-[80px] flex items-center justify-between px-6 md:px-12">
             {/* Logo */}
             <div className="flex items-center">
-                <Link href={isSellerFlow ? getRoute('seller.dashboard', '/seller/dashboard') : getRoute('home', '/')} className="flex items-center">
+                <Link href={isSellerFlow ? getRoute('seller.dashboard', '/seller/dashboard') : getRoute('home', '/')} prefetch className="flex items-center">
                     {elegant ? (
                         <h1 className="text-[28px] font-serif italic tracking-wide text-gray-900 dark:text-[#F5EDE0]">
                             Lomé<span className="text-[#D35400] dark:text-[#D4AF7A]">Shop</span>
@@ -79,6 +79,7 @@ export default function Navbar({ elegant = false }) {
                     <Link
                         key={link.name}
                         href={link.href}
+                        prefetch
                         className={`font-bold text-sm pb-1 ${
                             isCurrent(link.name)
                                 ? (elegant ? 'text-[#D35400] dark:text-[#D4AF7A] border-b-2 border-[#D35400] dark:border-[#D4AF7A]' : 'text-[#B03A2E] border-b-2 border-[#B03A2E]')
@@ -113,6 +114,7 @@ export default function Navbar({ elegant = false }) {
                 {/* Messages */}
                 <Link
                     href={getRoute('chat.inbox', '/chat/inbox')}
+                    prefetch
                     className={`relative p-2 rounded-full transition-all group ${iconColor}`}
                     title="Messages"
                 >
@@ -172,11 +174,11 @@ export default function Navbar({ elegant = false }) {
                             </div>
                             
                             {auth.user.role === 'seller' ? (
-                                <Dropdown.Link href={getRoute('seller.dashboard', '/seller/dashboard')}>Dashboard Vendeur</Dropdown.Link>
+                                <Dropdown.Link href={getRoute('seller.dashboard', '/seller/dashboard')} prefetch>Dashboard Vendeur</Dropdown.Link>
                             ) : auth.user.role === 'driver' ? (
-                                <Dropdown.Link href={getRoute('driver.dashboard', '/driver/dashboard')}>Dashboard Livreur</Dropdown.Link>
+                                <Dropdown.Link href={getRoute('driver.dashboard', '/driver/dashboard')} prefetch>Dashboard Livreur</Dropdown.Link>
                             ) : (
-                                <Dropdown.Link href={getRoute('profile.edit', '/profile')}>Mon Profil</Dropdown.Link>
+                                <Dropdown.Link href={getRoute('profile.edit', '/profile')} prefetch>Mon Profil</Dropdown.Link>
                             )}
                             
                             <Dropdown.Link href={getRoute('logout', '/logout')} method="post" as="button" className="text-red-600">
@@ -185,7 +187,7 @@ export default function Navbar({ elegant = false }) {
                         </Dropdown.Content>
                     </Dropdown>
                 ) : (
-                    <Link href={getRoute('role.selection', '/select-role')} className={`transition-colors ${elegant ? 'text-[#B03A2E] dark:text-[#D4AF7A] hover:text-[#8B4513] dark:hover:text-white' : 'text-[#B03A2E] hover:text-[#8B4513]'}`}>
+                    <Link href={getRoute('role.selection', '/select-role')} prefetch className={`transition-colors ${elegant ? 'text-[#B03A2E] dark:text-[#D4AF7A] hover:text-[#8B4513] dark:hover:text-white' : 'text-[#B03A2E] hover:text-[#8B4513]'}`}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
@@ -202,6 +204,7 @@ export default function Navbar({ elegant = false }) {
                         <Link
                             key={link.name}
                             href={link.href}
+                            prefetch
                             onClick={() => setMobileMenuOpen(false)}
                             className={`px-4 py-3 rounded-lg font-bold text-sm transition-all ${
                                 isCurrent(link.name)

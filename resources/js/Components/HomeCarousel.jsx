@@ -98,6 +98,7 @@ export default function HomeCarousel({ slides = [] }) {
                             <motion.div variants={textItem}>
                                 <Link
                                     href={route('explore', { category_id: slide.category_id })}
+                                    prefetch
                                     className="inline-block bg-[#D4AF7A] hover:bg-[#c9a15f] text-[#1a0f00] px-8 py-3.5 rounded-2xl font-bold text-sm transition-all shadow-lg hover:scale-[1.03] active:scale-[0.98]"
                                 >
                                     Découvrir la collection

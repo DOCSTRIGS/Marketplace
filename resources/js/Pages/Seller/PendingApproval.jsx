@@ -55,6 +55,7 @@ export default function PendingApproval({ shop }) {
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Link
                             href={route('home')}
+                            prefetch
                             className="w-full sm:w-auto px-8 py-4 bg-[#1a1a1a] text-white font-black rounded-2xl hover:bg-black transition-all shadow-lg shadow-gray-200 dark:shadow-none uppercase tracking-widest text-xs"
                         >
                             Retour à l'accueil

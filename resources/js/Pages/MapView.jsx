@@ -634,7 +634,7 @@ export default function MapView({ initialShops }) {
                                 </div>
                                 <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
                                     {activeShop.matching_products?.map(p => p && (
-                                        <Link key={p.id} href={route('product.show', p.id)} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 group transition-colors">
+                                        <Link key={p.id} href={route('product.show', p.id)} prefetch className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 group transition-colors">
                                             <img src={p.images?.[0] || 'https://via.placeholder.com/150'} className="w-10 h-10 rounded-lg object-cover" alt="" />
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-xs font-bold text-gray-900 dark:text-white truncate group-hover:text-[#B03A2E]">{p.name}</p>

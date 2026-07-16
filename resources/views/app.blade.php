@@ -35,6 +35,14 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        {{-- Warm up the TCP/TLS handshake for cross-origin hosts used on nearly every
+             page (product/shop images on Supabase Storage, Google Maps, KkiaPay) so
+             the first request to each doesn't pay that setup cost on top of the fetch. --}}
+        <link rel="preconnect" href="https://wpbcjmvctafxxeybzici.supabase.co">
+        <link rel="preconnect" href="https://maps.googleapis.com">
+        <link rel="preconnect" href="https://maps.gstatic.com" crossorigin>
+        <link rel="preconnect" href="https://cdn.kkiapay.me">
+
         <!-- Scripts -->
         <script>
             if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {

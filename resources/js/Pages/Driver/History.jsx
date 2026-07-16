@@ -12,9 +12,9 @@ export default function DriverHistory({ auth, orders }) {
                     <h1 className="text-2xl font-black text-[#D35400] dark:text-[#E67E22] tracking-tighter">LoméShop</h1>
                     <nav className="flex items-center gap-8">
                         <div className="flex gap-6 text-[11px] font-black uppercase text-spacing">
-                            <Link href={route('driver.dashboard')} className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Missions</Link>
-                            <Link href={route('driver.history')} className="text-[#8B4513] border-b-2 border-[#8B4513] pb-1">Historique</Link>
-                            <Link href={route('driver.profile')} className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Mon Profil</Link>
+                            <Link href={route('driver.dashboard')} prefetch className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Missions</Link>
+                            <Link href={route('driver.history')} prefetch className="text-[#8B4513] border-b-2 border-[#8B4513] pb-1">Historique</Link>
+                            <Link href={route('driver.profile')} prefetch className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Mon Profil</Link>
                         </div>
                     </nav>
                 </div>
@@ -89,6 +89,7 @@ export default function DriverHistory({ auth, orders }) {
                             <Link
                                 key={i}
                                 href={link.url}
+                                prefetch
                                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${link.active ? 'bg-[#8B4513] text-white' : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />

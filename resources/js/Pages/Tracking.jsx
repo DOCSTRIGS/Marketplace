@@ -223,14 +223,16 @@ export default function Tracking({ order: initialOrder }) {
                                 </p>
 
                                 <div className="w-full space-y-3">
-                                    <Link 
+                                    <Link
                                         href={route('explore')}
+                                        prefetch
                                         className="block w-full py-4 bg-[#8B4513] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#8B4513]/20 hover:bg-[#70360f] transition-all hover:scale-[1.02] active:scale-[0.98] border border-[#8B4513]"
                                     >
                                         Découvrir les produits
                                     </Link>
-                                    <Link 
+                                    <Link
                                         href={route('orders.index')}
+                                        prefetch
                                         className="block w-full py-4 bg-transparent text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-widest border border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600 transition-all hover:scale-[1.02] active:scale-[0.98]"
                                     >
                                         Historique des commandes

@@ -50,7 +50,7 @@ export default function SellerLayout({ children }) {
             {/* Sidebar */}
             <div className={`fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-[#1e1e1e] border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="flex items-center justify-center h-20 border-b border-gray-200 dark:border-gray-800">
-                    <Link href="/">
+                    <Link href="/" prefetch>
                         <h1 className="text-3xl font-bold text-[#8B4513]">LoméShop</h1>
                     </Link>
                 </div>
@@ -63,6 +63,7 @@ export default function SellerLayout({ children }) {
                                 <Link
                                     key={item.name}
                                     href={item.href}
+                                    prefetch
                                     onClick={() => setSidebarOpen(false)}
                                     className={`relative flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-300 ${
                                         isActive 

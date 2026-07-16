@@ -111,7 +111,7 @@ export default function Dashboard({ auth, stats: initialStats, recentOrders: ini
                                     Live
                                 </span>
                             </div>
-                            <Link href={route('seller.tracking')} className="text-xs font-black text-[#8B4513] hover:underline uppercase tracking-widest transition-colors">
+                            <Link href={route('seller.tracking')} prefetch className="text-xs font-black text-[#8B4513] hover:underline uppercase tracking-widest transition-colors">
                                 Voir la carte complète
                             </Link>
                         </div>
@@ -154,13 +154,14 @@ export default function Dashboard({ auth, stats: initialStats, recentOrders: ini
                     <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 transition-colors">
                         <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-gray-900 dark:text-white transition-colors">Messages Clients</h3>
-                            <Link href={route('seller.chat')} className="text-xs font-black text-[#8B4513] hover:underline uppercase tracking-widest transition-colors">
+                            <Link href={route('seller.chat')} prefetch className="text-xs font-black text-[#8B4513] hover:underline uppercase tracking-widest transition-colors">
                                 Voir tout →
                             </Link>
                         </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 transition-colors">Répondez à vos clients en temps réel directement depuis votre boutique.</p>
                         <Link
                             href={route('seller.chat')}
+                            prefetch
                             className="w-full flex items-center justify-center py-3 rounded-xl bg-[#8B4513] text-white font-bold text-sm hover:bg-[#70360f] transition-colors shadow-md shadow-[#8B4513]/20"
                         >
                             Ouvrir la messagerie

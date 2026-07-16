@@ -19,7 +19,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     <div className="flex h-16 justify-between">
                         <div className="flex">
                             <div className="flex shrink-0 items-center">
-                                <Link href="/">
+                                <Link href="/" prefetch>
                                     <ApplicationLogo className="block h-9 w-auto fill-current text-gray-800" />
                                 </Link>
                             </div>
@@ -28,6 +28,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <NavLink
                                     href={route('dashboard')}
                                     active={route().current('dashboard')}
+                                    prefetch
                                 >
                                     Dashboard
                                 </NavLink>
@@ -64,6 +65,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     <Dropdown.Content>
                                         <Dropdown.Link
                                             href={route('profile.edit')}
+                                            prefetch
                                         >
                                             Profile
                                         </Dropdown.Link>
@@ -132,6 +134,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         <ResponsiveNavLink
                             href={route('dashboard')}
                             active={route().current('dashboard')}
+                            prefetch
                         >
                             Dashboard
                         </ResponsiveNavLink>
@@ -148,7 +151,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         </div>
 
                         <div className="mt-3 space-y-1">
-                            <ResponsiveNavLink href={route('profile.edit')}>
+                            <ResponsiveNavLink href={route('profile.edit')} prefetch>
                                 Profile
                             </ResponsiveNavLink>
                             <ResponsiveNavLink

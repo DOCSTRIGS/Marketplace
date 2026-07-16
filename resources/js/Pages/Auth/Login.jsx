@@ -102,6 +102,7 @@ export default function Login({ status, canResetPassword }) {
                     {canResetPassword && (
                         <Link
                             href={route('password.request')}
+                            prefetch
                             className="text-xs font-bold text-[#8B4513] hover:underline"
                         >
                             Oublié ?
@@ -120,7 +121,7 @@ export default function Login({ status, canResetPassword }) {
                     
                     <p className="text-xs font-bold text-gray-400">
                         Nouveau ici ?{' '}
-                        <Link href={route('register')} className="text-[#8B4513] hover:underline">
+                        <Link href={route('register')} prefetch className="text-[#8B4513] hover:underline">
                             Créer un compte
                         </Link>
                     </p>

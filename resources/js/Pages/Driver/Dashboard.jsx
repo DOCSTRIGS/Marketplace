@@ -170,9 +170,9 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                         <h1 className="text-2xl font-black text-[#D35400] dark:text-[#E67E22] tracking-tighter">LoméShop</h1>
                         <nav className="flex items-center gap-8">
                             <div className="flex gap-6 text-[11px] font-black uppercase text-spacing">
-                                <Link href={route('driver.dashboard')} className="text-[#8B4513] border-b-2 border-[#8B4513] pb-1">Missions</Link>
-                                <Link href={route('driver.history')} className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Historique</Link>
-                                <Link href={route('driver.profile')} className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Mon Profil</Link>
+                                <Link href={route('driver.dashboard')} prefetch className="text-[#8B4513] border-b-2 border-[#8B4513] pb-1">Missions</Link>
+                                <Link href={route('driver.history')} prefetch className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Historique</Link>
+                                <Link href={route('driver.profile')} prefetch className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Mon Profil</Link>
                             </div>
                             <div className="w-[1px] h-6 bg-gray-200 dark:bg-gray-800 mx-2"></div>
                             <div className="flex items-center gap-3">
@@ -208,7 +208,7 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                     <div className="flex items-center gap-6">
                         <ThemeToggle />
                         {stats && (
-                            <Link href={route('driver.profile')} className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-full hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors" title={`${stats.reviews_count || 0} avis`}>
+                            <Link href={route('driver.profile')} prefetch className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-full hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors" title={`${stats.reviews_count || 0} avis`}>
                                 <span className="text-amber-500 text-sm">★</span>
                                 <span className="text-[11px] font-black text-amber-700 dark:text-amber-400">{stats.rating}</span>
                             </Link>

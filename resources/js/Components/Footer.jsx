@@ -11,7 +11,7 @@ export default function Footer() {
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-16">
                     {/* Brand Info */}
                     <div className="col-span-2">
-                        <Link href={route('home')} className="inline-block mb-4">
+                        <Link href={route('home')} prefetch className="inline-block mb-4">
                             <h2 className="text-[24px] font-black tracking-tight uppercase">
                                 <span className="text-[#D35400]">Lomé</span>
                                 <span className="text-gray-800 dark:text-white">Shop</span>
@@ -33,8 +33,8 @@ export default function Footer() {
                     <div>
                         <h3 className="text-gray-800 dark:text-gray-200 font-black text-xs uppercase tracking-widest mb-5">Acheter</h3>
                         <ul className="space-y-3 font-medium">
-                            <li><Link href={route('explore')} className="text-gray-500 dark:text-gray-400 hover:text-[#D35400] dark:hover:text-[#D35400] text-xs transition-colors">Boutiques</Link></li>
-                            <li><Link href={route('explore', { sort: 'Nouveautés' })} className="text-gray-500 dark:text-gray-400 hover:text-[#D35400] dark:hover:text-[#D35400] text-xs transition-colors">Nouveautés</Link></li>
+                            <li><Link href={route('explore')} prefetch className="text-gray-500 dark:text-gray-400 hover:text-[#D35400] dark:hover:text-[#D35400] text-xs transition-colors">Boutiques</Link></li>
+                            <li><Link href={route('explore', { sort: 'Nouveautés' })} prefetch className="text-gray-500 dark:text-gray-400 hover:text-[#D35400] dark:hover:text-[#D35400] text-xs transition-colors">Nouveautés</Link></li>
                         </ul>
                     </div>
 
@@ -43,11 +43,11 @@ export default function Footer() {
                         <h3 className="text-gray-800 dark:text-gray-200 font-black text-xs uppercase tracking-widest mb-5">Vendre</h3>
                         <ul className="space-y-3 font-medium">
                             {isSeller ? (
-                                <li><Link href={route('seller.dashboard')} className="text-gray-500 dark:text-gray-400 hover:text-[#D35400] dark:hover:text-[#D35400] text-xs transition-colors">Portail vendeur</Link></li>
+                                <li><Link href={route('seller.dashboard')} prefetch className="text-gray-500 dark:text-gray-400 hover:text-[#D35400] dark:hover:text-[#D35400] text-xs transition-colors">Portail vendeur</Link></li>
                             ) : (
-                                <li><Link href={route('role.selection')} className="text-gray-500 dark:text-gray-400 hover:text-[#D35400] dark:hover:text-[#D35400] text-xs transition-colors">Vendre sur LoméShop</Link></li>
+                                <li><Link href={route('role.selection')} prefetch className="text-gray-500 dark:text-gray-400 hover:text-[#D35400] dark:hover:text-[#D35400] text-xs transition-colors">Vendre sur LoméShop</Link></li>
                             )}
-                            <li><Link href={route('help')} className="text-gray-500 dark:text-gray-400 hover:text-[#D35400] dark:hover:text-[#D35400] text-xs transition-colors">Centre d'aide</Link></li>
+                            <li><Link href={route('help')} prefetch className="text-gray-500 dark:text-gray-400 hover:text-[#D35400] dark:hover:text-[#D35400] text-xs transition-colors">Centre d'aide</Link></li>
                         </ul>
                     </div>
 
@@ -55,8 +55,8 @@ export default function Footer() {
                     <div>
                         <h3 className="text-gray-800 dark:text-gray-200 font-black text-xs uppercase tracking-widest mb-5">Légal</h3>
                         <ul className="space-y-3 font-medium">
-                            <li><Link href={route('legal.terms')} className="text-gray-500 dark:text-gray-400 hover:text-[#D35400] dark:hover:text-[#D35400] text-xs transition-colors">Conditions d'utilisation</Link></li>
-                            <li><Link href={route('legal.privacy')} className="text-gray-500 dark:text-gray-400 hover:text-[#D35400] dark:hover:text-[#D35400] text-xs transition-colors">Politique de confidentialité</Link></li>
+                            <li><Link href={route('legal.terms')} prefetch className="text-gray-500 dark:text-gray-400 hover:text-[#D35400] dark:hover:text-[#D35400] text-xs transition-colors">Conditions d'utilisation</Link></li>
+                            <li><Link href={route('legal.privacy')} prefetch className="text-gray-500 dark:text-gray-400 hover:text-[#D35400] dark:hover:text-[#D35400] text-xs transition-colors">Politique de confidentialité</Link></li>
                         </ul>
                     </div>
                 </div>

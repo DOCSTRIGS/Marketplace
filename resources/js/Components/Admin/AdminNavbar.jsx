@@ -28,7 +28,7 @@ export default function AdminNavbar({ activeTab = 'overview' }) {
             <div className="h-[80px] flex items-center justify-between px-8 md:px-12">
                 {/* Logo */}
                 <div className="flex items-center gap-8">
-                    <Link href={route('admin.dashboard')} className="flex items-center">
+                    <Link href={route('admin.dashboard')} prefetch className="flex items-center">
                         <h1 className="text-[24px] font-black tracking-tighter uppercase">
                             <span className="text-[#8B4513]">Lomé</span>
                             <span className="text-gray-900 dark:text-white">Admin</span>
@@ -40,6 +40,7 @@ export default function AdminNavbar({ activeTab = 'overview' }) {
                             <Link
                                 key={tab.id}
                                 href={tab.href}
+                                prefetch
                                 className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
                                     currentActive === tab.id
                                     ? 'bg-[#8B4513] text-white shadow-md shadow-[#8B4513]/20'
@@ -84,6 +85,7 @@ export default function AdminNavbar({ activeTab = 'overview' }) {
                             </div>
                             <Dropdown.Link
                                 href={route('profile.edit')}
+                                prefetch
                                 className="dark:text-gray-300 dark:hover:bg-white/5"
                             >
                                 Modifier nom, email, mot de passe
@@ -136,6 +138,7 @@ export default function AdminNavbar({ activeTab = 'overview' }) {
                         <Link
                             key={tab.id}
                             href={tab.href}
+                            prefetch
                             onClick={() => setMobileMenuOpen(false)}
                             className={`px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center justify-between ${
                                 currentActive === tab.id

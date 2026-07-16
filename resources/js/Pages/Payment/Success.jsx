@@ -48,6 +48,7 @@ export default function Success({ reference, totalAmount, firstOrderId, pending 
                     </p>
                     <Link
                         href={route('checkout.delivery')}
+                        prefetch
                         className="w-full inline-block bg-[#8B4513] text-white py-4 rounded-xl font-bold text-sm hover:bg-[#70360f] transition-all shadow-lg shadow-[#8B4513]/20 uppercase tracking-wider"
                     >
                         Retourner au paiement
@@ -96,6 +97,7 @@ export default function Success({ reference, totalAmount, firstOrderId, pending 
 
                     <Link
                         href={route('tracking', { order_id: firstOrderId })}
+                        prefetch
                         className="w-full bg-[#8B4513] text-white py-4 rounded-xl font-bold text-sm hover:bg-[#70360f] transition-all shadow-lg shadow-[#8B4513]/20 uppercase tracking-wider"
                     >
                         Suivre en direct (Carte)
@@ -103,6 +105,7 @@ export default function Success({ reference, totalAmount, firstOrderId, pending 
 
                     <Link
                         href={route('explore')}
+                        prefetch
                         className="w-full bg-white dark:bg-transparent text-gray-900 dark:text-white border-2 border-gray-200 dark:border-gray-700 py-4 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-all uppercase tracking-wider"
                     >
                         Continuer mes achats

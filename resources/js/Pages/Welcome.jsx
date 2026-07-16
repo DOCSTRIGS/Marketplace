@@ -71,6 +71,7 @@ export default function Welcome({ auth, products = [], carouselSlides = [], prod
                                 </p>
                                 <Link
                                     href={route('explore')}
+                                    prefetch
                                     className="inline-block bg-[#D4AF7A] hover:bg-[#c9a15f] text-[#1a0f00] px-8 py-3.5 rounded-2xl font-bold text-sm transition-all shadow-lg hover:scale-[1.03] active:scale-[0.98]"
                                 >
                                     Découvrir la collection
@@ -88,7 +89,7 @@ export default function Welcome({ auth, products = [], carouselSlides = [], prod
                                         <h3 className="text-2xl font-bold text-[#222222] dark:text-white mb-1">{group.category_name}</h3>
                                         <p className="text-[#777777] dark:text-gray-400 text-sm">Les articles les plus recherchés en ce moment à Lomé.</p>
                                     </div>
-                                    <Link href={route('explore', { category_id: group.category_id })} className="text-[#8B4513] dark:text-[#D4AF7A] font-bold text-sm hover:underline hidden sm:flex items-center">
+                                    <Link href={route('explore', { category_id: group.category_id })} prefetch className="text-[#8B4513] dark:text-[#D4AF7A] font-bold text-sm hover:underline hidden sm:flex items-center">
                                         Voir tout
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                                             <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -128,6 +129,7 @@ export default function Welcome({ auth, products = [], carouselSlides = [], prod
                                     <Link
                                         key={shop.id}
                                         href={route('explore', { shop_id: shop.id })}
+                                        prefetch
                                         className="bg-white dark:bg-[#1e1e1e] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow text-center"
                                     >
                                         <div className="w-16 h-16 rounded-full bg-[#EFE9E1] dark:bg-[#252525] mx-auto mb-4 overflow-hidden flex items-center justify-center text-[#8B4513] dark:text-[#D4AF7A] font-black text-xl">

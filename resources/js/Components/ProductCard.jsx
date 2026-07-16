@@ -67,8 +67,9 @@ export default function ProductCard({ product }) {
                     </p>
 
                     {/* Button */}
-                    <Link 
+                    <Link
                         href={route('product.show', safeProduct.id)}
+                        prefetch
                         className="block w-full py-2.5 px-4 bg-white border border-[#8B4513] text-[#8B4513] text-sm font-bold rounded-lg text-center hover:bg-[#8B4513] hover:text-white transition-colors"
                     >
                         Voir le produit

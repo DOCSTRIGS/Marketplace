@@ -260,8 +260,9 @@ export default function Explore({ products, categories, filters, activeShop }) {
                             </div>
 
                             <div className="flex flex-col sm:flex-row md:flex-col gap-3 w-full md:w-auto shrink-0">
-                                <Link 
+                                <Link
                                     href={route('chat.show', activeShop.id)}
+                                    prefetch
                                     className="flex-grow md:flex-grow-0 px-6 py-3 bg-transparent border-2 border-gray-250 dark:border-gray-800 hover:border-[#b85817] hover:text-[#b85817] rounded-xl text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white text-center transition-all duration-300"
                                 >
                                     Discuter en ligne
@@ -471,6 +472,7 @@ export default function Explore({ products, categories, filters, activeShop }) {
                                 {/* Premium Overlay */}
                                 <Link
                                     href={route('map')}
+                                    prefetch
                                     className="absolute inset-0 z-[10] bg-gradient-to-t from-[#111111]/80 via-[#111111]/20 to-transparent flex flex-col justify-end p-5 transition-opacity duration-300 group-hover/map:opacity-90"
                                 >
                                     <div className="flex items-center justify-between">

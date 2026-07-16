@@ -1,5 +1,20 @@
-const CACHE_NAME = 'lome-shop-cache-v2';
+const CACHE_NAME = 'lome-shop-cache-v3';
 const OFFLINE_URL = '/offline.html';
+// Vite's /build/ filenames change on every deploy but the old ones are never
+// requested again, so nothing ever evicted them from this cache — capping the
+// entry count keeps it from growing forever across deploys.
+const MAX_STATIC_CACHE_ENTRIES = 120;
+
+async function trimCache(cacheName, maxEntries) {
+    const cache = await caches.open(cacheName);
+    const keys = await cache.keys();
+    if (keys.length <= maxEntries) return;
+    // Cache.keys() returns insertion order, so the oldest entries come first.
+    const excess = keys.length - maxEntries;
+    for (let i = 0; i < excess; i++) {
+        await cache.delete(keys[i]);
+    }
+}
 
 // Assets to cache immediately on install
 const PRECACHE_ASSETS = [
@@ -101,6 +116,7 @@ self.addEventListener('fetch', (event) => {
                 if (isStaticAsset) {
                     return caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, networkResponse.clone());
+                        trimCache(CACHE_NAME, MAX_STATIC_CACHE_ENTRIES);
                         return networkResponse;
                     });
                 }

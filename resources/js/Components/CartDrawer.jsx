@@ -96,8 +96,9 @@ export default function CartDrawer({ isOpen, onClose }) {
                                     <h3 className="font-bold text-[#222222] dark:text-white">Votre panier est vide</h3>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">Parcourez nos catégories pour trouver votre bonheur.</p>
                                 </div>
-                                <Link 
-                                    href={route('explore')} 
+                                <Link
+                                    href={route('explore')}
+                                    prefetch
                                     onClick={onClose}
                                     className="bg-[#8B4513] text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-[#8B4513]/20"
                                 >

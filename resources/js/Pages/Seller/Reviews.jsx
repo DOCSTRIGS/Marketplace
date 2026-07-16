@@ -125,6 +125,7 @@ export default function SellerReviews({ auth, reviews, avgRating, reviewsCount }
                         <Link
                             key={i}
                             href={link.url}
+                            prefetch
                             className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${link.active ? 'bg-[#8B4513] text-white' : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />
