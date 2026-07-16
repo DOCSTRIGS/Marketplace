@@ -52,5 +52,41 @@
     </head>
     <body class="font-sans antialiased">
         @inertia
+
+        {{-- Shown until React mounts into #app above (pure CSS, no JS needed):
+             covers the gap between the HTML arriving and the JS bundle finishing
+             download/boot/first render, which can take a few seconds on a cold
+             start. Hidden automatically the instant #app gets its first child. --}}
+        <div id="initial-loader">
+            <div class="initial-loader-spinner"></div>
+        </div>
+        <style>
+            #initial-loader {
+                position: fixed;
+                inset: 0;
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #FDF8F4;
+            }
+            html.dark #initial-loader {
+                background: #121212;
+            }
+            #app:not(:empty) ~ #initial-loader {
+                display: none;
+            }
+            .initial-loader-spinner {
+                width: 42px;
+                height: 42px;
+                border: 4px solid rgba(139, 69, 19, 0.15);
+                border-top-color: #D35400;
+                border-radius: 50%;
+                animation: initial-loader-spin 0.8s linear infinite;
+            }
+            @keyframes initial-loader-spin {
+                to { transform: rotate(360deg); }
+            }
+        </style>
     </body>
 </html>
