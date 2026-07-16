@@ -39,7 +39,7 @@ RUN apt-get update && apt-get install -y \
         libcurl4-openssl-dev \
         unzip \
     && docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype \
-    && docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql pgsql gd zip mbstring curl dom xml \
+    && docker-php-ext-install -j"$(nproc)" pdo pdo_pgsql pgsql gd zip mbstring curl dom xml pcntl \
     && rm -rf /var/lib/apt/lists/* \
     && rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
 
