@@ -7,10 +7,10 @@ export default function DriverHistory({ auth, orders }) {
         <div className="min-h-screen bg-white dark:bg-[#121212] text-[#1a1a1a] dark:text-white antialiased transition-colors duration-300">
             <Head title="Historique des Missions" />
 
-            <header className="h-20 px-12 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-[#1e1e1e] z-50 transition-colors duration-300">
-                <div className="flex items-center gap-10">
+            <header className="h-20 px-4 md:px-6 xl:px-12 flex flex-col gap-4 md:flex-row md:items-center justify-between border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-[#1e1e1e] z-50 transition-colors duration-300">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center">
                     <h1 className="text-2xl font-black text-[#D35400] dark:text-[#E67E22] tracking-tighter">LoméShop</h1>
-                    <nav className="flex items-center gap-8">
+                    <nav className="flex flex-col gap-3 md:flex-row md:items-center">
                         <div className="flex gap-6 text-[11px] font-black uppercase text-spacing">
                             <Link href={route('driver.dashboard')} prefetch className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Missions</Link>
                             <Link href={route('driver.history')} prefetch className="text-[#8B4513] border-b-2 border-[#8B4513] pb-1">Historique</Link>
@@ -30,8 +30,8 @@ export default function DriverHistory({ auth, orders }) {
                 </div>
             </header>
 
-            <main className="p-12 max-w-[1200px] mx-auto">
-                <div className="flex items-center justify-between mb-12">
+            <main className="p-6 md:p-12 max-w-[1200px] mx-auto">
+                <div className="flex flex-col gap-4 md:flex-row items-start md:items-center justify-between mb-12">
                     <div>
                         <h2 className="text-[34px] font-black uppercase tracking-tight mb-2">Historique des Missions</h2>
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Toutes vos livraisons terminées avec succès</p>
@@ -39,34 +39,34 @@ export default function DriverHistory({ auth, orders }) {
                 </div>
 
                 <div className="bg-white dark:bg-[#1e1e1e] rounded-[40px] border border-gray-50 dark:border-gray-800 shadow-sm overflow-hidden transition-colors duration-300">
-                    <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <div className="overflow-x-auto sm:px-4">
+                    <table className="w-full text-left border-collapse min-w-full">
                         <thead>
                             <tr className="border-b border-gray-50 dark:border-gray-800">
-                                <th className="px-8 py-6 text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 tracking-widest">Date / Heure</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 tracking-widest">Commande</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 tracking-widest">Boutique</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 tracking-widest">Destination</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 tracking-widest">Statut</th>
+                                <th className="px-4 py-4 md:px-8 md:py-6 text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 tracking-widest">Date / Heure</th>
+                                <th className="px-4 py-4 md:px-8 md:py-6 text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 tracking-widest">Commande</th>
+                                <th className="px-4 py-4 md:px-8 md:py-6 text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 tracking-widest">Boutique</th>
+                                <th className="px-4 py-4 md:px-8 md:py-6 text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 tracking-widest">Destination</th>
+                                <th className="px-4 py-4 md:px-8 md:py-6 text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 tracking-widest">Statut</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                             {orders.data.length > 0 ? orders.data.map(order => (
                                 <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
-                                    <td className="px-8 py-6">
+                                    <td className="px-4 py-4 md:px-8 md:py-6">
                                         <p className="text-[11px] font-bold text-gray-900 dark:text-white">{new Date(order.delivered_at || order.updated_at).toLocaleDateString()}</p>
                                         <p className="text-[9px] text-gray-400 dark:text-gray-500">{new Date(order.delivered_at || order.updated_at).toLocaleTimeString()}</p>
                                     </td>
-                                    <td className="px-8 py-6">
+                                    <td className="px-4 py-4 md:px-8 md:py-6">
                                         <p className="text-[11px] font-black uppercase text-gray-900 dark:text-white">{order.order_number}</p>
                                     </td>
-                                    <td className="px-8 py-6">
+                                    <td className="px-4 py-4 md:px-8 md:py-6">
                                         <p className="text-[11px] font-bold text-gray-900 dark:text-white">{order.shop.name}</p>
                                     </td>
-                                    <td className="px-8 py-6">
+                                    <td className="px-4 py-4 md:px-8 md:py-6">
                                         <p className="text-[11px] font-medium text-gray-600 dark:text-gray-300 truncate max-w-[200px]">{order.delivery_address}</p>
                                     </td>
-                                    <td className="px-8 py-6">
+                                    <td className="px-4 py-4 md:px-8 md:py-6">
                                         <span className="bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">LIVRÉ</span>
                                     </td>
                                 </tr>

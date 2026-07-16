@@ -165,16 +165,16 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
             <div className="min-h-screen bg-white dark:bg-[#121212] text-[#1a1a1a] dark:text-white antialiased transition-colors duration-300">
                 <Head title="LoméShop — Espace Livreur" />
 
-                <header className="h-20 px-12 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-[#1e1e1e] z-50 transition-colors duration-300">
-                    <div className="flex items-center gap-10">
+                <header className="h-20 px-4 md:px-6 xl:px-12 flex flex-col gap-4 md:flex-row md:items-center justify-between border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-[#1e1e1e] z-50 transition-colors duration-300">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center">
                         <h1 className="text-2xl font-black text-[#D35400] dark:text-[#E67E22] tracking-tighter">LoméShop</h1>
-                        <nav className="flex items-center gap-8">
+                        <nav className="flex flex-col gap-3 md:flex-row md:items-center">
                             <div className="flex gap-6 text-[11px] font-black uppercase text-spacing">
                                 <Link href={route('driver.dashboard')} prefetch className="text-[#8B4513] border-b-2 border-[#8B4513] pb-1">Missions</Link>
                                 <Link href={route('driver.history')} prefetch className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Historique</Link>
                                 <Link href={route('driver.profile')} prefetch className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Mon Profil</Link>
                             </div>
-                            <div className="w-[1px] h-6 bg-gray-200 dark:bg-gray-800 mx-2"></div>
+                            <div className="w-[1px] h-6 bg-gray-200 dark:bg-gray-800 mx-2" />
                             <div className="flex items-center gap-3">
                                 <div className={`w-2 h-2 rounded-full ${status === 'available' ? 'bg-green-500 animate-pulse' : 'bg-gray-300 dark:bg-gray-700'}`}></div>
                                 <select 
@@ -205,7 +205,7 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                         </div>
                     )}
 
-                    <div className="flex items-center gap-6">
+                    <div className="flex flex-wrap items-center gap-3 md:gap-6">
                         <ThemeToggle />
                         {stats && (
                             <Link href={route('driver.profile')} prefetch className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-full hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors" title={`${stats.reviews_count || 0} avis`}>

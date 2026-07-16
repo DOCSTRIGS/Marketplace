@@ -41,16 +41,16 @@ export default function DriverProfile({ auth, user, reviews = [], avgRating = 0,
             <Head title="Mon Profil Livreur" />
 
 
-            <header className="h-20 px-12 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-[#1e1e1e] z-50 transition-colors duration-300">
-                <div className="flex items-center gap-10">
+            <header className="h-20 px-4 md:px-6 xl:px-12 flex flex-col gap-4 md:flex-row md:items-center justify-between border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-[#1e1e1e] z-50 transition-colors duration-300">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center">
                     <h1 className="text-2xl font-black text-[#D35400] dark:text-[#E67E22] tracking-tighter">LoméShop</h1>
-                    <nav className="flex items-center gap-8">
+                    <nav className="flex flex-col gap-3 md:flex-row md:items-center">
                         <div className="flex gap-6 text-[11px] font-black uppercase text-spacing">
                             <Link href={route('driver.dashboard')} prefetch className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Missions</Link>
                             <Link href={route('driver.history')} prefetch className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Historique</Link>
                             <Link href={route('driver.profile')} prefetch className="text-[#8B4513] border-b-2 border-[#8B4513] pb-1">Profil</Link>
                         </div>
-                        <div className="w-[1px] h-6 bg-gray-200 dark:bg-gray-800 mx-2"></div>
+                        <div className="w-[1px] h-6 bg-gray-200 dark:bg-gray-800 mx-2" />
                         <div className="bg-[#F2F2F2] dark:bg-gray-800 p-1 rounded-full flex items-center">
                             <button type="button" onClick={() => handleStatusChange('available')} className={`px-6 py-2 rounded-full text-[10px] font-bold uppercase transition-all ${status === 'available' ? 'bg-[#8B4513] text-white' : 'text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white'}`}>En ligne</button>
                             <button type="button" onClick={() => handleStatusChange('offline')} className={`px-6 py-2 rounded-full text-[10px] font-bold uppercase transition-all ${status === 'offline' ? 'bg-[#8B4513] text-white' : 'text-gray-400'}`}>Hors ligne</button>
@@ -73,16 +73,16 @@ export default function DriverProfile({ auth, user, reviews = [], avgRating = 0,
                 </div>
             </header>
 
-            <main className="p-12 max-w-[1200px] mx-auto">
+            <main className="p-6 md:p-12 max-w-[1200px] mx-auto">
                 <div className="mb-12">
                     <h2 className="text-[34px] font-black uppercase tracking-tight mb-2 text-gray-900 dark:text-white">Réglages du Profil</h2>
                     <p className="text-xs text-gray-400 dark:text-gray-500 font-medium tracking-wide uppercase">Gérez vos informations personnelles et votre véhicule.</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="grid grid-cols-12 gap-12">
+                <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-12">
                     {/* SECTION PERSONNELLE */}
-                    <div className="col-span-4 space-y-8">
-                        <div className="bg-gray-50 dark:bg-[#1e1e1e] rounded-[40px] border border-transparent dark:border-gray-800 p-10 space-y-6">
+                    <div className="col-span-12 lg:col-span-4 space-y-8">
+                        <div className="bg-gray-50 dark:bg-[#1e1e1e] rounded-[40px] border border-transparent dark:border-gray-800 p-6 md:p-10 space-y-6">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-black uppercase tracking-widest text-[#8B4513] dark:text-[#E67E22]">Infos Personnelles</h3>
                             </div>
@@ -162,11 +162,11 @@ export default function DriverProfile({ auth, user, reviews = [], avgRating = 0,
                     </div>
 
                     {/* SECTION VÉHICULE */}
-                    <div className="col-span-8 space-y-8">
-                        <div className="bg-white dark:bg-[#1e1e1e] rounded-[40px] p-12 border border-gray-100 dark:border-gray-800 shadow-sm space-y-10">
+                    <div className="col-span-12 lg:col-span-8 space-y-8">
+                        <div className="bg-white dark:bg-[#1e1e1e] rounded-[40px] p-6 md:p-12 border border-gray-100 dark:border-gray-800 shadow-sm space-y-10">
                             <h3 className="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Mon Véhicule & Documents</h3>
                             
-                            <div className="grid grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div className="space-y-6">
                                     <div>
                                         <label className="text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 ml-2 mb-2 block">Type de véhicule</label>
