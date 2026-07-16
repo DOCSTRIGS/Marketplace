@@ -17,27 +17,6 @@ class AdminController extends Controller
 {
     public function dashboard()
     {
-        // Pending shops stay a plain list (action queue an admin must see in full;
-        // it self-clears as items are approved/rejected, so it doesn't grow unbounded).
-        $pendingShops = Shop::with('user', 'neighborhood')
-            ->where('status', 'pending')
-            ->latest()
-            ->get();
-
-        // These lists only grow over time, so they're paginated instead of loading
-        // the entire table on every dashboard visit.
-        $approvedShops = Shop::with('user', 'neighborhood')
-            ->where('status', 'approved')
-            ->latest()
-            ->paginate(20, ['*'], 'approved_page')
-            ->withQueryString();
-
-        $rejectedShops = Shop::with('user', 'neighborhood')
-            ->where('status', 'rejected')
-            ->latest()
-            ->paginate(20, ['*'], 'rejected_page')
-            ->withQueryString();
-
         $shopStatusCounts = Shop::selectRaw("
                 COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
                 COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved,
@@ -67,17 +46,6 @@ class AdminController extends Controller
             'total_revenue' => (float) Order::where('status', '!=', 'cancelled')->sum('total_amount'),
             'total_commissions' => (float) Order::where('status', '!=', 'cancelled')->sum('commission_amount'),
         ];
-
-        $categories = Category::withCount('children')->get();
-        $users = User::where('role', '!=', 'driver')->latest()->paginate(20, ['*'], 'users_page')->withQueryString();
-        $drivers = User::where('role', 'driver')
-            ->withAvg('driverReviews', 'rating')
-            ->withCount('driverReviews')
-            ->orderByDesc('updated_at')
-            ->paginate(20, ['*'], 'drivers_page')
-            ->withQueryString();
-        $reviews = Review::with(['user', 'product.shop', 'driver'])->latest()->paginate(20, ['*'], 'reviews_page')->withQueryString();
-        $withdrawals = Withdrawal::with('shop.user')->latest()->paginate(20, ['*'], 'withdrawals_page')->withQueryString();
 
         // Real Chart data for the last 7 days + Comparison with previous week
         // Collapsed from 4 queries x 7 days (28 round trips) into 3 grouped queries.
@@ -131,16 +99,33 @@ class AdminController extends Controller
                 'value' => $cat->products_count, // Real count
             ]);
 
+        // Only the overview tab (stats/chart/category/neighborhood breakdowns above) is
+        // needed on first paint — everything below is a per-tab list that used to be
+        // fetched eagerly on every dashboard visit regardless of which tab was active.
+        // Deferring them means the initial response pays for ~6 queries instead of ~30+
+        // remote round trips; each tab's data streams in right after via its own request.
         return Inertia::render('Admin/Dashboard', [
-            'pendingShops'  => $pendingShops,
-            'approvedShops' => $approvedShops,
-            'rejectedShops' => $rejectedShops,
+            'pendingShops'  => Inertia::defer(fn() => Shop::with('user', 'neighborhood')
+                ->where('status', 'pending')->latest()->get(), 'shops'),
+            'approvedShops' => Inertia::defer(fn() => Shop::with('user', 'neighborhood')
+                ->where('status', 'approved')->latest()
+                ->paginate(20, ['*'], 'approved_page')->withQueryString(), 'shops'),
+            'rejectedShops' => Inertia::defer(fn() => Shop::with('user', 'neighborhood')
+                ->where('status', 'rejected')->latest()
+                ->paginate(20, ['*'], 'rejected_page')->withQueryString(), 'shops'),
             'stats'         => $stats,
-            'categories'    => $categories,
-            'users'         => $users,
-            'drivers'       => $drivers,
-            'reviews'       => $reviews,
-            'withdrawals'   => $withdrawals,
+            'categories'    => Inertia::defer(fn() => Category::withCount('children')->get(), 'categories'),
+            'users'         => Inertia::defer(fn() => User::where('role', '!=', 'driver')->latest()
+                ->paginate(20, ['*'], 'users_page')->withQueryString(), 'users'),
+            'drivers'       => Inertia::defer(fn() => User::where('role', 'driver')
+                ->withAvg('driverReviews', 'rating')
+                ->withCount('driverReviews')
+                ->orderByDesc('updated_at')
+                ->paginate(20, ['*'], 'drivers_page')->withQueryString(), 'drivers'),
+            'reviews'       => Inertia::defer(fn() => Review::with(['user', 'product.shop', 'driver'])
+                ->latest()->paginate(20, ['*'], 'reviews_page')->withQueryString(), 'reviews'),
+            'withdrawals'   => Inertia::defer(fn() => Withdrawal::with('shop.user')
+                ->latest()->paginate(20, ['*'], 'withdrawals_page')->withQueryString(), 'withdrawals'),
             'chartData'     => $chartData,
             'categoryStats' => $categoryStats,
             'neighborhoodStats' => $neighborhoodStats,

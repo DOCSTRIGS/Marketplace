@@ -32,6 +32,18 @@ function PaginationControls({ paginator }) {
     );
 }
 
+// Shown for deferred props (users/drivers/shops/reviews/withdrawals/categories) while
+// their data streams in behind the initial (fast) page load.
+function TabSkeleton() {
+    return (
+        <div className="space-y-3 animate-pulse">
+            {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-16 bg-gray-100 dark:bg-white/5 rounded-2xl"></div>
+            ))}
+        </div>
+    );
+}
+
 // Asymmetric Sector Renderer — each slice uses its own outerRadius from data (like reference image)
 const ExplodedSector = (props) => {
     const { cx, cy, innerRadius, startAngle, endAngle, fill, radius } = props;
@@ -581,13 +593,15 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                             </div>
                         </div>
 
+                        {!pendingShops || !approvedShops || !rejectedShops ? <TabSkeleton /> : (
+                        <>
                         {/* Pending Shops */}
                         <div>
                             <div className="flex items-center gap-3 mb-6">
                                 <h2 className="text-xl font-black text-gray-900 dark:text-white">Demandes en attente</h2>
                                 <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-3 py-1 rounded-full text-xs font-bold">{pendingShops.length}</span>
                             </div>
-                            
+
                             {pendingShops.length === 0 ? (
                                 <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 p-12 text-center">
                                     <div className="w-16 h-16 bg-gray-50 dark:bg-[#252525] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -699,10 +713,13 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 <PaginationControls paginator={rejectedShops} />
                             </div>
                         )}
+                        </>
+                        )}
                     </div>
                 )}
 
                 {activeTab === 'withdrawals' && (
+                    !withdrawals ? <TabSkeleton /> :
                     <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors">
                         <div className="overflow-x-auto">
                         <table className="w-full text-left">
@@ -748,6 +765,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                 )}
 
                 {activeTab === 'reviews' && (
+                    !reviews ? <TabSkeleton /> :
                     <>
                     <div className="grid gap-6 md:grid-cols-2">
                         {reviews.data.map(review => (
@@ -824,7 +842,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 <button type="submit" className="bg-[#8B4513] text-white px-8 py-2 rounded-xl font-bold">Ajouter</button>
                             </form>
                         </div>
-                        {categories.filter(c=>!c.parent_id).map(cat => (
+                        {!categories ? <TabSkeleton /> : categories.filter(c=>!c.parent_id).map(cat => (
                             <CategoryRow key={cat.id} cat={cat} subcategories={categories.filter(c=>c.parent_id===cat.id)} />
                         ))}
                     </div>
@@ -842,6 +860,8 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                             </button>
                         </div>
 
+                        {!users ? <TabSkeleton /> : (
+                        <>
                         <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors">
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-gray-50 dark:bg-[#252525] border-b border-gray-100 dark:border-gray-800">
@@ -892,6 +912,8 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                             </table>
                         </div>
                         <PaginationControls paginator={users} />
+                        </>
+                        )}
                     </div>
                 )}
 
@@ -907,6 +929,8 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                             </button>
                         </div>
                         
+                        {!drivers ? <TabSkeleton /> : (
+                        <>
                         <div className="bg-white dark:bg-[#1e1e1e] rounded-[2.5rem] border border-gray-100 dark:border-gray-800 overflow-hidden shadow-xl transition-all">
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-gray-50/50 dark:bg-[#252525] border-b border-gray-100 dark:border-gray-800">
@@ -982,6 +1006,8 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                             </table>
                         </div>
                         <PaginationControls paginator={drivers} />
+                        </>
+                        )}
                     </div>
                 )}
 
