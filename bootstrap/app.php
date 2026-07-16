@@ -12,6 +12,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Render (like most PaaS) terminates TLS at its edge and forwards plain HTTP
+        // internally. Without trusting that proxy, Laravel thinks every request is
+        // HTTP and generates asset/URL links as http://, which browsers then block
+        // as mixed content on the HTTPS page. Trusting all proxies here is safe:
+        // the container has no other ingress path than Render's own edge.
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
