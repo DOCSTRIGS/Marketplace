@@ -24,7 +24,7 @@ function Directions({ driverPos, shopPos, clientPos, orderStatus }) {
         if (!directionsService || !directionsRenderer) return;
 
         let destination = shopPos;
-        
+
         if (orderStatus === 'shipped') {
             destination = clientPos;
         }
@@ -69,7 +69,7 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
         }
 
         setProcessing(true);
-        axios.post(route('driver.orders.update-status', orderId), { 
+        axios.post(route('driver.orders.update-status', orderId), {
             status: newStatus,
             delivery_code: code
         })
@@ -177,8 +177,8 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                             <div className="w-[1px] h-6 bg-gray-200 dark:bg-gray-800 mx-2" />
                             <div className="flex items-center gap-3">
                                 <div className={`w-2 h-2 rounded-full ${status === 'available' ? 'bg-green-500 animate-pulse' : 'bg-gray-300 dark:bg-gray-700'}`}></div>
-                                <select 
-                                    value={status} 
+                                <select
+                                    value={status}
                                     onChange={(e) => {
                                         const newStatus = e.target.value;
                                         setStatus(newStatus);
@@ -272,7 +272,7 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                                         </div>
                                         <div className="pt-2 space-y-4">
                                             {order.status === 'accepted' || order.status === 'preparing' ? (
-                                                <button 
+                                                <button
                                                     disabled={processing}
                                                     onClick={() => handleUpdateStatus(order.id, 'shipped')}
                                                     className="w-full py-3 bg-[#8B4513] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-[#8B4513]/20"
@@ -283,8 +283,8 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                                                 <div className="space-y-3">
                                                     <div className="bg-gray-50 dark:bg-[#121212] p-4 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800">
                                                         <p className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2 text-center">Code de livraison (Client)</p>
-                                                        <input 
-                                                            type="text" 
+                                                        <input
+                                                            type="text"
                                                             maxLength="4"
                                                             placeholder="0 0 0 0"
                                                             value={deliveryCodes[order.id] || ''}
@@ -292,7 +292,7 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                                                             className="w-full text-center text-xl font-black tracking-[0.5em] bg-transparent border-none focus:ring-0 placeholder-gray-200 dark:placeholder-gray-700 text-gray-900 dark:text-white"
                                                         />
                                                     </div>
-                                                    <button 
+                                                    <button
                                                         disabled={processing || !deliveryCodes[order.id] || deliveryCodes[order.id].length < 4}
                                                         onClick={() => handleUpdateStatus(order.id, 'delivered')}
                                                         className="w-full py-4 bg-green-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-green-500/20 disabled:opacity-50 disabled:shadow-none transition-all"
@@ -317,7 +317,7 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                                         </div>
                                         <p className="text-[9px] font-black uppercase text-gray-400 dark:text-gray-500 mb-1">Boutique</p>
                                         <p className="text-[11px] font-bold mb-4 text-gray-900 dark:text-white">{order.shop.name}</p>
-                                        <button 
+                                        <button
                                             disabled={processing}
                                             onClick={() => handleAcceptOrder(order.id)}
                                             className="w-full py-3 bg-white dark:bg-transparent border-2 border-[#8B4513] text-[#8B4513] dark:text-[#E67E22] rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-[#8B4513] hover:text-white dark:hover:text-white transition-all"
@@ -361,9 +361,9 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                              className="w-full h-full"
                         >
                             {activeOrders.length > 0 && (
-                                <Directions 
-                                    driverPos={driverPos} 
-                                    shopPos={{ lat: parseFloat(activeOrders[0].shop.latitude), lng: parseFloat(activeOrders[0].shop.longitude) }} 
+                                <Directions
+                                    driverPos={driverPos}
+                                    shopPos={{ lat: parseFloat(activeOrders[0].shop.latitude), lng: parseFloat(activeOrders[0].shop.longitude) }}
                                     clientPos={{ lat: parseFloat(activeOrders[0].user.last_latitude) || 6.1366, lng: parseFloat(activeOrders[0].user.last_longitude) || 1.2222 }}
                                     orderStatus={activeOrders[0].status}
                                 />

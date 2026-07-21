@@ -5,7 +5,7 @@ import ThemeToggle from '@/Components/ThemeToggle';
 
 export default function DriverProfile({ auth, user, reviews = [], avgRating = 0, reviewsCount = 0 }) {
     const [status, setStatus] = useState(auth.user.driver_status || 'available');
-    
+
     const handleStatusChange = (newStatus) => {
         setStatus(newStatus);
         axios.post(route('driver.update-availability'), { status: newStatus })
@@ -13,7 +13,7 @@ export default function DriverProfile({ auth, user, reviews = [], avgRating = 0,
     };
 
     const [showPassword, setShowPassword] = useState(false);
-    
+
     const { data, setData, post, processing, errors } = useForm({
         name: user.name || '',
         phone: user.phone || '',
@@ -59,10 +59,10 @@ export default function DriverProfile({ auth, user, reviews = [], avgRating = 0,
                 </div>
                 <div className="flex items-center gap-6">
                     <ThemeToggle />
-                    <Link 
-                        href={route('logout')} 
-                        method="post" 
-                        as="button" 
+                    <Link
+                        href={route('logout')}
+                        method="post"
+                        as="button"
                         className="text-[10px] font-black uppercase text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 px-4 py-2 rounded-xl transition-all"
                     >
                         Déconnexion
@@ -86,7 +86,7 @@ export default function DriverProfile({ auth, user, reviews = [], avgRating = 0,
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-black uppercase tracking-widest text-[#8B4513] dark:text-[#E67E22]">Infos Personnelles</h3>
                             </div>
-                            
+
                             <div className="space-y-4">
                                 <div>
                                     <label className="text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 ml-2 mb-2 block">Nom Complet</label>
@@ -100,8 +100,8 @@ export default function DriverProfile({ auth, user, reviews = [], avgRating = 0,
                                 <div className="pt-4 border-t border-gray-200 dark:border-gray-800 mt-4">
                                     <div className="flex items-center justify-between mb-4">
                                         <h4 className="text-[10px] font-black uppercase text-gray-400 dark:text-gray-500">Changer le mot de passe</h4>
-                                        <button 
-                                            type="button" 
+                                        <button
+                                            type="button"
                                             onClick={() => setShowPassword(!showPassword)}
                                             className="text-[9px] font-black uppercase text-[#8B4513] dark:text-[#E67E22] hover:underline"
                                         >
@@ -109,17 +109,17 @@ export default function DriverProfile({ auth, user, reviews = [], avgRating = 0,
                                         </button>
                                     </div>
                                     <div className="space-y-4">
-                                                <input 
-                                                    type={showPassword ? "text" : "password"} 
-                                                    placeholder="Nouveau mot de passe" 
-                                                    onChange={e => setData('password', e.target.value)} 
-                                                    className="w-full premium-input" 
+                                                <input
+                                                    type={showPassword ? "text" : "password"}
+                                                    placeholder="Nouveau mot de passe"
+                                                    onChange={e => setData('password', e.target.value)}
+                                                    className="w-full premium-input"
                                                 />
-                                                <input 
-                                                    type={showPassword ? "text" : "password"} 
-                                                    placeholder="Confirmer" 
-                                                    onChange={e => setData('password_confirmation', e.target.value)} 
-                                                    className="w-full premium-input" 
+                                                <input
+                                                    type={showPassword ? "text" : "password"}
+                                                    placeholder="Confirmer"
+                                                    onChange={e => setData('password_confirmation', e.target.value)}
+                                                    className="w-full premium-input"
                                                 />
                                     </div>
                                     {errors.password && <p className="text-red-500 text-[10px] mt-1">{errors.password}</p>}
@@ -165,7 +165,7 @@ export default function DriverProfile({ auth, user, reviews = [], avgRating = 0,
                     <div className="col-span-12 lg:col-span-8 space-y-8">
                         <div className="bg-white dark:bg-[#1e1e1e] rounded-[40px] p-6 md:p-12 border border-gray-100 dark:border-gray-800 shadow-sm space-y-10">
                             <h3 className="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Mon Véhicule & Documents</h3>
-                            
+
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div className="space-y-6">
                                     <div>
@@ -231,8 +231,8 @@ export default function DriverProfile({ auth, user, reviews = [], avgRating = 0,
                         </div>
 
                         <div className="flex justify-end">
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 disabled={processing}
                                 className="px-12 py-5 bg-[#8B4513] text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-[#8B4513]/30 disabled:opacity-50"
                             >

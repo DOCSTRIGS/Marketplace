@@ -149,7 +149,7 @@ function CategoryRow({ cat, subcategories, onDeleteCategory, onDeleteSubCategory
                     ) : (
                         <div className="flex-1 min-w-0">
                             <p className="font-bold text-gray-900 dark:text-white text-sm">{cat.name}</p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">{subcategories.length} sous-catégorie{subcategories.length !== 1 ? 's' : ''}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">{subcategories?.length || 0} sous-catégorie{(subcategories?.length || 0) !== 1 ? 's' : ''}</p>
                         </div>
                     )}
 
@@ -179,7 +179,7 @@ function CategoryRow({ cat, subcategories, onDeleteCategory, onDeleteSubCategory
 
                 {expanded && (
                     <div className="border-t border-gray-100 dark:border-gray-800">
-                        {subcategories.length > 0 && (
+                        {subcategories?.length > 0 && (
                             <div className="px-5 pt-3 pb-2 space-y-1">
                                 <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Sous-catégories existantes</p>
                                 {subcategories.map(sub => (
@@ -399,7 +399,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
 
     const tabs = [
         { id: 'overview',   label: "Vue d'ensemble" },
-        { id: 'shops',      label: `Boutiques${pendingShops.length > 0 ? ` (${pendingShops.length})` : ''}` },
+        { id: 'shops',      label: `Boutiques${pendingShops?.length > 0 ? ` (${pendingShops.length})` : ''}` },
         { id: 'withdrawals', label: `Retraits${stats.total_pending_withdrawals > 0 ? ` (${stats.total_pending_withdrawals})` : ''}` },
         { id: 'reviews',    label: "Modération Avis" },
         { id: 'categories', label: "Catégories" },
@@ -599,10 +599,10 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                         <div>
                             <div className="flex items-center gap-3 mb-6">
                                 <h2 className="text-xl font-black text-gray-900 dark:text-white">Demandes en attente</h2>
-                                <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-3 py-1 rounded-full text-xs font-bold">{pendingShops.length}</span>
+                                <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-3 py-1 rounded-full text-xs font-bold">{pendingShops?.length || 0}</span>
                             </div>
 
-                            {pendingShops.length === 0 ? (
+                            { (pendingShops?.length || 0) === 0 ? (
                                 <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 p-12 text-center">
                                     <div className="w-16 h-16 bg-gray-50 dark:bg-[#252525] rounded-full flex items-center justify-center mx-auto mb-4">
                                         <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -664,7 +664,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 <span className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full text-xs font-bold">{approvedShops.total}</span>
                             </div>
 
-                            {approvedShops.data.length === 0 ? (
+                            { (approvedShops?.data?.length || 0) === 0 ? (
                                 <p className="text-gray-400 italic text-sm">Aucune boutique approuvée pour le moment.</p>
                             ) : (
                                 <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
@@ -798,7 +798,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 <p className="text-[10px] text-gray-400 mt-4 text-right">{new Date(review.created_at).toLocaleDateString('fr-FR')}</p>
                             </div>
                         ))}
-                        {reviews.data.length === 0 && <p className="text-gray-400 italic">Aucun avis à modérer.</p>}
+                        { (reviews?.data?.length || 0) === 0 && <p className="text-gray-400 italic">Aucun avis à modérer.</p>} 
                     </div>
                     <PaginationControls paginator={reviews} />
                     </>
