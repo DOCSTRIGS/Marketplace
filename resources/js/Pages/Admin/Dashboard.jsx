@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import axios from 'axios';
 import DriverDetailsDrawer from '@/Components/Admin/DriverDetailsDrawer';
-import { 
+import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     BarChart, Bar, Cell, PieChart, Pie, Legend, Sector
 } from 'recharts';
@@ -417,7 +417,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
 
             <div className="max-w-7xl mx-auto px-8 py-10">
                 <header className="mb-10">
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
                     >
@@ -473,8 +473,8 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" strokeOpacity={0.1} />
                                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#9ca3af'}} />
                                             <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#9ca3af'}} tickFormatter={(val) => `${val/1000}k`} />
-                                            <Tooltip 
-                                                contentStyle={{ backgroundColor: '#1e1e1e', borderRadius: '16px', border: 'none', color: '#fff', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.5)' }} 
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#1e1e1e', borderRadius: '16px', border: 'none', color: '#fff', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.5)' }}
                                                 itemStyle={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase' }}
                                             />
                                             <Area type="monotone" name="Semaine Actuelle" dataKey="revenue" stroke="#8B4513" strokeWidth={3} fill="url(#colorRev)" />
@@ -511,17 +511,17 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                     <h3 className="font-black text-gray-900 dark:text-white text-base tracking-tight uppercase mb-1">Distribution par Quartier</h3>
                                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-6">Visualisation asymétrique des boutiques</p>
                                 </div>
-                                
+
                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-8 my-auto">
                                     {/* Pie Chart */}
                                     <div className="w-60 h-60 relative shrink-0">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
-                                                <Pie 
+                                                <Pie
                                                     data={pieNeighborhoodData}
-                                                    cx="50%" cy="50%" 
-                                                    innerRadius={0} 
-                                                    paddingAngle={2} 
+                                                    cx="50%" cy="50%"
+                                                    innerRadius={0}
+                                                    paddingAngle={2}
                                                     dataKey="value"
                                                     shape={ExplodedSector}
                                                 >
@@ -533,7 +533,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                             </PieChart>
                                         </ResponsiveContainer>
                                     </div>
-                                    
+
                                     {/* Exact callout labels from reference picture */}
                                     <div className="flex-1 grid grid-cols-2 gap-4 w-full">
                                         {pieNeighborhoodData.map((entry) => (
@@ -560,7 +560,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
 
                                 <div className="h-52 w-full my-auto flex items-center">
                                     <ResponsiveContainer width="100%" height="80%">
-                                        <BarChart 
+                                        <BarChart
                                             data={[
                                                 { name: 'Approuvées', value: stats.total_shops, color: '#0f4c81' },
                                                 { name: 'En attente', value: stats.total_pending_shops, color: '#f39c12' },
@@ -570,15 +570,15 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                             margin={{ top: 0, right: 30, left: 10, bottom: 0 }}
                                         >
                                             <XAxis type="number" hide />
-                                            <YAxis 
-                                                dataKey="name" 
-                                                type="category" 
-                                                axisLine={false} 
-                                                tickLine={false} 
-                                                tick={{ fontSize: 11, fontWeight: 900, fill: '#6b7280' }} 
+                                            <YAxis
+                                                dataKey="name"
+                                                type="category"
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fontSize: 11, fontWeight: 900, fill: '#6b7280' }}
                                                 width={90}
                                             />
-                                            <Tooltip 
+                                            <Tooltip
                                                 cursor={{ fill: 'rgba(0,0,0,0.02)' }}
                                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                             />
@@ -624,7 +624,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
                                                         {shop.user?.name} {shop.user?.email && `(${shop.user.email})`} - {shop.neighborhood?.name || 'Lomé'}
                                                     </p>
-                                                    
+
                                                     {/* KYC Section */}
                                                     <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 mb-4 border border-gray-100 dark:border-gray-800">
                                                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3">Documents KYC</p>
@@ -635,7 +635,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                                                     Voir CNI
                                                                 </a>
                                                             ) : <span className="flex-1 text-[10px] text-gray-400 italic">CNI manquante</span>}
-                                                            
+
                                                             {shop.license_url ? (
                                                                 <a href={shop.license_url} target="_blank" className="flex-1 text-[10px] font-bold text-[#8B4513] hover:underline flex items-center gap-2 bg-white dark:bg-[#121212] p-2 rounded-lg border border-gray-100 dark:border-gray-800">
                                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -785,7 +785,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                                 : `Sur : ${review.product?.name} (${review.product?.shop?.name})`}
                                         </p>
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={() => setReviewToDelete(review)}
                                         className="text-red-400 hover:text-red-600"
                                     >
@@ -798,14 +798,14 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 <p className="text-[10px] text-gray-400 mt-4 text-right">{new Date(review.created_at).toLocaleDateString('fr-FR')}</p>
                             </div>
                         ))}
-                        { (reviews?.data?.length || 0) === 0 && <p className="text-gray-400 italic">Aucun avis à modérer.</p>} 
+                        { (reviews?.data?.length || 0) === 0 && <p className="text-gray-400 italic">Aucun avis à modérer.</p>}
                     </div>
                     <PaginationControls paginator={reviews} />
                     </>
                 )}
 
                 {/* Confirm Delete Review Modal */}
-                <ConfirmModal 
+                <ConfirmModal
                     isOpen={!!reviewToDelete}
                     onClose={() => setReviewToDelete(null)}
                     onConfirm={() => {
@@ -852,7 +852,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                     <div className="space-y-6">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-black text-gray-900 dark:text-white">Liste des Utilisateurs</h2>
-                            <button 
+                            <button
                                 onClick={() => openUserModal()}
                                 className="bg-[#8B4513] text-white px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-lg"
                             >
@@ -884,7 +884,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    <button 
+                                                    <button
                                                         onClick={() => openUserModal(u)}
                                                         className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
                                                         title="Modifier"
@@ -894,7 +894,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                                         </svg>
                                                     </button>
                                                     {u.id !== auth.user.id && (
-                                                        <button 
+                                                        <button
                                                             onClick={() => handleDeleteUser(u.id)}
                                                             className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
                                                             title="Supprimer"
@@ -921,14 +921,14 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                     <div className="space-y-6">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Gestion de la Flotte</h2>
-                            <button 
-                                onClick={() => openDriverModal()} 
+                            <button
+                                onClick={() => openDriverModal()}
                                 className="bg-[#8B4513] text-white px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-lg"
                             >
                                 + Nouveau Livreur
                             </button>
                         </div>
-                        
+
                         {!drivers ? <TabSkeleton /> : (
                         <>
                         <div className="bg-white dark:bg-[#1e1e1e] rounded-[2.5rem] border border-gray-100 dark:border-gray-800 overflow-hidden shadow-xl transition-all">
@@ -985,9 +985,9 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                             </td>
                                             <td className="px-8 py-6 text-right">
                                                 <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all">
-                                                    <button 
-                                                        onClick={() => openDriverDetails(d.id)} 
-                                                        className="p-2 text-gray-400 hover:text-[#8B4513] hover:bg-[#8B4513]/5 rounded-lg transition-all" 
+                                                    <button
+                                                        onClick={() => openDriverDetails(d.id)}
+                                                        className="p-2 text-gray-400 hover:text-[#8B4513] hover:bg-[#8B4513]/5 rounded-lg transition-all"
                                                         title="Détails"
                                                     >
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -1022,8 +1022,8 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                             <form onSubmit={submitUser} className="space-y-4">
                                 <div>
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Nom Complet</label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         value={userForm.data.name}
                                         onChange={e => userForm.setData('name', e.target.value)}
                                         className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
@@ -1032,8 +1032,8 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 </div>
                                 <div>
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Email</label>
-                                    <input 
-                                        type="email" 
+                                    <input
+                                        type="email"
                                         value={userForm.data.email}
                                         onChange={e => userForm.setData('email', e.target.value)}
                                         className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
@@ -1043,8 +1043,8 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 {!editingUser && (
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Mot de passe</label>
-                                        <input 
-                                            type="password" 
+                                        <input
+                                            type="password"
                                             value={userForm.data.password}
                                             onChange={e => userForm.setData('password', e.target.value)}
                                             className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
@@ -1054,7 +1054,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 )}
                                 <div>
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Rôle</label>
-                                    <select 
+                                    <select
                                         value={userForm.data.role}
                                         onChange={e => userForm.setData('role', e.target.value)}
                                         className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
@@ -1065,14 +1065,14 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                     </select>
                                 </div>
                                 <div className="flex gap-4 pt-6">
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => setUserModalOpen(false)}
                                         className="flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest bg-gray-100 dark:bg-[#252525] text-gray-500 hover:bg-gray-200 transition-all"
                                     >
                                         Annuler
                                     </button>
-                                    <button 
+                                    <button
                                         type="submit"
                                         disabled={userForm.processing}
                                         className="flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest bg-[#8B4513] text-white shadow-xl hover:scale-105 transition-all disabled:opacity-50"
@@ -1095,8 +1095,8 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                             <form onSubmit={submitDriver} className="space-y-4">
                                 <div>
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Nom du Livreur</label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         value={driverForm.data.name}
                                         onChange={e => driverForm.setData('name', e.target.value)}
                                         className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
@@ -1105,8 +1105,8 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 </div>
                                 <div>
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Email Professionnel</label>
-                                    <input 
-                                        type="email" 
+                                    <input
+                                        type="email"
                                         value={driverForm.data.email}
                                         onChange={e => driverForm.setData('email', e.target.value)}
                                         className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
@@ -1116,8 +1116,8 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 {!editingDriver && (
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Mot de passe</label>
-                                        <input 
-                                            type="password" 
+                                        <input
+                                            type="password"
                                             value={driverForm.data.password}
                                             onChange={e => driverForm.setData('password', e.target.value)}
                                             className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
@@ -1127,7 +1127,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                 )}
                                 <div>
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Statut Initial</label>
-                                    <select 
+                                    <select
                                         value={driverForm.data.driver_status}
                                         onChange={e => driverForm.setData('driver_status', e.target.value)}
                                         className="w-full px-5 py-3 bg-gray-50 dark:bg-[#252525] border-none rounded-2xl focus:ring-2 focus:ring-[#8B4513] transition-all font-medium text-gray-900 dark:text-white"
@@ -1138,14 +1138,14 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                     </select>
                                 </div>
                                 <div className="flex gap-4 pt-6">
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => setDriverModalOpen(false)}
                                         className="flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest bg-gray-100 dark:bg-[#252525] text-gray-500 hover:bg-gray-200 transition-all"
                                     >
                                         Annuler
                                     </button>
-                                    <button 
+                                    <button
                                         type="submit"
                                         disabled={driverForm.processing}
                                         className="flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest bg-[#8B4513] text-white shadow-xl hover:scale-105 transition-all disabled:opacity-50"
@@ -1161,7 +1161,7 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                 </AnimatePresence>
 
                 {/* Driver Details Slide-over Drawer */}
-                <DriverDetailsDrawer 
+                <DriverDetailsDrawer
                     driverId={selectedDriverId}
                     isOpen={detailsDrawerOpen}
                     onClose={() => setDetailsDrawerOpen(false)}

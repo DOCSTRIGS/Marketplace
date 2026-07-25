@@ -165,7 +165,7 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
             <div className="min-h-screen bg-white dark:bg-[#121212] text-[#1a1a1a] dark:text-white antialiased transition-colors duration-300">
                 <Head title="LoméShop — Espace Livreur" />
 
-                <header className="h-20 px-4 md:px-6 xl:px-12 flex flex-col gap-4 md:flex-row md:items-center justify-between border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-[#1e1e1e] z-50 transition-colors duration-300">
+                <header className="py-4 md:h-20 md:py-0 px-4 md:px-6 xl:px-12 flex flex-col gap-4 md:flex-row md:items-center justify-between border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-[#1e1e1e] z-50 transition-colors duration-300">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center">
                         <h1 className="text-2xl font-black text-[#D35400] dark:text-[#E67E22] tracking-tighter">LoméShop</h1>
                         <nav className="flex flex-col gap-3 md:flex-row md:items-center">
@@ -223,7 +223,7 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                     </div>
                 </header>
 
-                <main className="p-0 flex flex-col lg:flex-row h-[calc(100vh-80px)] overflow-hidden">
+                <main className="p-0 flex flex-col lg:flex-row lg:h-[calc(100vh-80px)] overflow-hidden">
                     {/* Left Sidebar: Order Lists */}
                     <div className="w-full lg:w-[400px] max-h-[45vh] lg:max-h-none border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-gray-800 flex flex-col bg-white dark:bg-[#1e1e1e] z-10 shadow-xl transition-colors duration-300">
                         <div className="p-6 border-b border-gray-50 dark:border-gray-800">
@@ -352,7 +352,7 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
                     </div>
 
                     {/* Right: Map Section */}
-                    <div className="flex-1 relative">
+                    <div className="flex-1 relative h-[50vh] lg:h-auto">
                         <Map
                              defaultCenter={driverPos}
                              defaultZoom={14}
@@ -381,17 +381,17 @@ export default function DriverDashboard({ auth, activeOrders = [], availableOrde
 
                         {/* Quick Overlay Info if Active Order */}
                         {activeOrders.length > 0 && (
-                            <div className="absolute bottom-8 left-8 right-8 bg-white/90 dark:bg-[#1e1e1e]/90 backdrop-blur-md rounded-[32px] p-6 shadow-2xl border border-white/20 dark:border-gray-800 flex items-center justify-between max-w-2xl mx-auto">
-                                <div className="flex items-center gap-5">
-                                    <div className="w-12 h-12 bg-[#8B4513] rounded-2xl flex items-center justify-center text-white">
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"/></svg>
+                            <div className="absolute bottom-4 left-4 right-4 md:bottom-8 md:left-8 md:right-8 bg-white/90 dark:bg-[#1e1e1e]/90 backdrop-blur-md rounded-3xl md:rounded-[32px] p-4 md:p-6 shadow-2xl border border-white/20 dark:border-gray-800 flex flex-wrap items-center justify-between gap-4 max-w-2xl mx-auto">
+                                <div className="flex items-center gap-3 md:gap-5 min-w-0">
+                                    <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 bg-[#8B4513] rounded-2xl flex items-center justify-center text-white">
+                                        <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"/></svg>
                                     </div>
-                                    <div>
+                                    <div className="min-w-0">
                                         <p className="text-[10px] font-black uppercase text-[#8B4513] dark:text-[#E67E22]">Mission en cours</p>
-                                        <h3 className="text-sm font-black uppercase tracking-tight text-gray-900 dark:text-white">Direction : {activeOrders[0].delivery_address}</h3>
+                                        <h3 className="text-sm font-black uppercase tracking-tight text-gray-900 dark:text-white truncate">Direction : {activeOrders[0].delivery_address}</h3>
                                     </div>
                                 </div>
-                                <div className="text-right">
+                                <div className="text-right shrink-0">
                                     <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Temps estimé</p>
                                     <p className="text-lg font-black tracking-tighter text-gray-900 dark:text-white">12 MIN</p>
                                 </div>
