@@ -41,35 +41,37 @@ export default function DriverProfile({ auth, user, reviews = [], avgRating = 0,
             <Head title="Mon Profil Livreur" />
 
 
-            <header className="h-20 px-4 md:px-6 xl:px-12 flex flex-col gap-4 md:flex-row md:items-center justify-between border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-[#1e1e1e] z-50 transition-colors duration-300">
+            <header className="py-4 lg:h-20 lg:py-0 px-4 md:px-6 xl:px-12 flex flex-col gap-4 lg:flex-row lg:items-center justify-between border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-[#1e1e1e] z-50 transition-colors duration-300">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center">
                     <h1 className="text-2xl font-black text-[#D35400] dark:text-[#E67E22] tracking-tighter">LoméShop</h1>
                     <nav className="flex flex-col gap-3 md:flex-row md:items-center">
-                        <div className="flex gap-6 text-[11px] font-black uppercase text-spacing">
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 text-[11px] font-black uppercase text-spacing">
                             <Link href={route('driver.dashboard')} prefetch className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Missions</Link>
                             <Link href={route('driver.history')} prefetch className="text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white">Historique</Link>
                             <Link href={route('driver.profile')} prefetch className="text-[#8B4513] border-b-2 border-[#8B4513] pb-1">Profil</Link>
                         </div>
-                        <div className="w-[1px] h-6 bg-gray-200 dark:bg-gray-800 mx-2" />
-                        <div className="bg-[#F2F2F2] dark:bg-gray-800 p-1 rounded-full flex items-center">
+                        <div className="hidden md:block w-[1px] h-6 bg-gray-200 dark:bg-gray-800 mx-2" />
+                        <div className="bg-[#F2F2F2] dark:bg-gray-800 p-1 rounded-full flex items-center w-fit">
                             <button type="button" onClick={() => handleStatusChange('available')} className={`px-6 py-2 rounded-full text-[10px] font-bold uppercase transition-all ${status === 'available' ? 'bg-[#8B4513] text-white' : 'text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white'}`}>En ligne</button>
                             <button type="button" onClick={() => handleStatusChange('offline')} className={`px-6 py-2 rounded-full text-[10px] font-bold uppercase transition-all ${status === 'offline' ? 'bg-[#8B4513] text-white' : 'text-gray-400'}`}>Hors ligne</button>
                         </div>
                     </nav>
                 </div>
-                <div className="flex items-center gap-6">
-                    <ThemeToggle />
+                <div className="flex items-center justify-between md:justify-end gap-3 md:gap-6">
+                    <div className="flex items-center gap-3 md:gap-6">
+                        <ThemeToggle />
+                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-850 overflow-hidden border border-gray-100 dark:border-gray-800">
+                            <img src={auth.user.profile_photo_url} className="w-full h-full object-cover" alt="" />
+                        </div>
+                    </div>
                     <Link
                         href={route('logout')}
                         method="post"
                         as="button"
-                        className="text-[10px] font-black uppercase text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 px-4 py-2 rounded-xl transition-all"
+                        className="text-[10px] font-black uppercase text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 px-4 py-2 rounded-xl transition-all shrink-0"
                     >
                         Déconnexion
                     </Link>
-                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-850 overflow-hidden ml-2 border border-gray-100 dark:border-gray-800">
-                        <img src={auth.user.profile_photo_url} className="w-full h-full object-cover" alt="" />
-                    </div>
                 </div>
             </header>
 
