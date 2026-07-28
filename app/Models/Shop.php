@@ -12,7 +12,7 @@ class Shop extends Model
         'logo', 'cover_image', 'latitude', 'longitude', 'slogan',
         'phone', 'categories', 'delivery_available', 'delivery_fee',
         'coverage_area', 'balance', 'status', 'is_verified',
-        'id_card_path', 'license_path', 'admin_note'
+        'id_card_path', 'license_path', 'kyc_document_type', 'admin_note'
     ];
 
     protected $appends = ['id_card_url', 'license_url'];

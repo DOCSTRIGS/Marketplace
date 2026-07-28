@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import SellerLayout from '@/Layouts/SellerLayout';
 
@@ -19,18 +19,36 @@ export default function Settings() {
     };
 
     const kycForm = useForm({
+        kyc_document_type: shop?.kyc_document_type || 'rccm',
         id_card: null,
         license: null,
     });
+
+    const [kycFileName, setKycFileName] = useState(null);
+
+    const handleKycFileChange = (e) => {
+        const file = e.target.files[0] || null;
+        setKycFileName(file ? file.name : null);
+        if (kycForm.data.kyc_document_type === 'rccm') {
+            kycForm.setData({ ...kycForm.data, license: file, id_card: null });
+        } else {
+            kycForm.setData({ ...kycForm.data, id_card: file, license: null });
+        }
+    };
 
     const submitKYC = (e) => {
         e.preventDefault();
         kycForm.post(route('seller.kyc.update'), {
             forceFormData: true,
             preserveScroll: true,
-            onSuccess: () => kycForm.reset(),
+            onSuccess: () => {
+                kycForm.setData({ ...kycForm.data, id_card: null, license: null });
+                setKycFileName(null);
+            },
         });
     };
+
+    const currentDocumentUrl = shop?.kyc_document_type === 'cni' ? shop?.id_card_url : shop?.license_url;
 
     return (
         <SellerLayout>
@@ -113,7 +131,7 @@ export default function Settings() {
 
                         <h3 className="font-bold text-gray-900 dark:text-white mb-2">Certification Prestige (KYC)</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xl">
-                            Uploadez vos documents officiels pour obtenir le badge "Vérifié". Cela renforce la confiance des clients et augmente vos ventes.
+                            Uploadez votre document officiel (RCCM ou carte d'identité nationale) pour obtenir le badge "Vérifié". Cela renforce la confiance des clients et augmente vos ventes.
                         </p>
 
                         {!shop.is_verified && shop.admin_note && (
@@ -123,70 +141,80 @@ export default function Settings() {
                             </div>
                         )}
 
-                        <form onSubmit={submitKYC} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1 flex justify-between">
-                                        <span>Carte d'identité (CNI)</span>
-                                        {shop.id_card_path && <span className="text-green-500 flex items-center gap-1"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg> Reçu</span>}
-                                    </label>
-                                    <div className="relative border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-                                        <input
-                                            type="file"
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                            onChange={e => kycForm.setData('id_card', e.target.files[0])}
-                                            accept="image/*"
-                                        />
-                                        <div className="text-gray-400 dark:text-gray-500">
-                                            {kycForm.data.id_card ? (
-                                                <span className="text-sm font-bold text-[#8B4513]">{kycForm.data.id_card.name}</span>
-                                            ) : (
-                                                <>
-                                                    <svg className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                                    <span className="text-xs">Cliquez ou glissez une image</span>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                    {kycForm.errors.id_card && <p className="text-red-500 text-xs">{kycForm.errors.id_card}</p>}
+                        {shop.kyc_document_type ? (
+                            <div className="mb-6 flex items-center justify-between gap-4 p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                <div>
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Document actuellement fourni</p>
+                                    <p className="text-sm font-bold text-gray-900 dark:text-white">
+                                        {shop.kyc_document_type === 'rccm' ? 'Certificat RCCM' : 'Carte d\'identité nationale'}
+                                    </p>
                                 </div>
+                                {currentDocumentUrl && (
+                                    <a href={currentDocumentUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-[#8B4513] hover:underline flex items-center gap-2 bg-white dark:bg-[#121212] px-3 py-2 rounded-lg border border-gray-100 dark:border-gray-800 shrink-0">
+                                        Voir le document
+                                    </a>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-2xl border border-orange-100 dark:border-orange-900/40 text-sm font-bold">
+                                Pas encore fourni — uploadez votre RCCM ou votre CNI ci-dessous.
+                            </div>
+                        )}
 
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1 flex justify-between">
-                                        <span>Permis de conduire / NIF</span>
-                                        {shop.license_path && <span className="text-green-500 flex items-center gap-1"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg> Reçu</span>}
-                                    </label>
-                                    <div className="relative border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-                                        <input
-                                            type="file"
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                            onChange={e => kycForm.setData('license', e.target.files[0])}
-                                            accept="image/*"
-                                        />
-                                        <div className="text-gray-400 dark:text-gray-500">
-                                            {kycForm.data.license ? (
-                                                <span className="text-sm font-bold text-[#8B4513]">{kycForm.data.license.name}</span>
-                                            ) : (
-                                                <>
-                                                    <svg className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                                    <span className="text-xs">Cliquez ou glissez un document</span>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                    {kycForm.errors.license && <p className="text-red-500 text-xs">{kycForm.errors.license}</p>}
-                                </div>
+                        <form onSubmit={submitKYC} className="space-y-6">
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => kycForm.setData('kyc_document_type', 'rccm')}
+                                    className={`flex-1 px-6 py-3 rounded-xl text-xs font-bold border-2 transition-all ${
+                                        kycForm.data.kyc_document_type === 'rccm'
+                                        ? 'bg-[#E5E5E5] dark:bg-white/10 border-[#8B4513] text-gray-900 dark:text-white shadow-sm'
+                                        : 'bg-gray-50 dark:bg-[#252525] border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'
+                                    }`}
+                                >
+                                    Certificat RCCM
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => kycForm.setData('kyc_document_type', 'cni')}
+                                    className={`flex-1 px-6 py-3 rounded-xl text-xs font-bold border-2 transition-all ${
+                                        kycForm.data.kyc_document_type === 'cni'
+                                        ? 'bg-[#E5E5E5] dark:bg-white/10 border-[#8B4513] text-gray-900 dark:text-white shadow-sm'
+                                        : 'bg-gray-50 dark:bg-[#252525] border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'
+                                    }`}
+                                >
+                                    Carte d'identité nationale
+                                </button>
                             </div>
 
-                            {!shop.is_verified && (
-                                <button
-                                    type="submit"
-                                    disabled={kycForm.processing || (!kycForm.data.id_card && !kycForm.data.license)}
-                                    className="bg-gray-900 dark:bg-white/10 text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-gray-800 dark:hover:bg-white/20 transition-all disabled:opacity-50"
-                                >
-                                    Soumettre pour vérification
-                                </button>
-                            )}
+                            <div className="relative border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                <input
+                                    type="file"
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    onChange={handleKycFileChange}
+                                    accept="image/*,.pdf"
+                                />
+                                <div className="text-gray-400 dark:text-gray-500">
+                                    {kycFileName ? (
+                                        <span className="text-sm font-bold text-[#8B4513]">{kycFileName}</span>
+                                    ) : (
+                                        <>
+                                            <svg className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                            <span className="text-xs">Cliquez ou glissez un fichier (PDF, JPG, PNG)</span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                            {kycForm.errors.id_card && <p className="text-red-500 text-xs">{kycForm.errors.id_card}</p>}
+                            {kycForm.errors.license && <p className="text-red-500 text-xs">{kycForm.errors.license}</p>}
+
+                            <button
+                                type="submit"
+                                disabled={kycForm.processing || (!kycForm.data.id_card && !kycForm.data.license)}
+                                className="bg-gray-900 dark:bg-white/10 text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-gray-800 dark:hover:bg-white/20 transition-all disabled:opacity-50"
+                            >
+                                {shop.kyc_document_type ? 'Mettre à jour le document' : 'Soumettre pour vérification'}
+                            </button>
                         </form>
                     </div>
                 )}

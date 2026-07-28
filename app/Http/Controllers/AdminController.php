@@ -135,11 +135,23 @@ class AdminController extends Controller
     public function updateShopStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:approved,rejected,pending'
+            'status' => 'required|in:approved,rejected,pending',
+            'note' => 'nullable|string',
         ]);
 
         $shop = Shop::findOrFail($id);
         $shop->status = $request->status;
+
+        if ($request->status === 'approved') {
+            $shop->is_verified = true;
+        } elseif ($request->status === 'rejected') {
+            $shop->is_verified = false;
+        }
+
+        if ($request->filled('note')) {
+            $shop->admin_note = $request->note;
+        }
+
         $shop->save();
 
         return redirect()->back()->with('success', 'Statut de la boutique mis à jour avec succès.');

@@ -76,6 +76,8 @@ export default function ShopSetup({ neighborhoods, categories }) {
         coverage_area: 'Lomé et environs',
         latitude: 6.1372,
         longitude: 1.2125,
+        kyc_document_type: 'rccm',
+        kyc_document: null,
     });
 
     const [logoPreview, setLogoPreview] = useState(null);
@@ -94,9 +96,17 @@ export default function ShopSetup({ neighborhoods, categories }) {
         setData('categories', newCats);
     };
 
+    const [kycFileName, setKycFileName] = useState(null);
+
+    const handleKycFileChange = (e) => {
+        const file = e.target.files[0];
+        setData('kyc_document', file || null);
+        setKycFileName(file ? file.name : null);
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('shops.store'));
+        post(route('shops.store'), { forceFormData: true });
     };
 
     return (
@@ -176,6 +186,53 @@ export default function ShopSetup({ neighborhoods, categories }) {
                                     value={data.description}
                                     onChange={e => setData('description', e.target.value)}
                                 />
+                            </div>
+
+                            {/* KYC Section */}
+                            <div className="space-y-4 pt-6 border-t border-gray-200 dark:border-gray-800">
+                                <div>
+                                    <h4 className="font-bold text-gray-900 dark:text-white">Vérification d'identité (KYC)</h4>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                                        Un document est obligatoire pour que votre demande soit examinée par notre équipe.
+                                    </p>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setData('kyc_document_type', 'rccm')}
+                                        className={`flex-1 px-6 py-3 rounded-xl text-xs font-bold border-2 transition-all ${
+                                            data.kyc_document_type === 'rccm'
+                                            ? 'bg-[#E5E5E5] dark:bg-white/10 border-[#8B4513] text-gray-900 dark:text-white shadow-sm'
+                                            : 'bg-[#EEEEEE] dark:bg-[#252525] border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'
+                                        }`}
+                                    >
+                                        Certificat RCCM
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setData('kyc_document_type', 'cni')}
+                                        className={`flex-1 px-6 py-3 rounded-xl text-xs font-bold border-2 transition-all ${
+                                            data.kyc_document_type === 'cni'
+                                            ? 'bg-[#E5E5E5] dark:bg-white/10 border-[#8B4513] text-gray-900 dark:text-white shadow-sm'
+                                            : 'bg-[#EEEEEE] dark:bg-[#252525] border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'
+                                        }`}
+                                    >
+                                        Carte d'identité nationale
+                                    </button>
+                                </div>
+
+                                <label className="flex items-center gap-4 bg-[#EEEEEE] dark:bg-[#252525] rounded-xl py-4 px-6 cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-all">
+                                    <svg className="w-6 h-6 text-[#8B4513] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                        {kycFileName || (data.kyc_document_type === 'rccm' ? 'Ajouter mon certificat RCCM (PDF, JPG, PNG)' : 'Ajouter ma carte d\'identité nationale (PDF, JPG, PNG)')}
+                                    </span>
+                                    <input type="file" className="hidden" onChange={handleKycFileChange} accept="image/*,.pdf" />
+                                </label>
+                                {errors.kyc_document && <p className="text-red-500 text-xs px-1">{errors.kyc_document}</p>}
+                                {errors.kyc_document_type && <p className="text-red-500 text-xs px-1">{errors.kyc_document_type}</p>}
                             </div>
 
                             {/* Geolocation Section */}
@@ -287,8 +344,8 @@ export default function ShopSetup({ neighborhoods, categories }) {
 
                             <button
                                 type="submit"
-                                disabled={processing}
-                                className="w-full max-w-[300px] py-5 bg-[#8B4513] text-white font-black rounded-2xl shadow-2xl hover:bg-[#7a2d09] transition-all transform hover:-translate-y-1 active:scale-95"
+                                disabled={processing || !data.kyc_document}
+                                className="w-full max-w-[300px] py-5 bg-[#8B4513] text-white font-black rounded-2xl shadow-2xl hover:bg-[#7a2d09] transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:hover:translate-y-0"
                             >
                                 {processing ? 'Ouverture...' : 'Ouvrir ma boutique'}
                             </button>

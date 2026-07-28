@@ -627,7 +627,14 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
 
                                                     {/* KYC Section */}
                                                     <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 mb-4 border border-gray-100 dark:border-gray-800">
-                                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3">Documents KYC</p>
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Documents KYC</p>
+                                                            {shop.kyc_document_type && (
+                                                                <span className="bg-[#8B4513]/10 text-[#8B4513] dark:text-[#D4AF7A] text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded">
+                                                                    {shop.kyc_document_type === 'rccm' ? 'RCCM' : 'CNI'}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <div className="flex gap-4">
                                                             {shop.id_card_url ? (
                                                                 <a href={shop.id_card_url} target="_blank" className="flex-1 text-[10px] font-bold text-[#8B4513] hover:underline flex items-center gap-2 bg-white dark:bg-[#121212] p-2 rounded-lg border border-gray-100 dark:border-gray-800">
@@ -672,9 +679,21 @@ export default function AdminDashboard({ pendingShops, approvedShops, rejectedSh
                                         <div key={shop.id} className="bg-white dark:bg-[#1e1e1e] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 flex items-center justify-between group hover:border-green-200 dark:hover:border-green-800 transition-all shadow-sm">
                                             <div className="flex-1">
                                                 <h3 className="font-black text-lg text-gray-900 dark:text-white">{shop.name}</h3>
-                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
+                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-2">
                                                     Vendeur: {shop.user?.name} {shop.user?.email && `(${shop.user.email})`}
                                                 </p>
+                                                {shop.kyc_document_type ? (
+                                                    <a
+                                                        href={shop.kyc_document_type === 'rccm' ? shop.license_url : shop.id_card_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#8B4513] hover:underline"
+                                                    >
+                                                        Voir {shop.kyc_document_type === 'rccm' ? 'RCCM' : 'CNI'}
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-[10px] font-bold text-gray-400 italic">Document KYC : pas encore fourni</span>
+                                                )}
                                             </div>
                                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button onClick={() => handleStatusUpdate(shop.id, 'rejected')} className="text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg hover:bg-orange-100">Suspendre</button>

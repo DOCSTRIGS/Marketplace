@@ -104,6 +104,8 @@ class ShopController extends Controller
             'coverage_area' => 'nullable|string',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
+            'kyc_document_type' => 'required|in:rccm,cni',
+            'kyc_document' => 'required|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
         $user = Auth::user();
@@ -122,6 +124,17 @@ class ShopController extends Controller
             'latitude' => $validated['latitude'],
             'longitude' => $validated['longitude'],
             'slug' => Str::slug($validated['name']) . '-' . time(),
+        ]);
+
+        $documentPath = $request->file('kyc_document')->store(
+            $validated['kyc_document_type'] === 'rccm' ? 'kyc/licenses' : 'kyc/id_cards',
+            's3'
+        );
+
+        $shop->update([
+            'kyc_document_type' => $validated['kyc_document_type'],
+            'license_path' => $validated['kyc_document_type'] === 'rccm' ? $documentPath : null,
+            'id_card_path' => $validated['kyc_document_type'] === 'cni' ? $documentPath : null,
         ]);
 
         // Enforce seller role
@@ -144,8 +157,8 @@ class ShopController extends Controller
     public function updateKYC(Request $request)
     {
         $request->validate([
-            'id_card' => 'nullable|image|max:2048',
-            'license' => 'nullable|image|max:2048',
+            'id_card' => 'nullable|mimes:jpg,jpeg,png,pdf|max:2048',
+            'license' => 'nullable|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
         $shop = Auth::user()->shop;
@@ -153,10 +166,14 @@ class ShopController extends Controller
 
         if ($request->hasFile('id_card')) {
             $shop->id_card_path = $request->file('id_card')->store('kyc/id_cards', 's3');
+            $shop->kyc_document_type = 'cni';
+            $shop->is_verified = false;
         }
 
         if ($request->hasFile('license')) {
             $shop->license_path = $request->file('license')->store('kyc/licenses', 's3');
+            $shop->kyc_document_type = 'rccm';
+            $shop->is_verified = false;
         }
 
         $shop->save();

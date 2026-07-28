@@ -248,7 +248,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('tracking');
 
     // Admin Driver Management
-    Route::middleware(['auth'])->group(function () {
+    Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/admin/drivers', function() {
             return redirect()->route('admin.dashboard', ['tab' => 'drivers']);
         });
