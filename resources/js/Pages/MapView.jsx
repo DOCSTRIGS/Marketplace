@@ -516,8 +516,8 @@ export default function MapView({ initialShops }) {
         <div className="h-screen flex flex-col bg-white dark:bg-[#121212] overflow-hidden transition-colors duration-300">
             <Head title="Carte Marketplace" />
             <Navbar elegant />
-            <div className="flex-1 flex overflow-hidden">
-                <aside className="w-full md:w-[400px] flex flex-col bg-white dark:bg-[#1e1e1e] border-r border-gray-100 dark:border-gray-800 z-10 shadow-lg transition-colors">
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                <aside className="w-full md:w-[400px] h-[45vh] md:h-auto shrink-0 flex flex-col bg-white dark:bg-[#1e1e1e] border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800 z-10 shadow-lg transition-colors">
                     <div className="p-6 pb-2">
                         <div className="flex items-center justify-between mb-2">
                             <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tighter uppercase">LoméShop Map</h2>
@@ -666,7 +666,7 @@ export default function MapView({ initialShops }) {
                     </div>
                 </aside>
 
-                <main className="flex-1 relative bg-gray-50 dark:bg-[#121212] overflow-hidden transition-colors">
+                <main className="w-full h-[55vh] md:h-auto md:flex-1 shrink-0 relative bg-gray-50 dark:bg-[#121212] overflow-hidden transition-colors">
                     <APIProvider apiKey={GOOGLE_MAPS_API_KEY} libraries={['places']}>
                         <Map 
                             defaultCenter={{ lat: 6.1372, lng: 1.2125 }} 
