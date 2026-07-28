@@ -366,6 +366,7 @@ export default function MapView({ initialShops }) {
     const [error, setError] = useState(null);
     const [selectedShop, setSelectedShop] = useState(null);
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const [isMapFullscreen, setIsMapFullscreen] = useState(false);
 
     const activeShop = selectedShop || shops.find(s => s.id === activeShopId);
 
@@ -517,7 +518,7 @@ export default function MapView({ initialShops }) {
             <Head title="Carte Marketplace" />
             <Navbar elegant />
             <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-                <aside className="w-full md:w-[400px] h-[45vh] md:h-auto shrink-0 flex flex-col bg-white dark:bg-[#1e1e1e] border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800 z-10 shadow-lg transition-colors">
+                <aside className={`${isMapFullscreen ? 'hidden' : 'flex'} md:flex w-full md:w-[400px] flex-1 md:flex-none md:h-auto shrink-0 flex-col bg-white dark:bg-[#1e1e1e] border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800 z-10 shadow-lg transition-colors`}>
                     <div className="p-6 pb-2">
                         <div className="flex items-center justify-between mb-2">
                             <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tighter uppercase">LoméShop Map</h2>
@@ -666,7 +667,18 @@ export default function MapView({ initialShops }) {
                     </div>
                 </aside>
 
-                <main className="w-full h-[55vh] md:h-auto md:flex-1 shrink-0 relative bg-gray-50 dark:bg-[#121212] overflow-hidden transition-colors">
+                <main className={`w-full ${isMapFullscreen ? 'h-full' : 'h-[200px]'} md:h-auto md:flex-1 shrink-0 relative bg-gray-50 dark:bg-[#121212] overflow-hidden transition-colors`}>
+                    <button
+                        onClick={() => setIsMapFullscreen(!isMapFullscreen)}
+                        className="md:hidden absolute top-3 right-3 z-40 w-10 h-10 bg-white dark:bg-[#1e1e1e] rounded-full shadow-xl flex items-center justify-center text-gray-700 dark:text-gray-200 border border-gray-100 dark:border-gray-800 active:scale-90 transition-all"
+                        title={isMapFullscreen ? "Réduire la carte" : "Agrandir la carte"}
+                    >
+                        {isMapFullscreen ? (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 9L4 4m0 0l5 0m-5 0l0 5M15 9l5-5m0 0l-5 0m5 0l0 5M9 15l-5 5m0 0l5 0m-5 0l0-5M15 15l5 5m0 0l-5 0m5 0l0-5" /></svg>
+                        ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+                        )}
+                    </button>
                     <APIProvider apiKey={GOOGLE_MAPS_API_KEY} libraries={['places']}>
                         <Map 
                             defaultCenter={{ lat: 6.1372, lng: 1.2125 }} 
