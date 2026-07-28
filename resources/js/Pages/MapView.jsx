@@ -365,6 +365,7 @@ export default function MapView({ initialShops }) {
     const [isSearching, setIsSearching] = useState(false);
     const [error, setError] = useState(null);
     const [selectedShop, setSelectedShop] = useState(null);
+    const [isMapFullscreen, setIsMapFullscreen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
 
     const activeShop = selectedShop || shops.find(s => s.id === activeShopId);
@@ -666,12 +667,12 @@ export default function MapView({ initialShops }) {
                     </div>
                 </aside>
 
-                <main className="w-full h-[300px] md:h-auto md:flex-1 shrink-0 relative bg-gray-50 dark:bg-[#121212] transition-colors">
+                <main className="hidden md:block w-full md:h-auto md:flex-1 shrink-0 relative bg-gray-50 dark:bg-[#121212] transition-colors">
                     <APIProvider apiKey={GOOGLE_MAPS_API_KEY} libraries={['places']}>
-                        <Map 
-                            defaultCenter={{ lat: 6.1372, lng: 1.2125 }} 
-                            defaultZoom={13} 
-                            mapId="bf50a87343b44b8b" 
+                        <Map
+                            defaultCenter={{ lat: 6.1372, lng: 1.2125 }}
+                            defaultZoom={13}
+                            mapId="bf50a87343b44b8b"
                             disableDefaultUI={true}
                             onClick={(e) => {
                                 const newPos = { lat: e.detail.latLng.lat, lng: e.detail.latLng.lng };
@@ -679,14 +680,14 @@ export default function MapView({ initialShops }) {
                                 setFollowUser(false);
                             }}
                         >
-                            <MapInner 
-                                shops={shops} 
-                                activeShopId={activeShopId} 
-                                setActiveShopId={setActiveShopId} 
-                                userLocation={userLocation} 
+                            <MapInner
+                                shops={shops}
+                                activeShopId={activeShopId}
+                                setActiveShopId={setActiveShopId}
+                                userLocation={userLocation}
                                 setUserLocation={setUserLocation}
-                                followUser={followUser} 
-                                setFollowUser={setFollowUser} 
+                                followUser={followUser}
+                                setFollowUser={setFollowUser}
                                 onShopSelect={(s) => {
                                     setActiveShopId(s.id);
                                     setSelectedShop(s);
@@ -694,29 +695,110 @@ export default function MapView({ initialShops }) {
                             />
                         </Map>
                     </APIProvider>
-
-                    {/* Shop Catalog Drawer */}
-                    {selectedShop && (
-                        <div className="fixed inset-0 z-50 pointer-events-none">
-                            <div className="absolute inset-0 bg-black/20 pointer-events-auto" onClick={() => setSelectedShop(null)}></div>
-                            <div className="pointer-events-auto">
-                                <ShopDrawer 
-                                    shop={selectedShop} 
-                                    onClose={() => setSelectedShop(null)} 
-                                    onOrderProduct={(p) => setSelectedProduct(p)}
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {selectedProduct && (
-                        <OrderModal 
-                            product={selectedProduct}
-                            userLocation={userLocation}
-                            onClose={() => setSelectedProduct(null)} 
-                        />
-                    )}
                 </main>
+
+                {/* Mobile: compact square map card in the flow, expandable to fullscreen */}
+                <div className="md:hidden px-6 pb-6">
+                    <div className="relative w-full aspect-square rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-lg">
+                        <APIProvider apiKey={GOOGLE_MAPS_API_KEY} libraries={['places']}>
+                            <Map
+                                defaultCenter={{ lat: 6.1372, lng: 1.2125 }}
+                                defaultZoom={13}
+                                mapId="bf50a87343b44b8b"
+                                disableDefaultUI={true}
+                                gestureHandling="none"
+                                onClick={(e) => {
+                                    const newPos = { lat: e.detail.latLng.lat, lng: e.detail.latLng.lng };
+                                    setUserLocation(newPos);
+                                    setFollowUser(false);
+                                }}
+                            >
+                                <MapInner
+                                    shops={shops}
+                                    activeShopId={activeShopId}
+                                    setActiveShopId={setActiveShopId}
+                                    userLocation={userLocation}
+                                    setUserLocation={setUserLocation}
+                                    followUser={followUser}
+                                    setFollowUser={setFollowUser}
+                                    onShopSelect={(s) => {
+                                        setActiveShopId(s.id);
+                                        setSelectedShop(s);
+                                    }}
+                                />
+                            </Map>
+                        </APIProvider>
+                        <button
+                            onClick={() => setIsMapFullscreen(true)}
+                            className="absolute top-3 right-3 z-40 w-10 h-10 bg-white dark:bg-[#1e1e1e] rounded-full shadow-xl flex items-center justify-center text-gray-700 dark:text-gray-200 border border-gray-100 dark:border-gray-800 active:scale-90 transition-all"
+                            title="Agrandir la carte"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Mobile: fullscreen map overlay */}
+                {isMapFullscreen && (
+                    <div className="md:hidden fixed inset-0 z-[200] bg-white dark:bg-[#121212]">
+                        <APIProvider apiKey={GOOGLE_MAPS_API_KEY} libraries={['places']}>
+                            <Map
+                                defaultCenter={{ lat: 6.1372, lng: 1.2125 }}
+                                defaultZoom={13}
+                                mapId="bf50a87343b44b8b"
+                                disableDefaultUI={true}
+                                onClick={(e) => {
+                                    const newPos = { lat: e.detail.latLng.lat, lng: e.detail.latLng.lng };
+                                    setUserLocation(newPos);
+                                    setFollowUser(false);
+                                }}
+                            >
+                                <MapInner
+                                    shops={shops}
+                                    activeShopId={activeShopId}
+                                    setActiveShopId={setActiveShopId}
+                                    userLocation={userLocation}
+                                    setUserLocation={setUserLocation}
+                                    followUser={followUser}
+                                    setFollowUser={setFollowUser}
+                                    onShopSelect={(s) => {
+                                        setActiveShopId(s.id);
+                                        setSelectedShop(s);
+                                    }}
+                                />
+                            </Map>
+                        </APIProvider>
+                        <button
+                            onClick={() => setIsMapFullscreen(false)}
+                            className="absolute top-4 right-4 z-40 w-11 h-11 bg-white dark:bg-[#1e1e1e] rounded-full shadow-xl flex items-center justify-center text-gray-700 dark:text-gray-200 border border-gray-100 dark:border-gray-800 active:scale-90 transition-all"
+                            title="Fermer"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                )}
+
+                {/* Shop Catalog Drawer */}
+                {selectedShop && (
+                    <div className="fixed inset-0 z-[250] pointer-events-none">
+                        <div className="absolute inset-0 bg-black/20 pointer-events-auto" onClick={() => setSelectedShop(null)}></div>
+                        <div className="pointer-events-auto">
+                            <ShopDrawer
+                                shop={selectedShop}
+                                onClose={() => setSelectedShop(null)}
+                                onOrderProduct={(p) => setSelectedProduct(p)}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {selectedProduct && (
+                    <OrderModal
+                        product={selectedProduct}
+                        userLocation={userLocation}
+                        onClose={() => setSelectedProduct(null)}
+                    />
+                )}
             </div>
         </div>
     );
