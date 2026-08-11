@@ -111,16 +111,16 @@ export default function RoleSelection() {
 
                 {onboardingStep === 1 && (
                     /* STEP 2: SOUTENEZ LE COMMERCE LOCAL (IMAGE 3) */
-                    <div className="flex-grow flex flex-col md:flex-row items-center justify-center px-10 md:px-20 gap-16 py-20">
+                    <div className="flex-grow flex flex-col md:flex-row items-center justify-center px-6 sm:px-10 md:px-20 gap-10 md:gap-16 py-12 md:py-20">
                         <div className="flex-1 max-w-xl">
                             <span className="inline-block px-3 py-1 bg-[#FDEAE2] text-[#E67E22] text-[10px] font-black rounded-full uppercase tracking-widest mb-6">Étape 02 / 03</span>
-                            <h2 className="text-[64px] font-black text-[#1a1a1a] leading-[1.1] mb-8 tracking-tighter">
+                            <h2 className="text-4xl sm:text-5xl md:text-[64px] font-black text-[#1a1a1a] leading-[1.1] mb-8 tracking-tighter">
                                 Soutenez <br /> le commerce <br /> <span className="text-[#8B4513]">local</span>
                             </h2>
                             <p className="text-gray-500 text-lg leading-relaxed mb-12 max-w-md font-medium">
                                 Chaque commande sur LoméShop valorise le savoir-faire local et soutient directement les commerçants et créateurs de Lomé. Ensemble, dynamisons l'économie locale.
                             </p>
-                            <div className="flex items-center gap-8">
+                            <div className="flex flex-wrap items-center gap-4 sm:gap-8">
                                 <button onClick={nextOnboarding} className="px-10 py-5 bg-[#8B4513] text-white font-black rounded-2xl text-lg shadow-xl shadow-[#8B4513]/20 hover:bg-[#70360f] transition-all flex items-center gap-2 group">
                                     Suivant 
                                     <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
@@ -148,10 +148,10 @@ export default function RoleSelection() {
 
                 {onboardingStep === 2 && (
                     /* STEP 3: SECURITE & CONFIDENTIALITE */
-                    <div className="flex-grow flex flex-col md:flex-row items-center justify-center px-10 md:px-20 gap-16 py-20">
+                    <div className="flex-grow flex flex-col md:flex-row items-center justify-center px-6 sm:px-10 md:px-20 gap-10 md:gap-16 py-12 md:py-20">
                         <div className="flex-1 max-w-xl">
                             <span className="inline-block px-3 py-1 bg-[#FDEAE2] text-[#E67E22] text-[10px] font-black rounded-full uppercase tracking-widest mb-6">Étape 03 / 03</span>
-                            <h2 className="text-[64px] font-black text-[#8B4513] leading-[1.1] mb-8 tracking-tighter">
+                            <h2 className="text-4xl sm:text-5xl md:text-[64px] font-black text-[#8B4513] leading-[1.1] mb-8 tracking-tighter">
                                 Confidentialité <br /> & Sécurité
                             </h2>
                             <p className="text-gray-500 text-lg leading-relaxed mb-6 max-w-md font-medium">
@@ -160,7 +160,7 @@ export default function RoleSelection() {
                             <p className="text-gray-400 text-xs leading-relaxed mb-12 max-w-md font-medium">
                                 En continuant, vous confirmez avoir pris connaissance et accepter notre politique de confidentialité ainsi que nos conditions d'utilisation.
                             </p>
-                            <div className="flex items-center gap-8">
+                            <div className="flex flex-wrap items-center gap-4 sm:gap-8">
                                 <button onClick={() => setView('selection')} className="px-10 py-5 bg-[#8B4513] text-white font-black rounded-2xl text-lg shadow-xl shadow-[#8B4513]/20 hover:bg-[#70360f] transition-all flex items-center gap-2 group">
                                     Commencer 
                                     <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
@@ -264,9 +264,9 @@ export default function RoleSelection() {
         <div className="min-h-screen bg-[#FDF8F6] flex flex-col items-center relative overflow-hidden font-sans">
             <Head title="Bienvenue sur LoméShop" />
             
-            <div className="relative z-10 w-full max-w-7xl px-8 py-20 flex flex-col items-center">
+            <div className="relative z-10 w-full max-w-7xl px-6 sm:px-8 py-12 sm:py-20 flex flex-col items-center">
                 <div className="text-center mb-16">
-                    <h1 className="text-[72px] font-black text-[#1a1a1a] mb-4 tracking-tighter">
+                    <h1 className="text-5xl sm:text-6xl md:text-[72px] font-black text-[#1a1a1a] mb-4 tracking-tighter">
                         Lomé<span className="text-[#8B4513]">Shop</span>
                     </h1>
                     <p className="text-gray-500 text-lg font-medium">La marketplace de Lomé — Tout à portée de main</p>

@@ -6,6 +6,7 @@ import { useCart } from '@/Contexts/CartContext';
 import { useToast } from '@/Contexts/ToastContext';
 import { APIProvider, Map, AdvancedMarker } from '@vis.gl/react-google-maps';
 import CategoryProductCard from '@/Components/CategoryProductCard';
+import SearchBar from '@/Components/SearchBar';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -121,16 +122,17 @@ export default function Explore({ products, categories, filters, activeShop }) {
         });
     };
 
-    // Live Search Debounce: Triggers search automatically 350ms after the user stops typing
+    // Same debounce for price filters: onBlur alone missed cases like spinner
+    // clicks or navigating away without blurring the field.
     useEffect(() => {
         const delayDebounce = setTimeout(() => {
-            if (searchTerm !== (filters.search || '')) {
-                applyFilters({ search: searchTerm });
+            if (minPrice !== (filters.min_price || '') || maxPrice !== (filters.max_price || '')) {
+                applyFilters();
             }
         }, 350);
 
         return () => clearTimeout(delayDebounce);
-    }, [searchTerm]);
+    }, [minPrice, maxPrice]);
 
     const handleSearch = (e) => {
         if (e.key === 'Enter') applyFilters();
@@ -289,34 +291,14 @@ export default function Explore({ products, categories, filters, activeShop }) {
                         </p>
                     </div>
                     {/* Search Bar */}
-                    <div className="relative w-full md:w-80">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </div>
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            onKeyDown={handleSearch}
-                            placeholder={activeShop ? `Rechercher chez ${activeShop.name}...` : "Rechercher un produit..."}
-                            className="w-full bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-gray-800 rounded-md py-2.5 pl-10 pr-10 text-sm focus:ring-1 focus:ring-[#B03A2E] focus:outline-none focus:border-[#B03A2E] text-gray-700 dark:text-gray-200 shadow-sm transition-all"
-                        />
-                        {searchTerm && (
-                            <button
-                                onClick={() => {
-                                    setSearchTerm('');
-                                    applyFilters({ search: '' });
-                                }}
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-white"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        )}
-                    </div>
+                    <SearchBar
+                        initialValue={searchTerm}
+                        placeholder={activeShop ? `Rechercher chez ${activeShop.name}...` : "Rechercher un produit..."}
+                        onClear={() => {
+                            setSearchTerm('');
+                            applyFilters({ search: '' });
+                        }}
+                    />
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-8">
@@ -373,20 +355,20 @@ export default function Explore({ products, categories, filters, activeShop }) {
                         <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 dark:border-gray-800 mb-6 transition-colors">
                             <h2 className="text-xl font-bold text-[#222222] dark:text-white mb-4">Prix (FCFA)</h2>
                             <div className="grid grid-cols-2 gap-2">
-                                <input 
-                                    type="number" 
-                                    placeholder="Min" 
+                                <input
+                                    type="number"
+                                    placeholder="Min"
                                     value={minPrice}
                                     onChange={(e) => setMinPrice(e.target.value)}
-                                    onBlur={() => applyFilters()}
+                                    onKeyDown={handleSearch}
                                     className="w-full text-xs bg-white dark:bg-[#252525] border-gray-100 dark:border-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-[#B03A2E] focus:border-[#B03A2E] transition-colors"
                                 />
-                                <input 
-                                    type="number" 
-                                    placeholder="Max" 
+                                <input
+                                    type="number"
+                                    placeholder="Max"
                                     value={maxPrice}
                                     onChange={(e) => setMaxPrice(e.target.value)}
-                                    onBlur={() => applyFilters()}
+                                    onKeyDown={handleSearch}
                                     className="w-full text-xs bg-white dark:bg-[#252525] border-gray-100 dark:border-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-[#B03A2E] focus:border-[#B03A2E] transition-colors"
                                 />
                             </div>

@@ -74,7 +74,7 @@ export default function MyOrders({ auth, orders }) {
                                 >
                                 {/* Order Header */}
                                 <div className="p-6 border-b border-gray-50 dark:border-gray-800 flex flex-wrap justify-between items-center gap-4 bg-gray-50/50 dark:bg-white/5 transition-colors">
-                                    <div className="flex gap-8">
+                                    <div className="flex flex-wrap gap-x-8 gap-y-3">
                                         <div>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">N° COMMANDE</p>
                                             <p className="font-bold text-[#222222] dark:text-white text-sm">{order.order_number}</p>
@@ -120,14 +120,14 @@ export default function MyOrders({ auth, orders }) {
 
                                     <div className="space-y-4">
                                         {order.order_items?.map((item) => (
-                                            <div key={item.id} className="flex items-center gap-4">
+                                            <div key={item.id} className="flex flex-wrap items-center gap-4">
                                                 <div className="w-16 h-16 rounded-lg bg-gray-100 dark:bg-[#252525] overflow-hidden flex-shrink-0">
-                                                    <img 
-                                                        src={item.product?.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=100&q=80'} 
+                                                    <img
+                                                        src={item.product?.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=100&q=80'}
                                                         className="w-full h-full object-cover"
                                                     />
                                                 </div>
-                                                <div className="flex-grow">
+                                                <div className="flex-grow min-w-[140px]">
                                                     <h4 className="text-sm font-bold text-[#222222] dark:text-white mb-1">{item.product?.name}</h4>
                                                     <p className="text-xs text-gray-500 dark:text-gray-400">Quantité : {item.quantity} × {formattedPrice(item.price)} FCFA</p>
                                                 </div>
@@ -144,7 +144,7 @@ export default function MyOrders({ auth, orders }) {
                                 </div>
 
                                 {/* Order Footer Actions */}
-                                <div className="p-6 bg-gray-50/30 dark:bg-white/5 border-t border-gray-50 dark:border-gray-800 flex justify-end gap-3 transition-colors">
+                                <div className="p-6 bg-gray-50/30 dark:bg-white/5 border-t border-gray-50 dark:border-gray-800 flex flex-wrap justify-end gap-3 transition-colors">
                                     <Link
                                         href={route('tracking', { order_id: order.id })}
                                         prefetch

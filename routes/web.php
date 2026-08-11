@@ -138,6 +138,8 @@ Route::get('/home', function () {
 
 Route::get('/explore', [App\Http\Controllers\ProductController::class, 'index'])->name('explore');
 
+Route::get('/api/search', [App\Http\Controllers\SearchController::class, 'suggest'])->name('search.suggest');
+
 Route::post('/newsletter/subscribe', [App\Http\Controllers\NewsletterController::class, 'store'])->name('newsletter.subscribe');
 
 Route::get('/conditions-utilisation', function () {
