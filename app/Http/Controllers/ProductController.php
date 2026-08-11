@@ -33,13 +33,27 @@ class ProductController extends Controller
             $query->where('category_id', $request->category_id);
         }
 
-        // Search by Name or Description
+        // Search by product name/description, or by its category name — the search
+        // bar suggests categories too, and typing "Tablettes" should surface every
+        // product in that category even though no product is literally named that.
         if ($request->filled('search')) {
             $search = $request->search;
-            $likeOp = $query->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
-            $query->where(function($q) use ($search, $likeOp) {
-                $q->where('name', $likeOp, "%{$search}%")
-                  ->orWhere('description', $likeOp, "%{$search}%");
+            $isPgsql = $query->getConnection()->getDriverName() === 'pgsql';
+            $likeOp = $isPgsql ? 'ilike' : 'like';
+            $query->where(function($q) use ($search, $likeOp, $isPgsql) {
+                if ($isPgsql) {
+                    $q->whereRaw('unaccent(name) ilike unaccent(?)', ["%{$search}%"])
+                      ->orWhereRaw('unaccent(description) ilike unaccent(?)', ["%{$search}%"])
+                      ->orWhereHas('category', function ($cq) use ($search) {
+                          $cq->whereRaw('unaccent(name) ilike unaccent(?)', ["%{$search}%"]);
+                      });
+                } else {
+                    $q->where('name', $likeOp, "%{$search}%")
+                      ->orWhere('description', $likeOp, "%{$search}%")
+                      ->orWhereHas('category', function ($cq) use ($search, $likeOp) {
+                          $cq->where('name', $likeOp, "%{$search}%");
+                      });
+                }
             });
         }
 
