@@ -91,58 +91,64 @@ export default function NotificationBell({ user }) {
                             className="fixed inset-0 z-40"
                             onClick={() => setIsOpen(false)}
                         ></div>
-                        <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="fixed left-1/2 -translate-x-1/2 top-20 sm:absolute sm:left-auto sm:translate-x-0 sm:right-0 sm:top-auto sm:mt-2 w-[calc(100vw-2rem)] max-w-80 bg-white dark:bg-[#1e1e1e] rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 z-50 overflow-hidden"
-                        >
-                            <div className="p-5 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
-                                <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Notifications</h3>
-                                {unreadCount > 0 && (
-                                    <button
-                                        onClick={markAllAsRead}
-                                        className="text-[9px] font-black text-[#8B4513] uppercase hover:underline"
-                                    >
-                                        Tout lire
+                        {/* Positioning lives on this un-animated wrapper: framer-motion applies
+                            `transform` to animate scale/y on the child, and a `fixed` element
+                            inside a transformed ancestor resolves against that ancestor instead
+                            of the viewport, which broke mobile centering. */}
+                        <div className="fixed left-1/2 -translate-x-1/2 top-20 sm:absolute sm:left-auto sm:translate-x-0 sm:right-0 sm:top-auto sm:mt-2 w-[calc(100vw-2rem)] max-w-80 z-50">
+                            <motion.div
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                className="bg-white dark:bg-[#1e1e1e] rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden"
+                            >
+                                <div className="p-5 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Notifications</h3>
+                                    {unreadCount > 0 && (
+                                        <button
+                                            onClick={markAllAsRead}
+                                            className="text-[9px] font-black text-[#8B4513] uppercase hover:underline"
+                                        >
+                                            Tout lire
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="max-h-[400px] overflow-y-auto">
+                                    {notifications.length > 0 ? (
+                                        <div className="divide-y divide-gray-50 dark:divide-gray-800">
+                                            {notifications.map((n) => (
+                                                <div
+                                                    key={n.id}
+                                                    onClick={() => !n.read_at && markAsRead(n.id)}
+                                                    className={`p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer relative ${!n.read_at ? 'bg-orange-50/30 dark:bg-orange-900/10' : ''}`}
+                                                >
+                                                    {!n.read_at && (
+                                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#8B4513]"></div>
+                                                    )}
+                                                    <p className={`text-[11px] leading-relaxed ${!n.read_at ? 'font-bold text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                        {n.data.message || 'Nouvelle mise à jour'}
+                                                    </p>
+                                                    <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-1 font-medium">
+                                                        {new Date(n.created_at).toLocaleDateString()} à {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-10 text-center">
+                                            <p className="text-[10px] font-black text-gray-300 dark:text-gray-600 uppercase tracking-widest">Aucune notification</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="p-4 bg-gray-50 dark:bg-white/5 border-t border-gray-100 dark:border-gray-800 text-center">
+                                    <button className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest hover:text-black dark:hover:text-white transition-colors">
+                                        Voir tout l'historique
                                     </button>
-                                )}
-                            </div>
-
-                            <div className="max-h-[400px] overflow-y-auto">
-                                {notifications.length > 0 ? (
-                                    <div className="divide-y divide-gray-50 dark:divide-gray-800">
-                                        {notifications.map((n) => (
-                                            <div
-                                                key={n.id}
-                                                onClick={() => !n.read_at && markAsRead(n.id)}
-                                                className={`p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer relative ${!n.read_at ? 'bg-orange-50/30 dark:bg-orange-900/10' : ''}`}
-                                            >
-                                                {!n.read_at && (
-                                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#8B4513]"></div>
-                                                )}
-                                                <p className={`text-[11px] leading-relaxed ${!n.read_at ? 'font-bold text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
-                                                    {n.data.message || 'Nouvelle mise à jour'}
-                                                </p>
-                                                <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-1 font-medium">
-                                                    {new Date(n.created_at).toLocaleDateString()} à {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="p-10 text-center">
-                                        <p className="text-[10px] font-black text-gray-300 dark:text-gray-600 uppercase tracking-widest">Aucune notification</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="p-4 bg-gray-50 dark:bg-white/5 border-t border-gray-100 dark:border-gray-800 text-center">
-                                <button className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest hover:text-black dark:hover:text-white transition-colors">
-                                    Voir tout l'historique
-                                </button>
-                            </div>
-                        </motion.div>
+                                </div>
+                            </motion.div>
+                        </div>
                     </>
                 )}
             </AnimatePresence>
