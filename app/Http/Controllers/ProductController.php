@@ -18,6 +18,7 @@ class ProductController extends Controller
         $query = Product::with(['category.parent', 'shop'])
             ->withCount('reviews')
             ->withAvg('reviews', 'rating')
+            ->where('status', '!=', 'inactive')
             ->whereHas('shop', function($q) {
                 $q->where('status', 'approved');
             });

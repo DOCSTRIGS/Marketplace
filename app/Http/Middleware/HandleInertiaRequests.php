@@ -34,25 +34,36 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // These counts each cost a DB round trip; only run the ones relevant
+            // to the current user's role instead of unconditionally on every request.
             'unreadMessagesCount' => (function() use ($request) {
+                if (!$request->user()) {
+                    return 0;
+                }
                 try {
-                    return $request->user() ? $request->user()->unreadMessagesCount() : 0;
+                    return $request->user()->unreadMessagesCount();
                 } catch (\Exception $e) {
                     \Log::error('Error counting unread messages: ' . $e->getMessage());
                     return 0;
                 }
             })(),
             'pendingOrdersCount' => (function() use ($request) {
+                if ($request->user()?->role !== 'seller') {
+                    return 0;
+                }
                 try {
-                    return $request->user() ? $request->user()->pendingOrdersCount() : 0;
+                    return $request->user()->pendingOrdersCount();
                 } catch (\Exception $e) {
                     \Log::error('Error counting pending orders: ' . $e->getMessage());
                     return 0;
                 }
             })(),
             'lowStockCount' => (function() use ($request) {
+                if ($request->user()?->role !== 'seller') {
+                    return 0;
+                }
                 try {
-                    return $request->user() ? $request->user()->lowStockCount() : 0;
+                    return $request->user()->lowStockCount();
                 } catch (\Exception $e) {
                     \Log::error('Error counting low stock products: ' . $e->getMessage());
                     return 0;
@@ -70,7 +81,9 @@ class HandleInertiaRequests extends Middleware
                     'pendingWithdrawals' => \App\Models\Withdrawal::where('status', 'pending')->count(),
                 ];
             })(),
-            'reviewStats' => (function() {
+            // Same value for every visitor, so cache it instead of hitting the DB
+            // on every single page load.
+            'reviewStats' => \Illuminate\Support\Facades\Cache::remember('review_stats_product', 300, function () {
                 try {
                     $productReviews = \App\Models\Review::where('type', 'product');
                     $count = (clone $productReviews)->count();
@@ -81,7 +94,7 @@ class HandleInertiaRequests extends Middleware
                 } catch (\Exception $e) {
                     return ['average' => 0, 'count' => 0];
                 }
-            })(),
+            }),
             'flash' => [
                 'message' => fn () => $request->session()->get('message'),
                 'error' => fn () => $request->session()->get('error'),

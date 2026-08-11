@@ -33,7 +33,10 @@ class ShopController extends Controller
         $search = $request->input('search');
         $likeOp = Shop::query()->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
 
+        // The map only ever renders id/name/price/images[0] per product, so avoid
+        // pulling large columns (description, full images array) for every shop.
         $query = Shop::with(['neighborhood', 'products' => function($q) use ($search, $likeOp) {
+            $q->select('id', 'shop_id', 'name', 'price', 'images');
             if ($search) {
                 $q->where('name', $likeOp, "%{$search}%");
             }
@@ -53,6 +56,12 @@ class ShopController extends Controller
         $query->where('status', 'approved')
               ->whereNotNull('latitude')
               ->whereNotNull('longitude');
+
+        // Cap the unfiltered load (initial map view); a search narrows the result
+        // set naturally, so only limit when browsing without one.
+        if (!$search) {
+            $query->limit(300);
+        }
 
         $shops = $query->get()->map(function($shop) {
             return [
