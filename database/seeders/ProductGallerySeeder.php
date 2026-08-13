@@ -51,8 +51,13 @@ class ProductGallerySeeder extends Seeder
             // Beauté
             'beaute-et-hygiene' => 'aura-beaute-bio',
             
-            // Maison
-            'maison-et-decoration' => 'latelier-du-meuble-royal',
+            // Maison (mobilier reste chez le spécialiste meubles, le reste va à la boutique déco)
+            'meubles' => 'latelier-du-meuble-royal',
+            'eclairage' => 'maison-deco-lome',
+            'decoration-artisanale' => 'maison-deco-lome',
+            'ustensiles' => 'maison-deco-lome',
+            'linge-de-maison' => 'maison-deco-lome',
+            'maison-et-decoration' => 'maison-deco-lome', // Repli général pour Maison et Décoration
             
             // Sport
             'sports-et-loisirs' => 'lome-sport-vitalite',

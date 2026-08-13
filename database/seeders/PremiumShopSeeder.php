@@ -98,6 +98,16 @@ class PremiumShopSeeder extends Seeder
                 'description' => 'Mobilier d\'exception fabriqué à la main à Lomé en bois précieux de teck et d\'iroko. Canapés chics, tables impériales et luminaires design.'
             ],
             [
+                'name' => 'Maison & Déco Lomé',
+                'seller_email' => 'vendeur.decoration@lomeshop.com',
+                'seller_name' => 'Ama Kponou',
+                'neighborhood' => 'Bè',
+                'latitude' => 6.1260,
+                'longitude' => 1.2230,
+                'logo' => '/images/products/decoration-artisanale/jarre.webp',
+                'description' => 'Luminaires design, décoration artisanale togolaise et ustensiles de qualité pour sublimer votre intérieur au quotidien.'
+            ],
+            [
                 'name' => 'Lomé Sport & Vitalité',
                 'seller_email' => 'vendeur.sport@lomeshop.com',
                 'seller_name' => 'Pierre Adama',
