@@ -61,15 +61,10 @@ export default function Footer() {
                     </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-gray-200/50 dark:border-white/5">
-                    <div className="hidden md:block w-32"></div> {/* Spacer for centering */}
-                    <p className="text-[11px] text-gray-400 dark:text-gray-500 font-bold text-center flex-1 mb-4 md:mb-0">
+                <div className="flex flex-col md:flex-row justify-center items-center pt-8 border-t border-gray-200/50 dark:border-white/5">
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500 font-bold text-center">
                         &copy; {new Date().getFullYear()} LoméShop. Fabriqué avec soin au Togo.
                     </p>
-                    <div className="flex space-x-2 w-32 justify-end">
-                        <div className="w-9 h-6 bg-gradient-to-br from-[#8B4513] to-[#D35400] rounded-lg flex items-center justify-center text-[9px] font-black text-white shadow-sm shadow-[#D35400]/10 tracking-widest">VISA</div>
-                        <div className="w-9 h-6 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center text-[9px] font-black text-white shadow-sm shadow-indigo-600/10 tracking-widest">T-MONEY</div>
-                    </div>
                 </div>
             </div>
         </footer>

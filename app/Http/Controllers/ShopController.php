@@ -82,8 +82,8 @@ class ShopController extends Controller
                                 : asset('storage/' . $shop->logo)))) 
                     : 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&w=400&q=80',
                 'matching_products' => $shop->products,
-                // For the UI, we take the price of the first matching product or a default
-                'price' => $shop->products->first() ? number_format((float)$shop->products->first()->price, 0, ',', ' ') . ' FCFA' : 'Voir catalogue'
+                // For the UI, we show the cheapest matching product's price as a starting price
+                'price' => $shop->products->isNotEmpty() ? 'À partir de ' . number_format((float)$shop->products->min('price'), 0, ',', ' ') . ' FCFA' : 'Voir catalogue'
             ];
         });
 
