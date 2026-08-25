@@ -15,7 +15,7 @@ return new class extends Migration
 
         DB::statement(<<<'SQL'
             CREATE OR REPLACE FUNCTION immutable_unaccent(text) RETURNS text AS $$
-                SELECT unaccent('unaccent'::regdictionary, $1)
+                SELECT public.unaccent('public.unaccent'::regdictionary, $1)
             $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE
         SQL);
 
