@@ -16,8 +16,12 @@ class ShopController extends Controller
      */
     public function create()
     {
-        $neighborhoods = \App\Models\Neighborhood::orderBy('name')->get();
-        $categories = \App\Models\Category::whereNull('parent_id')->orderBy('name')->get();
+        $neighborhoods = \Illuminate\Support\Facades\Cache::remember('neighborhoods_all', 600, function () {
+            return \App\Models\Neighborhood::orderBy('name')->get();
+        });
+        $categories = \Illuminate\Support\Facades\Cache::remember('categories_top_level', 600, function () {
+            return \App\Models\Category::whereNull('parent_id')->orderBy('name')->get();
+        });
 
         return Inertia::render('Seller/ShopSetup', [
             'neighborhoods' => $neighborhoods,

@@ -247,6 +247,8 @@ class AdminController extends Controller
             'parent_id' => null
         ]);
 
+        $this->forgetCategoryCaches();
+
         return redirect()->back()->with('success', 'Catégorie ajoutée avec succès.');
     }
 
@@ -264,6 +266,8 @@ class AdminController extends Controller
             'parent_id' => $parent->id
         ]);
 
+        $this->forgetCategoryCaches();
+
         return redirect()->back()->with('success', 'Sous-catégorie ajoutée avec succès.');
     }
 
@@ -278,6 +282,8 @@ class AdminController extends Controller
         $category->slug = Str::slug($request->name);
         $category->save();
 
+        $this->forgetCategoryCaches();
+
         return redirect()->back()->with('success', 'Catégorie modifiée avec succès.');
     }
 
@@ -289,7 +295,21 @@ class AdminController extends Controller
         $category->children()->delete();
         $category->delete();
 
+        $this->forgetCategoryCaches();
+
         return redirect()->back()->with('success', 'Catégorie supprimée avec succès.');
+    }
+
+    /**
+     * Categories are cached (ProductController, ShopController, SellerController,
+     * CategoryController) since they rarely change; bust all of those keys whenever
+     * an admin action here actually changes them.
+     */
+    private function forgetCategoryCaches(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget('categories_with_children');
+        \Illuminate\Support\Facades\Cache::forget('categories_top_level');
+        \Illuminate\Support\Facades\Cache::forget('categories_with_parent');
     }
 
     public function financialReport()

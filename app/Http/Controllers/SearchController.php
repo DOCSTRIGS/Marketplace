@@ -18,9 +18,9 @@ class SearchController extends Controller
         }
 
         // unaccent() makes "telephone" match "téléphone" on both sides of the
-        // comparison; wrapping the column keeps this index-free but the tables
-        // here are small enough (catalog browse, not full-text scale) that a
-        // sequential scan on a handful of rows per keystroke is fine.
+        // comparison. Categories are few enough that a sequential scan is fine,
+        // but products uses immutable_unaccent() so it hits the same trigram
+        // index as the Explore search (this endpoint fires on every keystroke).
         $categories = Category::query()
             ->whereRaw('unaccent(name) ILIKE unaccent(?)', ["%{$term}%"])
             ->orderByRaw('unaccent(name) ILIKE unaccent(?) DESC', ["{$term}%"])
@@ -30,8 +30,8 @@ class SearchController extends Controller
         $products = Product::query()
             ->where('status', '!=', 'inactive')
             ->whereHas('shop', fn ($q) => $q->where('status', 'approved'))
-            ->whereRaw('unaccent(name) ILIKE unaccent(?)', ["%{$term}%"])
-            ->orderByRaw('unaccent(name) ILIKE unaccent(?) DESC', ["{$term}%"])
+            ->whereRaw('immutable_unaccent(name) ILIKE immutable_unaccent(?)', ["%{$term}%"])
+            ->orderByRaw('immutable_unaccent(name) ILIKE immutable_unaccent(?) DESC', ["{$term}%"])
             ->limit(5)
             ->with('category:id,name')
             ->get(['id', 'name', 'category_id', 'price', 'images']);

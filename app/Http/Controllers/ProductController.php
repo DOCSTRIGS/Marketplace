@@ -42,8 +42,8 @@ class ProductController extends Controller
             $likeOp = $isPgsql ? 'ilike' : 'like';
             $query->where(function($q) use ($search, $likeOp, $isPgsql) {
                 if ($isPgsql) {
-                    $q->whereRaw('unaccent(name) ilike unaccent(?)', ["%{$search}%"])
-                      ->orWhereRaw('unaccent(description) ilike unaccent(?)', ["%{$search}%"])
+                    $q->whereRaw('immutable_unaccent(name) ilike immutable_unaccent(?)', ["%{$search}%"])
+                      ->orWhereRaw('immutable_unaccent(description) ilike immutable_unaccent(?)', ["%{$search}%"])
                       ->orWhereHas('category', function ($cq) use ($search) {
                           $cq->whereRaw('unaccent(name) ilike unaccent(?)', ["%{$search}%"]);
                       });
@@ -87,7 +87,9 @@ class ProductController extends Controller
         $products = $request->filled('shop_id')
             ? $query->latest()->get()
             : $query->latest()->take(200)->get();
-        $categories = Category::whereNull('parent_id')->with('children')->get();
+        $categories = \Illuminate\Support\Facades\Cache::remember('categories_with_children', 600, function () {
+            return Category::whereNull('parent_id')->with('children')->get();
+        });
 
         $activeShop = null;
         if ($request->filled('shop_id')) {

@@ -195,7 +195,9 @@ class SellerController extends Controller
         $products = Product::where('shop_id', $shop->id)->with('category.parent')->latest()->get();
         return Inertia::render('Seller/Products', [
             'products' => $products,
-            'categories' => \App\Models\Category::whereNotNull('parent_id')->get()
+            'categories' => \Illuminate\Support\Facades\Cache::remember('categories_with_parent', 600, function () {
+                return \App\Models\Category::whereNotNull('parent_id')->get();
+            })
         ]);
     }
 
@@ -321,21 +323,6 @@ class SellerController extends Controller
 
         return Inertia::render('Seller/Tracking', [
             'order' => $order
-        ]);
-    }
-    public function wallet()
-    {
-        $shop = Auth::user()->shop;
-        if (!$shop) return redirect()->route('shops.create');
-
-        $transactions = \App\Models\Transaction::where('user_id', Auth::id())
-            ->with('order')
-            ->latest()
-            ->get();
-
-        return Inertia::render('Seller/Wallet', [
-            'shop' => $shop,
-            'transactions' => $transactions
         ]);
     }
 

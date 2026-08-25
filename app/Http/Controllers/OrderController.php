@@ -125,26 +125,6 @@ class OrderController extends Controller
     }
 
     /**
-     * Display seller orders.
-     */
-    public function sellerOrders()
-    {
-        $user = Auth::user();
-        $shop = $user->shop;
-        
-        if (!$shop) return redirect()->route('shops.create');
-
-        $orders = Order::where('shop_id', $shop->id)
-            ->with(['orderItems.product', 'user'])
-            ->latest()
-            ->get();
-
-        return Inertia::render('Seller/Orders', [
-            'orders' => $orders
-        ]);
-    }
-
-    /**
      * Update order status.
      */
     public function updateStatus(Request $request, $id)

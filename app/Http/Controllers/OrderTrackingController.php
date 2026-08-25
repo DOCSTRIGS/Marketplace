@@ -13,6 +13,8 @@ class OrderTrackingController extends Controller
      */
     public function getDriverPosition(Order $order)
     {
+        $order->loadMissing(['driver', 'shop']);
+
         // Security: Only the shop owner or the client who placed the order can track
         $user = Auth::user();
         
