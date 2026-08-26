@@ -227,7 +227,11 @@ class DriverController extends Controller
         $order->update($updateData);
 
         // Broadcast status update
-        event(new \App\Events\OrderUpdated($order));
+        try {
+            event(new \App\Events\OrderUpdated($order));
+        } catch (\Exception $e) {
+            // Log error or ignore if broadcasting (Reverb) is unreachable
+        }
 
         // Send Notifications
         if ($order->status === 'shipped') {
@@ -339,7 +343,11 @@ class DriverController extends Controller
         auth()->user()->update(['driver_status' => 'busy']);
 
         // Notifier les parties concernées
-        event(new \App\Events\OrderUpdated($order));
+        try {
+            event(new \App\Events\OrderUpdated($order));
+        } catch (\Exception $e) {
+            // Log error or ignore if broadcasting (Reverb) is unreachable
+        }
 
         return back()->with('success', 'Mission acceptée ! En route pour la boutique.');
     }

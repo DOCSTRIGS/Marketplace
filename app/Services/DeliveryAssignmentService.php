@@ -74,7 +74,11 @@ class DeliveryAssignmentService
         }
 
         // Broadcast to all drivers in range
-        event(new \App\Events\OrderUpdated($order));
+        try {
+            event(new \App\Events\OrderUpdated($order));
+        } catch (\Exception $e) {
+            // Log error or ignore if broadcasting (Reverb) is unreachable
+        }
 
         return null; // Return null because we didn't assign yet
     }

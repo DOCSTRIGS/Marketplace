@@ -107,7 +107,11 @@ class OrderController extends Controller
             ));
 
             // Real-time broadcast for Seller
-            event(new \App\Events\OrderUpdated($order));
+            try {
+                event(new \App\Events\OrderUpdated($order));
+            } catch (\Exception $e) {
+                // Log error or ignore if broadcasting (Reverb) is unreachable
+            }
 
             $createdOrders[] = $order;
         }
@@ -160,7 +164,11 @@ class OrderController extends Controller
         }
 
         // Broadcast status update
-        event(new \App\Events\OrderUpdated($order));
+        try {
+            event(new \App\Events\OrderUpdated($order));
+        } catch (\Exception $e) {
+            // Log error or ignore if broadcasting (Reverb) is unreachable
+        }
 
         // Si une commande déjà payée est annulée, on restitue le stock décrémenté au paiement
         $postPaymentStatuses = ['paid', 'preparing', 'shipped'];
