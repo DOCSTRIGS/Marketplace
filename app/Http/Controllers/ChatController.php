@@ -9,6 +9,7 @@ use App\Models\Shop;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ChatController extends Controller
 {
@@ -103,7 +104,11 @@ class ChatController extends Controller
         $conversation->touch();
 
         // Broadcast to Reverb WebSocket
-        broadcast(new MessageSent($message))->toOthers();
+        try {
+            broadcast(new MessageSent($message))->toOthers();
+        } catch (\Exception $e) {
+            Log::warning('ChatController: message broadcast failed', ['message_id' => $message->id, 'error' => $e->getMessage()]);
+        }
 
         return response()->json(['message' => $message->load('sender')]);
     }

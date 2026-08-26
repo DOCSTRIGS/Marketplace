@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Review;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class DriverController extends Controller
@@ -116,24 +117,28 @@ class DriverController extends Controller
             'last_location_update' => now(),
         ]);
 
-        // 2. Broadcast for Admin (Global Fleet Channel)
-        broadcast(new \App\Events\DriverLocationUpdated(
-            null, // No specific order needed for global fleet
-            $request->latitude,
-            $request->longitude,
-            $user->id,
-            $user->driver_status
-        ))->toOthers();
-
-        // 3. Broadcast for Client/Seller (Specific Order Channel)
-        if ($request->order_id) {
+        try {
+            // 2. Broadcast for Admin (Global Fleet Channel)
             broadcast(new \App\Events\DriverLocationUpdated(
-                $request->order_id,
+                null, // No specific order needed for global fleet
                 $request->latitude,
                 $request->longitude,
                 $user->id,
                 $user->driver_status
             ))->toOthers();
+
+            // 3. Broadcast for Client/Seller (Specific Order Channel)
+            if ($request->order_id) {
+                broadcast(new \App\Events\DriverLocationUpdated(
+                    $request->order_id,
+                    $request->latitude,
+                    $request->longitude,
+                    $user->id,
+                    $user->driver_status
+                ))->toOthers();
+            }
+        } catch (\Exception $e) {
+            Log::warning('DriverController: broadcast failed', ['error' => $e->getMessage()]);
         }
 
         return response()->json(['status' => 'success', 'lat' => $request->latitude, 'lng' => $request->longitude]);
@@ -159,13 +164,17 @@ class DriverController extends Controller
         ]);
 
         // Broadcast the latest position to keep tracking updated
-        broadcast(new \App\Events\DriverLocationUpdated(
-            $latest['order_id'],
-            $latest['latitude'],
-            $latest['longitude'],
-            $user->id,
-            $user->driver_status
-        ))->toOthers();
+        try {
+            broadcast(new \App\Events\DriverLocationUpdated(
+                $latest['order_id'],
+                $latest['latitude'],
+                $latest['longitude'],
+                $user->id,
+                $user->driver_status
+            ))->toOthers();
+        } catch (\Exception $e) {
+            Log::warning('DriverController: broadcast failed', ['error' => $e->getMessage()]);
+        }
 
         return response()->json(['status' => 'success', 'synced' => count($request->positions)]);
     }
@@ -230,27 +239,31 @@ class DriverController extends Controller
         try {
             event(new \App\Events\OrderUpdated($order));
         } catch (\Exception $e) {
-            // Log error or ignore if broadcasting (Reverb) is unreachable
+            Log::warning('DriverController: broadcast failed', ['error' => $e->getMessage()]);
         }
 
         // Send Notifications
-        if ($order->status === 'shipped') {
-            $order->user->notify(new \App\Notifications\OrderNotification(
-                $order, 
-                "Votre commande #{$order->order_number} est en route !",
-                'info'
-            ));
-        } elseif ($order->status === 'delivered') {
-            $order->shop->user->notify(new \App\Notifications\OrderNotification(
-                $order, 
-                "La commande #{$order->order_number} a été livrée avec succès.",
-                'success'
-            ));
-            $order->user->notify(new \App\Notifications\OrderNotification(
-                $order, 
-                "Merci ! Votre commande #{$order->order_number} a été livrée avec succès (OTP: {$order->delivery_code}).",
-                'success'
-            ));
+        try {
+            if ($order->status === 'shipped') {
+                $order->user->notify(new \App\Notifications\OrderNotification(
+                    $order,
+                    "Votre commande #{$order->order_number} est en route !",
+                    'info'
+                ));
+            } elseif ($order->status === 'delivered') {
+                $order->shop->user->notify(new \App\Notifications\OrderNotification(
+                    $order,
+                    "La commande #{$order->order_number} a été livrée avec succès.",
+                    'success'
+                ));
+                $order->user->notify(new \App\Notifications\OrderNotification(
+                    $order,
+                    "Merci ! Votre commande #{$order->order_number} a été livrée avec succès (OTP: {$order->delivery_code}).",
+                    'success'
+                ));
+            }
+        } catch (\Exception $e) {
+            Log::warning('DriverController: notification failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
         }
 
         return response()->json(['success' => true]);
@@ -327,17 +340,21 @@ class DriverController extends Controller
         ]);
 
         // Notifications
-        $order->user->notify(new \App\Notifications\OrderNotification(
-            $order, 
-            "Votre commande #{$order->order_number} est en préparation.",
-            'info'
-        ));
+        try {
+            $order->user->notify(new \App\Notifications\OrderNotification(
+                $order,
+                "Votre commande #{$order->order_number} est en préparation.",
+                'info'
+            ));
 
-        $order->shop->user->notify(new \App\Notifications\OrderNotification(
-            $order, 
-            "Un livreur est en route pour récupérer la commande #{$order->order_number}.",
-            'success'
-        ));
+            $order->shop->user->notify(new \App\Notifications\OrderNotification(
+                $order,
+                "Un livreur est en route pour récupérer la commande #{$order->order_number}.",
+                'success'
+            ));
+        } catch (\Exception $e) {
+            Log::warning('DriverController: notification failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+        }
 
         // Marquer le livreur comme occupé
         auth()->user()->update(['driver_status' => 'busy']);
@@ -346,7 +363,7 @@ class DriverController extends Controller
         try {
             event(new \App\Events\OrderUpdated($order));
         } catch (\Exception $e) {
-            // Log error or ignore if broadcasting (Reverb) is unreachable
+            Log::warning('DriverController: broadcast failed', ['error' => $e->getMessage()]);
         }
 
         return back()->with('success', 'Mission acceptée ! En route pour la boutique.');
@@ -364,13 +381,17 @@ class DriverController extends Controller
         ]);
 
         // Broadcast to Admin (Fleet Channel)
-        broadcast(new \App\Events\DriverLocationUpdated(
-            null,
-            $user->last_latitude,
-            $user->last_longitude,
-            $user->id,
-            $user->driver_status
-        ))->toOthers();
+        try {
+            broadcast(new \App\Events\DriverLocationUpdated(
+                null,
+                $user->last_latitude,
+                $user->last_longitude,
+                $user->id,
+                $user->driver_status
+            ))->toOthers();
+        } catch (\Exception $e) {
+            Log::warning('DriverController: broadcast failed', ['error' => $e->getMessage()]);
+        }
 
         return response()->json(['success' => true, 'status' => $validated['status']]);
     }

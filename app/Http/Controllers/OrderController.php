@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderPlacedSeller;
 use App\Mail\OrderConfirmedClient;
@@ -96,21 +97,25 @@ class OrderController extends Controller
             try {
                 Mail::to($order->shop->user->email)->send(new OrderPlacedSeller($order));
             } catch (\Exception $e) {
-                // Log error or ignore if mail not configured
+                Log::warning('OrderController: seller email failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
             }
 
             // Send Notification to Client with OTP
-            $order->user->notify(new \App\Notifications\OrderNotification(
-                $order, 
-                "Votre commande #{$order->order_number} est enregistrée ! Code de réception : {$order->delivery_code}",
-                'success'
-            ));
+            try {
+                $order->user->notify(new \App\Notifications\OrderNotification(
+                    $order,
+                    "Votre commande #{$order->order_number} est enregistrée ! Code de réception : {$order->delivery_code}",
+                    'success'
+                ));
+            } catch (\Exception $e) {
+                Log::warning('OrderController: notification failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            }
 
             // Real-time broadcast for Seller
             try {
                 event(new \App\Events\OrderUpdated($order));
             } catch (\Exception $e) {
-                // Log error or ignore if broadcasting (Reverb) is unreachable
+                Log::warning('OrderController: broadcast failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
             }
 
             $createdOrders[] = $order;
@@ -167,7 +172,7 @@ class OrderController extends Controller
         try {
             event(new \App\Events\OrderUpdated($order));
         } catch (\Exception $e) {
-            // Log error or ignore if broadcasting (Reverb) is unreachable
+            Log::warning('OrderController: broadcast failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
         }
 
         // Si une commande déjà payée est annulée, on restitue le stock décrémenté au paiement

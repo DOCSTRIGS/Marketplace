@@ -66,18 +66,22 @@ class DeliveryAssignmentService
 
         // 3. Notify the closest drivers (don't assign yet, wait for manual acceptance)
         foreach ($candidates as $candidate) {
-            $candidate['driver']->notify(new \App\Notifications\OrderNotification(
-                $order, 
-                "Une nouvelle mission est disponible près de vous : #{$order->order_number}",
-                'info'
-            ));
+            try {
+                $candidate['driver']->notify(new \App\Notifications\OrderNotification(
+                    $order,
+                    "Une nouvelle mission est disponible près de vous : #{$order->order_number}",
+                    'info'
+                ));
+            } catch (\Exception $e) {
+                Log::warning('DeliveryAssignmentService: driver notification failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            }
         }
 
         // Broadcast to all drivers in range
         try {
             event(new \App\Events\OrderUpdated($order));
         } catch (\Exception $e) {
-            // Log error or ignore if broadcasting (Reverb) is unreachable
+            Log::warning('DeliveryAssignmentService: broadcast failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
         }
 
         return null; // Return null because we didn't assign yet
