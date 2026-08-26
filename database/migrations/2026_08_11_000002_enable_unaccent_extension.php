@@ -9,7 +9,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('CREATE EXTENSION IF NOT EXISTS unaccent');
+        // Supabase installs extensions into the "extensions" schema by default;
+        // force public so unaccent()/its dictionary are reachable as public.unaccent.
+        DB::statement('CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public');
     }
 
     public function down(): void

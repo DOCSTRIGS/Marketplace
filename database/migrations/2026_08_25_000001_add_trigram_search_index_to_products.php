@@ -13,6 +13,24 @@ return new class extends Migration
     {
         DB::statement('CREATE EXTENSION IF NOT EXISTS pg_trgm');
 
+        // On Supabase, unaccent may already be installed in the "extensions" schema
+        // (its default). Move it to public so it matches public.unaccent below,
+        // instead of erroring or silently leaving it out of reach.
+        DB::statement(<<<'SQL'
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'unaccent') THEN
+                    CREATE EXTENSION unaccent WITH SCHEMA public;
+                ELSIF NOT EXISTS (
+                    SELECT 1 FROM pg_extension e
+                    JOIN pg_namespace n ON n.oid = e.extnamespace
+                    WHERE e.extname = 'unaccent' AND n.nspname = 'public'
+                ) THEN
+                    ALTER EXTENSION unaccent SET SCHEMA public;
+                END IF;
+            END $$;
+        SQL);
+
         DB::statement(<<<'SQL'
             CREATE OR REPLACE FUNCTION immutable_unaccent(text) RETURNS text AS $$
                 SELECT public.unaccent('public.unaccent'::regdictionary, $1)
