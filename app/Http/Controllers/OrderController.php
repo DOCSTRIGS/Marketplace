@@ -9,13 +9,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderPlacedSeller;
 use App\Mail\OrderConfirmedClient;
+use App\Traits\NotifiesSafely;
 
 class OrderController extends Controller
 {
+    use NotifiesSafely;
+
     /**
      * Store a newly created order.
      */
@@ -94,29 +96,29 @@ class OrderController extends Controller
                 ]);
             }
             // Send Email to Seller
-            try {
-                Mail::to($order->shop->user->email)->send(new OrderPlacedSeller($order));
-            } catch (\Exception $e) {
-                Log::warning('OrderController: seller email failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
-            }
+            $this->safely(
+                fn() => Mail::to($order->shop->user->email)->send(new OrderPlacedSeller($order)),
+                'OrderController@store: seller email failed',
+                ['order_id' => $order->id]
+            );
 
             // Send Notification to Client with OTP
-            try {
-                $order->user->notify(new \App\Notifications\OrderNotification(
+            $this->safely(
+                fn() => $order->user->notify(new \App\Notifications\OrderNotification(
                     $order,
                     "Votre commande #{$order->order_number} est enregistrée ! Code de réception : {$order->delivery_code}",
                     'success'
-                ));
-            } catch (\Exception $e) {
-                Log::warning('OrderController: notification failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
-            }
+                )),
+                'OrderController@store: client notification failed',
+                ['order_id' => $order->id]
+            );
 
             // Real-time broadcast for Seller
-            try {
-                event(new \App\Events\OrderUpdated($order));
-            } catch (\Exception $e) {
-                Log::warning('OrderController: broadcast failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
-            }
+            $this->safely(
+                fn() => event(new \App\Events\OrderUpdated($order)),
+                'OrderController@store: broadcast failed',
+                ['order_id' => $order->id]
+            );
 
             $createdOrders[] = $order;
         }
@@ -169,11 +171,11 @@ class OrderController extends Controller
         }
 
         // Broadcast status update
-        try {
-            event(new \App\Events\OrderUpdated($order));
-        } catch (\Exception $e) {
-            Log::warning('OrderController: broadcast failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
-        }
+        $this->safely(
+            fn() => event(new \App\Events\OrderUpdated($order)),
+            'OrderController@updateStatus: broadcast failed',
+            ['order_id' => $order->id]
+        );
 
         // Si une commande déjà payée est annulée, on restitue le stock décrémenté au paiement
         $postPaymentStatuses = ['paid', 'preparing', 'shipped'];
