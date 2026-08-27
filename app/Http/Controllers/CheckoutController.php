@@ -96,11 +96,25 @@ class CheckoutController extends Controller
             return redirect()->route('home');
         }
 
+        // Un panier multi-boutique peut avoir des commandes sœurs à des statuts
+        // différents (ex. l'une payée, l'autre annulée par un vendeur) : on ne peut
+        // pas se fier à la première venue. Priorité à "payé" dès qu'au moins une
+        // commande l'est réellement — un client débité ne doit jamais atterrir sur
+        // "Commande annulée, contactez le support" alors qu'une partie a abouti.
+        $paidStatuses = ['paid', 'preparing', 'shipped', 'delivered'];
+        if ($orders->contains(fn ($order) => in_array($order->status, $paidStatuses, true))) {
+            $status = 'paid';
+        } elseif ($orders->every(fn ($order) => $order->status === 'cancelled')) {
+            $status = 'cancelled';
+        } else {
+            $status = 'pending';
+        }
+
         return Inertia::render('Payment/Success', [
             'reference' => $reference,
             'totalAmount' => $orders->sum('total_amount'),
             'firstOrderId' => $orders->first()->id,
-            'pending' => $orders->first()->status === 'pending',
+            'status' => $status,
         ]);
     }
 
@@ -130,8 +144,18 @@ class CheckoutController extends Controller
             return response()->json(['message' => 'Commande non trouvée.'], 404);
         }
 
-        // Idempotent : déjà confirmée (ex. double appel réseau).
-        if ($orders->first()->status !== 'pending') {
+        // Un panier peut couvrir plusieurs boutiques : $orders contient alors
+        // plusieurs lignes partageant la même payment_reference. Chacune peut avoir
+        // évolué indépendamment depuis la création (ex. un vendeur annule sa propre
+        // commande pendant que l'autre boutique attend toujours le paiement) — on
+        // ne peut donc pas se fier au seul statut de la première. Voir Order::isResurrectable().
+
+        // Idempotent : déjà confirmée (ex. double appel réseau) — rien à faire si
+        // aucune commande du groupe n'est en attente ou "ressuscitable". Une
+        // annulation humaine (vendeur/admin) n'a jamais auto_cancelled_at renseigné
+        // et reste donc, elle, définitivement fermée : cf. boucle plus bas, qui
+        // ignore individuellement toute commande non éligible.
+        if ($orders->every(fn ($order) => !$order->isResurrectable())) {
             return response()->json(['status' => 'already_confirmed']);
         }
 
@@ -181,10 +205,30 @@ class CheckoutController extends Controller
         }
 
         foreach ($orders as $order) {
-            $order->update([
-                'status' => 'paid',
-                'kkiapay_transaction_id' => $validated['transaction_id'],
-            ]);
+            // Re-vérifie et applique la condition de façon atomique au niveau SQL
+            // (au lieu de se fier au $order chargé en mémoire avant l'appel réseau
+            // KkiaPay ci-dessus) : si un vendeur a annulé cette commande précise
+            // pendant cette fenêtre, la clause WHERE ne matche plus rien et cette
+            // commande reste ignorée, même si elle était éligible au moment du chargement.
+            $updated = Order::where('id', $order->id)
+                ->where(function ($q) {
+                    $q->where('status', 'pending')
+                        ->orWhere(function ($q2) {
+                            $q2->where('status', 'cancelled')->whereNotNull('auto_cancelled_at');
+                        });
+                })
+                ->update([
+                    'status' => 'paid',
+                    'kkiapay_transaction_id' => $validated['transaction_id'],
+                    // On efface la marque de la purge auto : si cette commande est de
+                    // nouveau annulée plus tard, ce sera forcément une action humaine,
+                    // qui ne doit plus jamais pouvoir être "ressuscitée" par ce même code.
+                    'auto_cancelled_at' => null,
+                ]);
+
+            if (!$updated) {
+                continue;
+            }
 
             foreach ($order->orderItems as $orderItem) {
                 // N'affecte que les lignes où le stock est encore suffisant : évite un

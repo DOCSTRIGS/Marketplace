@@ -21,7 +21,12 @@ class Order extends Model
         'driver_id', 
         'payment_reference',
         'kkiapay_transaction_id',
+        'auto_cancelled_at',
         'delivery_code'
+    ];
+
+    protected $casts = [
+        'auto_cancelled_at' => 'datetime',
     ];
 
     public function user()
@@ -42,5 +47,17 @@ class Order extends Model
     public function driver()
     {
         return $this->belongsTo(User::class, 'driver_id');
+    }
+
+    /**
+     * Whether CheckoutController::confirmPayment is allowed to flip this order
+     * to "paid": either it's still awaiting payment, or it was auto-cancelled by
+     * CancelStalePendingOrders (auto_cancelled_at set) rather than by a human —
+     * a deliberate human cancellation must stay definitively closed.
+     */
+    public function isResurrectable(): bool
+    {
+        return $this->status === 'pending'
+            || ($this->status === 'cancelled' && $this->auto_cancelled_at !== null);
     }
 }

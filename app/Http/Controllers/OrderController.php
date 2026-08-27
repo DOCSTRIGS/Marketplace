@@ -167,7 +167,11 @@ class OrderController extends Controller
 
         // Only update status if it wasn't already moved to 'shipped' by the service
         if ($order->status !== 'shipped') {
-            $order->update(['status' => $validated['status']]);
+            // This is always a deliberate human decision (seller/admin): clear any
+            // leftover auto_cancelled_at from a previous automatic purge, so a stale
+            // marker from an earlier cycle can never make a later, unrelated human
+            // cancellation look "system-cancelled" to CheckoutController::confirmPayment.
+            $order->update(['status' => $validated['status'], 'auto_cancelled_at' => null]);
         }
 
         // Broadcast status update

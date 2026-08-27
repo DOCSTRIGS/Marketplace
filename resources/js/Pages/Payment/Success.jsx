@@ -2,9 +2,12 @@ import React, { useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import confetti from 'canvas-confetti';
 
-export default function Success({ reference, totalAmount, firstOrderId, pending }) {
+export default function Success({ reference, totalAmount, firstOrderId, status }) {
+    const pending = status === 'pending';
+    const cancelled = status === 'cancelled';
+
     useEffect(() => {
-        if (pending) return;
+        if (pending || cancelled) return;
         // Lancer les confettis au chargement de la page
         const duration = 3 * 1000;
         const end = Date.now() + duration;
@@ -31,6 +34,32 @@ export default function Success({ reference, totalAmount, firstOrderId, pending 
         };
         frame();
     }, []);
+
+    if (cancelled) {
+        return (
+            <div className="min-h-screen bg-[#FDF8F4] dark:bg-[#121212] flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8 font-sans text-center transition-colors">
+                <Head title="Commande annulée" />
+                <div className="bg-white dark:bg-[#1e1e1e] p-10 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 max-w-md w-full transition-colors">
+                    <div className="w-24 h-24 bg-red-100 dark:bg-red-900/30 text-red-500 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                    <h1 className="text-2xl font-black text-[#222222] dark:text-white mb-2 tracking-tight transition-colors">Commande annulée</h1>
+                    <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed transition-colors">
+                        Votre commande <strong className="text-gray-900 dark:text-white">{reference}</strong> a été annulée car le paiement n'a pas été confirmé à temps. Si vous avez été débité, contactez le support — sinon, vous pouvez recommencer votre achat.
+                    </p>
+                    <Link
+                        href={route('checkout.delivery')}
+                        prefetch
+                        className="w-full inline-block bg-[#8B4513] text-white py-4 rounded-xl font-bold text-sm hover:bg-[#70360f] transition-all shadow-lg shadow-[#8B4513]/20 uppercase tracking-wider"
+                    >
+                        Recommencer ma commande
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     if (pending) {
         return (
