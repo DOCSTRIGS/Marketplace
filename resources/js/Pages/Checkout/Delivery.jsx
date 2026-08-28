@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 import { useCart } from '@/Contexts/CartContext';
 import { useToast } from '@/Contexts/ToastContext';
@@ -13,6 +13,51 @@ export default function Delivery({ auth }) {
     const [clientLng, setClientLng] = useState(null);
     const [isLocating, setIsLocating] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Verrou synchrone : l'attribut `disabled` du bouton dépend d'un state React
+    // qui n'est pas encore à jour entre deux clics rapprochés. Ce ref bloque toute
+    // ré-entrée dans handleSubmit avant que la commande ne soit créée.
+    const submitLockRef = useRef(false);
+    // Identifie cette tentative de checkout. Stable pour toute la durée de vie de
+    // la page : si le client relance le paiement (widget fermé, échec réseau), le
+    // serveur renvoie la MÊME commande au lieu d'en créer une seconde.
+    const idempotencyKeyRef = useRef(null);
+    const referenceRef = useRef(null);
+    const kkiapayBoundRef = useRef(false);
+
+    const genIdempotencyKey = () => {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+        return `idem-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    };
+
+    // Écouteurs KkiaPay enregistrés une seule fois (ils sont globaux : les ré-attacher
+    // à chaque soumission déclencherait plusieurs confirmPayment pour un seul paiement).
+    const bindKkiapayListeners = () => {
+        if (kkiapayBoundRef.current) return;
+        kkiapayBoundRef.current = true;
+
+        addKkiapayListener('success', async (response) => {
+            const reference = referenceRef.current;
+            if (!reference) return;
+            try {
+                await axios.post(route('checkout.confirmPayment', { reference }), {
+                    transaction_id: response.transactionId,
+                });
+                clearCart();
+                router.visit(route('checkout.success', { reference }));
+            } catch (error) {
+                submitLockRef.current = false;
+                setIsSubmitting(false);
+                addToast(error.response?.data?.message || 'Impossible de confirmer le paiement.', 'error');
+            }
+        });
+
+        addKkiapayListener('failed', () => {
+            submitLockRef.current = false;
+            setIsSubmitting(false);
+            addToast('Le paiement a échoué.', 'error');
+        });
+    };
 
     // Redirige si le panier est vide
     useEffect(() => {
@@ -48,46 +93,38 @@ export default function Delivery({ auth }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Garde synchrone contre le double-clic / la double soumission.
+        if (submitLockRef.current) return;
+
         if (!address.trim()) {
             addToast('Veuillez saisir ou récupérer une adresse de livraison.', 'error');
             return;
         }
 
+        submitLockRef.current = true;
         setIsSubmitting(true);
 
+        if (!idempotencyKeyRef.current) {
+            idempotencyKeyRef.current = genIdempotencyKey();
+        }
+
         try {
-            // 1. Créer la commande
+            // 1. Créer la commande (idempotent côté serveur grâce à idempotency_key)
             const orderResponse = await axios.post(route('orders.store'), {
                 items: cart.map(item => ({ id: item.id, quantity: item.quantity })),
                 delivery_address: address,
                 latitude: clientLat,
-                longitude: clientLng
+                longitude: clientLng,
+                idempotency_key: idempotencyKeyRef.current,
             });
 
             const { reference, kkiapay_public_key, kkiapay_sandbox, total_amount } = orderResponse.data;
+            referenceRef.current = reference;
 
-            // 3. Configurer les écouteurs KkiaPay (évite l'erreur DataCloneError)
-            addKkiapayListener('success', async (response) => {
-                // Le widget KkiaPay ne fait que confirmer côté client : on ne
-                // marque JAMAIS la commande payée sans vérification serveur.
-                try {
-                    await axios.post(route('checkout.confirmPayment', { reference }), {
-                        transaction_id: response.transactionId,
-                    });
-                    clearCart();
-                    router.visit(route('checkout.success', { reference: reference }));
-                } catch (error) {
-                    setIsSubmitting(false);
-                    addToast(error.response?.data?.message || 'Impossible de confirmer le paiement.', 'error');
-                }
-            });
+            // 2. Configurer les écouteurs KkiaPay (une seule fois)
+            bindKkiapayListeners();
 
-            addKkiapayListener('failed', (error) => {
-                setIsSubmitting(false);
-                addToast('Le paiement a échoué.', 'error');
-            });
-
-            // 4. Ouvrir KkiaPay
+            // 3. Ouvrir KkiaPay
             openKkiapayWidget({
                 amount: total_amount,
                 key: kkiapay_public_key,
@@ -98,8 +135,15 @@ export default function Delivery({ auth }) {
                 email: auth.user.email,
             });
 
+            // La commande existe et le widget de paiement est ouvert : on relâche
+            // le verrou et on réactive le bouton. Si le client ferme le widget
+            // sans payer puis relance, le serveur renverra CETTE commande (même
+            // idempotency_key) — aucune duplication possible.
+            submitLockRef.current = false;
+            setIsSubmitting(false);
         } catch (error) {
             console.error(error);
+            submitLockRef.current = false;
             setIsSubmitting(false);
             addToast(error.response?.data?.message || 'Une erreur est survenue lors de la commande.', 'error');
         }

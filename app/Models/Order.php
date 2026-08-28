@@ -20,6 +20,7 @@ class Order extends Model
         'payment_method', 
         'driver_id', 
         'payment_reference',
+        'idempotency_key',
         'kkiapay_transaction_id',
         'auto_cancelled_at',
         'delivery_code'

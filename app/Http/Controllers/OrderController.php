@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderPlacedSeller;
 use App\Mail\OrderConfirmedClient;
@@ -30,7 +33,10 @@ class OrderController extends Controller
             'delivery_address' => 'required|string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'idempotency_key' => 'nullable|string|max:64',
         ]);
+
+        $userId = Auth::id();
 
         if (isset($validated['latitude']) && isset($validated['longitude'])) {
             $user = Auth::user();
@@ -39,100 +45,199 @@ class OrderController extends Controller
             $user->save();
         }
 
-        $products = Product::whereIn('id', array_column($validated['items'], 'id'))
-            ->get()
-            ->keyBy('id');
+        // Sérialise les soumissions de commande d'un même client. Sans ce verrou,
+        // un double-clic sur "Confirmer & Payer", un retry réseau du navigateur ou
+        // une seconde tentative de paiement crée un deuxième jeu de commandes avec
+        // sa propre payment_reference : le client ne règle qu'une référence via
+        // KkiaPay, l'autre commande reste "pending" et pollue le tableau de bord
+        // vendeur avant d'être purgée par orders:cancel-stale.
+        $lock = Cache::lock("orders:store:user:{$userId}", 15);
 
-        $itemsByShop = [];
-        foreach ($validated['items'] as $itemData) {
-            $product = $products[$itemData['id']];
+        try {
+            $lock->block(8);
 
-            if ($product->stock < $itemData['quantity']) {
-                $message = "Stock insuffisant pour \"{$product->name}\" (disponible : {$product->stock}).";
-                if ($request->expectsJson()) {
-                    return response()->json(['message' => $message], 422);
+            // 1. Rejeu exact de la même tentative de checkout (même clé) : on renvoie
+            //    les commandes déjà créées, sans rien dupliquer.
+            if (!empty($validated['idempotency_key'])) {
+                $existing = Order::where('user_id', $userId)
+                    ->where('idempotency_key', $validated['idempotency_key'])
+                    ->get();
+
+                if ($existing->isNotEmpty()) {
+                    return $this->orderGroupResponse($request, $existing);
                 }
-                return back()->withErrors(['message' => $message]);
             }
 
-            $itemsByShop[$product->shop_id][] = [
-                'product' => $product,
-                'quantity' => $itemData['quantity']
-            ];
+            // 2. Filet de sécurité pour un client sans clé : un panier strictement
+            //    identique, encore impayé et créé il y a moins de 15 min, est réutilisé.
+            $reused = $this->findReusablePendingOrders($userId, $validated['items']);
+            if ($reused->isNotEmpty()) {
+                return $this->orderGroupResponse($request, $reused);
+            }
+
+            $products = Product::whereIn('id', array_column($validated['items'], 'id'))
+                ->get()
+                ->keyBy('id');
+
+            $itemsByShop = [];
+            foreach ($validated['items'] as $itemData) {
+                $product = $products[$itemData['id']];
+
+                if ($product->stock < $itemData['quantity']) {
+                    $message = "Stock insuffisant pour \"{$product->name}\" (disponible : {$product->stock}).";
+                    if ($request->expectsJson()) {
+                        return response()->json(['message' => $message], 422);
+                    }
+                    return back()->withErrors(['message' => $message]);
+                }
+
+                $itemsByShop[$product->shop_id][] = [
+                    'product' => $product,
+                    'quantity' => $itemData['quantity']
+                ];
+            }
+
+            $paymentReference = 'PAY-' . strtoupper(Str::random(12));
+
+            $createdOrders = DB::transaction(function () use ($itemsByShop, $validated, $userId, $paymentReference) {
+                $orders = [];
+
+                foreach ($itemsByShop as $shopId => $items) {
+                    $totalAmount = 0;
+                    foreach ($items as $item) {
+                        $totalAmount += $item['product']->price * $item['quantity'];
+                    }
+
+                    $commissionAmount = $totalAmount * 0.10;
+                    $sellerAmount = $totalAmount - $commissionAmount;
+
+                    $order = Order::create([
+                        'user_id' => $userId,
+                        'shop_id' => $shopId,
+                        'order_number' => 'CMD-' . strtoupper(Str::random(8)),
+                        'total_amount' => $totalAmount,
+                        'commission_amount' => $commissionAmount,
+                        'seller_amount' => $sellerAmount,
+                        'status' => 'pending',
+                        'delivery_address' => $validated['delivery_address'],
+                        'payment_method' => 'Flooz/T-Money',
+                        'payment_reference' => $paymentReference,
+                        'idempotency_key' => $validated['idempotency_key'] ?? null,
+                        'delivery_code' => rand(1000, 9999),
+                    ]);
+
+                    foreach ($items as $item) {
+                        OrderItem::create([
+                            'order_id' => $order->id,
+                            'product_id' => $item['product']->id,
+                            'quantity' => $item['quantity'],
+                            'price' => $item['product']->price,
+                        ]);
+                    }
+
+                    $orders[] = $order;
+                }
+
+                return $orders;
+            });
+
+            // Effets de bord (emails, notifications, broadcast) une fois la
+            // transaction validée : ils ne doivent pas empêcher la création ni
+            // être rejoués par un éventuel rollback.
+            foreach ($createdOrders as $order) {
+                $this->safely(
+                    fn() => Mail::to($order->shop->user->email)->send(new OrderPlacedSeller($order)),
+                    'OrderController@store: seller email failed',
+                    ['order_id' => $order->id]
+                );
+
+                $this->safely(
+                    fn() => $order->user->notify(new \App\Notifications\OrderNotification(
+                        $order,
+                        "Votre commande #{$order->order_number} est enregistrée ! Code de réception : {$order->delivery_code}",
+                        'success'
+                    )),
+                    'OrderController@store: client notification failed',
+                    ['order_id' => $order->id]
+                );
+
+                $this->safely(
+                    fn() => event(new \App\Events\OrderUpdated($order)),
+                    'OrderController@store: broadcast failed',
+                    ['order_id' => $order->id]
+                );
+            }
+
+            return $this->orderGroupResponse($request, collect($createdOrders));
+        } catch (LockTimeoutException $e) {
+            $message = 'Votre commande précédente est encore en cours de traitement. Merci de patienter quelques secondes.';
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], 429);
+            }
+            return back()->withErrors(['message' => $message]);
+        } finally {
+            optional($lock)->release();
         }
+    }
 
-        $paymentReference = 'PAY-' . strtoupper(Str::random(12));
-        $createdOrders = [];
-
-        foreach ($itemsByShop as $shopId => $items) {
-            $totalAmount = 0;
-            foreach ($items as $item) {
-                $totalAmount += $item['product']->price * $item['quantity'];
-            }
-
-            $commissionAmount = $totalAmount * 0.10;
-            $sellerAmount = $totalAmount - $commissionAmount;
-
-            $order = Order::create([
-                'user_id' => Auth::id(),
-                'shop_id' => $shopId,
-                'order_number' => 'CMD-' . strtoupper(Str::random(8)),
-                'total_amount' => $totalAmount,
-                'commission_amount' => $commissionAmount,
-                'seller_amount' => $sellerAmount,
-                'status' => 'pending',
-                'delivery_address' => $validated['delivery_address'],
-                'payment_method' => 'Flooz/T-Money',
-                'payment_reference' => $paymentReference,
-                'delivery_code' => rand(1000, 9999),
-            ]);
-
-            foreach ($items as $item) {
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $item['product']->id,
-                    'quantity' => $item['quantity'],
-                    'price' => $item['product']->price,
-                ]);
-            }
-            // Send Email to Seller
-            $this->safely(
-                fn() => Mail::to($order->shop->user->email)->send(new OrderPlacedSeller($order)),
-                'OrderController@store: seller email failed',
-                ['order_id' => $order->id]
-            );
-
-            // Send Notification to Client with OTP
-            $this->safely(
-                fn() => $order->user->notify(new \App\Notifications\OrderNotification(
-                    $order,
-                    "Votre commande #{$order->order_number} est enregistrée ! Code de réception : {$order->delivery_code}",
-                    'success'
-                )),
-                'OrderController@store: client notification failed',
-                ['order_id' => $order->id]
-            );
-
-            // Real-time broadcast for Seller
-            $this->safely(
-                fn() => event(new \App\Events\OrderUpdated($order)),
-                'OrderController@store: broadcast failed',
-                ['order_id' => $order->id]
-            );
-
-            $createdOrders[] = $order;
-        }
+    /**
+     * Réponse commune pour un groupe de commandes partageant une payment_reference,
+     * qu'elles viennent d'être créées ou qu'on renvoie un jeu existant (idempotence).
+     */
+    private function orderGroupResponse(Request $request, $orders)
+    {
+        $reference = $orders->first()->payment_reference;
 
         if ($request->expectsJson()) {
             return response()->json([
-                'reference' => $paymentReference,
-                'total_amount' => array_sum(array_map(fn($o) => $o->total_amount, $createdOrders)),
+                'reference' => $reference,
+                'total_amount' => (int) $orders->sum('total_amount'),
                 'kkiapay_public_key' => config('services.kkiapay.public_key'),
-                'kkiapay_sandbox' => config('services.kkiapay.environment', 'sandbox') !== 'live'
+                'kkiapay_sandbox' => config('services.kkiapay.environment', 'sandbox') !== 'live',
             ]);
         }
 
-        return redirect()->route('checkout.show', ['reference' => $paymentReference]);
+        return redirect()->route('checkout.show', ['reference' => $reference]);
+    }
+
+    /**
+     * Cherche un groupe de commandes "pending" encore impayé (aucun
+     * kkiapay_transaction_id), créé il y a moins de 15 min par ce client, dont le
+     * contenu correspond exactement au panier demandé. Sert de garde-fou contre la
+     * duplication quand le client ne fournit pas d'idempotency_key.
+     */
+    private function findReusablePendingOrders(int $userId, array $items)
+    {
+        $wanted = [];
+        foreach ($items as $item) {
+            $pid = (int) $item['id'];
+            $wanted[$pid] = ($wanted[$pid] ?? 0) + (int) $item['quantity'];
+        }
+        ksort($wanted);
+
+        $candidates = Order::where('user_id', $userId)
+            ->where('status', 'pending')
+            ->whereNull('kkiapay_transaction_id')
+            ->where('created_at', '>=', now()->subMinutes(15))
+            ->with('orderItems')
+            ->get();
+
+        foreach ($candidates->groupBy('payment_reference') as $group) {
+            $got = [];
+            foreach ($group as $order) {
+                foreach ($order->orderItems as $orderItem) {
+                    $pid = (int) $orderItem->product_id;
+                    $got[$pid] = ($got[$pid] ?? 0) + (int) $orderItem->quantity;
+                }
+            }
+            ksort($got);
+
+            if ($got === $wanted) {
+                return $group->values();
+            }
+        }
+
+        return collect();
     }
 
     /**
